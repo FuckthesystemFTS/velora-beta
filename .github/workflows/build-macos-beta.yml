@@ -8,18 +8,8 @@ permissions:
 
 jobs:
   build:
-    name: macOS ${{ matrix.name }}
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: apple-silicon
-            runner: macos-15
-            target: aarch64-apple-darwin
-          - name: intel
-            runner: macos-15-intel
-            target: x86_64-apple-darwin
+    name: macOS unsigned beta
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -34,12 +24,12 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
 
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/desktop/src-tauri -> target
-          key: macos-${{ matrix.target }}
+          key: macos-latest
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -59,26 +49,26 @@ jobs:
 
       - name: Cargo check
         working-directory: apps/desktop/src-tauri
-        run: cargo check --target ${{ matrix.target }}
+        run: cargo check
 
       - name: Build unsigned macOS beta
         working-directory: apps/desktop
         env:
           TAURI_SIGNING_PRIVATE_KEY: ""
-        run: pnpm exec tauri build --target ${{ matrix.target }} --config src-tauri/tauri.macos.conf.json
+        run: pnpm exec tauri build --config src-tauri/tauri.macos.conf.json
 
       - name: Compute SHA-256
         shell: bash
         run: |
-          mkdir -p releases/beta/macos/${{ matrix.name }}
-          find apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle -type f \( -name "*.dmg" -o -name "*.app.tar.gz" \) -print0 | while IFS= read -r -d '' file; do
-            cp "$file" "releases/beta/macos/${{ matrix.name }}/$(basename "$file")"
-            shasum -a 256 "$file" > "releases/beta/macos/${{ matrix.name }}/$(basename "$file").sha256.txt"
+          mkdir -p releases/beta/macos/latest
+          find apps/desktop/src-tauri/target/release/bundle -type f \( -name "*.dmg" -o -name "*.app.tar.gz" \) -print0 | while IFS= read -r -d '' file; do
+            cp "$file" "releases/beta/macos/latest/$(basename "$file")"
+            shasum -a 256 "$file" > "releases/beta/macos/latest/$(basename "$file").sha256.txt"
           done
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: velora-macos-${{ matrix.name }}-unsigned-beta
-          path: releases/beta/macos/${{ matrix.name }}
+          name: velora-macos-unsigned-beta
+          path: releases/beta/macos/latest
           if-no-files-found: error
