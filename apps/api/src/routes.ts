@@ -76,7 +76,12 @@ export async function registerRoutes(app: FastifyInstance) {
     }
 
     const user = await repository.createUser(body.username, hashPassword(body.password));
-    return { userId: user.id, username: user.username };
+    const mail = await repository.getOrCreateVeloMailAccount(user.id, user.username);
+    return {
+      token: `dev-${user.id}`,
+      user: { id: user.id, username: user.username, identityLevel: mail.identityLevel },
+      mail
+    };
   });
 
   app.post("/api/v1/auth/login", async (request, reply) => {
@@ -86,9 +91,11 @@ export async function registerRoutes(app: FastifyInstance) {
       return reply.unauthorized("invalid credentials");
     }
 
+    const mail = await repository.getOrCreateVeloMailAccount(user.id, user.username);
     return {
       token: `dev-${user.id}`,
-      user: { id: user.id, username: user.username }
+      user: { id: user.id, username: user.username, identityLevel: mail.identityLevel },
+      mail
     };
   });
 
@@ -237,7 +244,16 @@ export async function registerRoutes(app: FastifyInstance) {
     if (!user) {
       return reply.notFound("account not found");
     }
-    return { id: user.id, username: user.username };
+    const mail = await repository.getOrCreateVeloMailAccount(user.id, user.username);
+    return { id: user.id, username: user.username, identityLevel: mail.identityLevel, mail };
+  });
+
+  app.post("/api/v1/identity/verify-basic", async (request, reply) => {
+    const userId = request.headers["x-user-id"];
+    if (typeof userId !== "string") {
+      return reply.unauthorized("missing x-user-id header");
+    }
+    return repository.setIdentityLevel(userId, 1);
   });
 
   app.post("/api/v1/devices/enroll", async (request, reply) => {
@@ -360,6 +376,7 @@ export async function registerRoutes(app: FastifyInstance) {
         chunks?: Array<{ chunkIndex: number; chunkHash: string; chunkSize: number; localPath: string }>;
         packagePath?: string;
       };
+      await repository.ensureBetaPublisherZone({ address: body.address, userId, publisherPublicKey: body.publisherPublicKey });
       const result = await repository.registerSiteRelease({ ...body, userId });
       await persistReleaseSnapshot({
         address: body.address,

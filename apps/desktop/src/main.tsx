@@ -47,6 +47,20 @@ type MailMessage = {
   createdAt: string;
 };
 
+type AccountSession = {
+  token: string;
+  user: {
+    id: string;
+    username: string;
+    identityLevel: number;
+  };
+  mail: {
+    address: string;
+    identityLevel: number;
+  };
+};
+
+type AuthMode = "login" | "register";
 
 const apiBaseUrl = "https://velora-beta-20260629-9a9196313b42.herokuapp.com";
 const demoSitePath = "examples/velora-demo-site";
@@ -92,10 +106,9 @@ const featuredSites: SearchCard[] = [
 ];
 
 const identityLevels = [
-  ["Livello 0", "Informativo", "Landing page, portfolio e pagine senza account. SDK non obbligatorio."],
-  ["Livello 1", "Account base", "Email verificata, password e Login Velora obbligatorio."],
-  ["Livello 2", "Identita verificata", "Documento verificato tramite infrastruttura sicura. 1,99 EUR/mese."],
-  ["Livello 3", "Operazioni sensibili", "OTP, pagamenti e wallet predisposti. 4,99 EUR/mese, non operativo in beta."]
+  ["Livello 0", "Account creato", "Accesso, navigazione, VeloMail e pubblicazione beta."],
+  ["Livello 1", "Dispositivo verificato", "Account collegato al dispositivo attivo e pronto per pubblicare."],
+  ["Livello 2", "Revisione avanzata", "Riservato alle verifiche manuali successive alla beta pubblica."]
 ];
 
 const publisherPlans = [
@@ -123,6 +136,10 @@ function App() {
   const [packaged, setPackaged] = React.useState<PublisherPackageResponse | null>(null);
   const [releases, setReleases] = React.useState<PublisherReleaseRecord[]>([]);
   const [diagnostics, setDiagnostics] = React.useState("I dettagli tecnici sono disponibili solo qui.");
+  const [session, setSession] = React.useState<AccountSession | null>(() => loadStoredSession());
+  const [authMode, setAuthMode] = React.useState<AuthMode>("register");
+  const [authForm, setAuthForm] = React.useState({ username: "", password: "" });
+  const [authMessage, setAuthMessage] = React.useState("");
   const [mailAddress, setMailAddress] = React.useState("beta@velora");
   const [mailUserId, setMailUserId] = React.useState("");
   const [mailMessages, setMailMessages] = React.useState<MailMessage[]>([]);
@@ -135,20 +152,80 @@ function App() {
     void prepareVelora();
   }, []);
 
+  React.useEffect(() => {
+    if (!session) {
+      return;
+    }
+    const slug = normalizeAccountSlug(session.user.username);
+    setPublisherAddress(`shop.${slug}`);
+    setMailDraft((current) => current.to === "beta@velora" || current.to === "alias@velora" ? { ...current, to: session.mail.address } : current);
+  }, [session]);
+
   async function prepareVelora() {
     try {
       setNodeMessage("Preparazione dei dati locali in corso");
       await invoke<string>("init_local_store");
-      await ensureBetaSession();
+      if (session) {
+        applySession(session);
+      }
       setNodeMessage("Connessione alla rete");
       await invoke("get_or_create_node_identity");
       setNetworkState("ready");
-      setNodeMessage("Velora e pronta");
+      setNodeMessage(session ? "Velora e pronta" : "Accedi o crea il tuo account Velora");
     } catch (error) {
       setNetworkState("limited");
-      setNodeMessage("Connessione limitata. Puoi continuare a esplorare i contenuti locali.");
+      setNodeMessage("Velora sta preparando la connessione. Puoi continuare a esplorare.");
       setDiagnostics(String(error));
     }
+  }
+
+  async function submitAuth() {
+    setAuthMessage("Connessione account in corso");
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/auth/${authMode}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ username: authForm.username.trim(), password: authForm.password })
+      });
+      if (!response.ok) {
+        throw new Error(response.status === 409 ? "Alias gia utilizzato" : "Credenziali non valide");
+      }
+      const nextSession = await response.json() as AccountSession;
+      saveStoredSession(nextSession);
+      applySession(nextSession);
+      setSession(nextSession);
+      setAuthMessage("Account pronto");
+      setNodeMessage("Velora e pronta");
+      setNetworkState("ready");
+      await enrollActiveDevice(nextSession.user.id);
+      await loadMail("INBOX", nextSession.user.id);
+    } catch (error) {
+      setAuthMessage(error instanceof Error ? error.message : "Accesso non riuscito");
+      setDiagnostics(String(error));
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem("velora.session");
+    setSession(null);
+    setMailUserId("");
+    setMailAddress("alias@velora");
+    setMailMessages([]);
+    setNodeMessage("Accedi o crea il tuo account Velora");
+  }
+
+  function applySession(nextSession: AccountSession) {
+    setMailUserId(nextSession.user.id);
+    setMailAddress(nextSession.mail.address);
+  }
+
+  async function enrollActiveDevice(userId: string) {
+    const identity = await invoke<{ peer_id: string; public_key: string }>("get_or_create_node_identity");
+    await fetch(`${apiBaseUrl}/api/v1/devices/enroll`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-user-id": userId },
+      body: JSON.stringify({ peerId: identity.peer_id, publicKey: identity.public_key, deviceName: "Velora Desktop" })
+    });
   }
 
   function looksLikeTraditionalWeb(value: string) {
@@ -241,12 +318,18 @@ function App() {
   }
 
   async function validateRelease() {
-    setValidation(await siteApi.validateRelease({ sitePath: publisherSitePath }));
+    const result = await invoke<VeloraValidationResult>("validate_local_release", {
+      input: { sitePath: publisherSitePath }
+    });
+    setValidation(result);
   }
 
   async function packageRelease() {
+    await requireSessionUserId();
     const identity = await invoke<{ peer_id: string; public_key: string }>("get_or_create_node_identity");
-    const result = await siteApi.packageRelease({ sitePath: publisherSitePath, publisherPublicKey: identity.public_key, userId: "beta-publisher" });
+    const result = await invoke<PublisherPackageResponse>("package_local_release", {
+      input: { sitePath: publisherSitePath, publisherPublicKey: identity.public_key }
+    });
     setPackaged(result);
     await invoke("cache_packaged_release", {
       input: {
@@ -261,7 +344,8 @@ function App() {
     if (!packaged) {
       return;
     }
-    const result = await siteApi.registerRelease({ ...packaged, userId: "beta-publisher" });
+    const userId = await requireSessionUserId();
+    const result = await siteApi.registerRelease({ ...packaged, userId });
     await invoke("cache_packaged_release", {
       input: {
         ...packaged,
@@ -269,7 +353,7 @@ function App() {
         status: result.status
       }
     });
-    setDiagnostics(`Release registrata: ${JSON.stringify(result)}`);
+    setDiagnostics(`Release registrata: ${result.status}`);
     await loadReleases();
   }
 
@@ -282,12 +366,12 @@ function App() {
     setFavorites((current) => current.includes(zone) ? current.filter((item) => item !== zone) : [...current, zone]);
   }
 
-  async function loadMail(folder = mailFolder) {
+  async function loadMail(folder = mailFolder, sessionUserId?: string) {
     setWorkspace("mail");
     setMailFolder(folder);
     setMailStatus("Sincronizzazione in corso");
     try {
-      const userId = await ensureBetaSession();
+      const userId = sessionUserId ?? await requireSessionUserId();
       const accountResponse = await fetch(`${apiBaseUrl}/api/v1/mail/account`, { headers: { "x-user-id": userId } });
       if (accountResponse.ok) {
         const account = await accountResponse.json() as { address: string };
@@ -310,7 +394,7 @@ function App() {
   async function sendMail() {
     setMailStatus("Invio in corso");
     try {
-      const userId = await ensureBetaSession();
+      const userId = await requireSessionUserId();
       const response = await fetch(`${apiBaseUrl}/api/v1/mail/send`, {
         method: "POST",
         headers: { "content-type": "application/json", "x-user-id": userId },
@@ -331,32 +415,61 @@ function App() {
     }
   }
 
-  async function ensureBetaSession() {
+  async function requireSessionUserId() {
     if (mailUserId) {
       return mailUserId;
     }
-    const identity = await invoke<{ peer_id: string }>("get_or_create_node_identity");
-    const response = await fetch(`${apiBaseUrl}/api/v1/beta/session`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ installationId: identity.peer_id })
-    });
-    if (!response.ok) {
-      throw new Error("BETA_SESSION_FAILED");
+    if (session) {
+      applySession(session);
+      return session.user.id;
     }
-    const session = await response.json() as { user: { id: string }; mail: { address: string } };
-    setMailUserId(session.user.id);
-    setMailAddress(session.mail.address);
-    return session.user.id;
+    throw new Error("Accedi al tuo account Velora");
+  }
+
+  async function verifyIdentity() {
+    try {
+      const userId = await requireSessionUserId();
+      const response = await fetch(`${apiBaseUrl}/api/v1/identity/verify-basic`, {
+        method: "POST",
+        headers: { "x-user-id": userId }
+      });
+      if (!response.ok) {
+        throw new Error("IDENTITY_VERIFICATION_FAILED");
+      }
+      const result = await response.json() as { identityLevel: number };
+      const nextSession = session ? {
+        ...session,
+        user: { ...session.user, identityLevel: Number(result.identityLevel ?? 1) },
+        mail: { ...session.mail, identityLevel: Number(result.identityLevel ?? 1) }
+      } : null;
+      if (nextSession) {
+        saveStoredSession(nextSession);
+        setSession(nextSession);
+      }
+      setNodeMessage("Identita verificata su questo dispositivo");
+    } catch (error) {
+      setDiagnostics(String(error));
+      setNodeMessage("Verifica identita non riuscita");
+    }
   }
 
   return (
     <div className="app-shell">
       <Sidebar workspace={workspace} setWorkspace={setWorkspace} networkState={networkState} />
       <main className="main">
-        <TopBar networkState={networkState} nodeMessage={nodeMessage} />
+        <TopBar networkState={networkState} nodeMessage={nodeMessage} session={session} onLogout={logout} />
+        {!session ? (
+          <AccountGate
+            mode={authMode}
+            setMode={setAuthMode}
+            form={authForm}
+            setForm={setAuthForm}
+            message={authMessage}
+            onSubmit={() => void submitAuth()}
+          />
+        ) : null}
         {workspace === "home" ? (
-          <Home query={query} setQuery={setQuery} onSubmit={() => void openZone()} onSearch={() => void runSearch()} onOpen={openZone} onMail={() => void loadMail("INBOX")} viewerState={viewerState} viewerMessage={viewerMessage} />
+          <Home query={query} setQuery={setQuery} onSubmit={() => void openZone()} onSearch={() => void runSearch()} onOpen={openZone} onMail={() => void loadMail("INBOX")} viewerState={viewerState} viewerMessage={viewerMessage} session={session} />
         ) : null}
         {workspace === "explore" ? (
           <Explore
@@ -387,7 +500,7 @@ function App() {
         ) : null}
         {workspace === "favorites" ? <SimpleCollection title="Preferiti" items={favorites} onOpen={openZone} /> : null}
         {workspace === "activity" ? <Activity /> : null}
-        {workspace === "identity" ? <Identity /> : null}
+        {workspace === "identity" ? <Identity session={session} onVerify={() => void verifyIdentity()} /> : null}
         {workspace === "notifications" ? <Notifications /> : null}
         {workspace === "settings" ? <Settings diagnostics={diagnostics} nodeMessage={nodeMessage} networkState={networkState} onRetry={() => void prepareVelora()} /> : null}
         {workspace === "dev" ? (
@@ -399,6 +512,7 @@ function App() {
             validation={validation}
             packaged={packaged}
             releases={releases}
+            session={session}
             onValidate={validateRelease}
             onPackage={packageRelease}
             onRegister={registerRelease}
@@ -445,7 +559,7 @@ function Sidebar({ workspace, setWorkspace, networkState }: { workspace: Workspa
   );
 }
 
-function TopBar({ networkState, nodeMessage }: { networkState: NetworkState; nodeMessage: string }) {
+function TopBar({ networkState, nodeMessage, session, onLogout }: { networkState: NetworkState; nodeMessage: string; session: AccountSession | null; onLogout: () => void }) {
   return (
     <header className="topbar">
       <div>
@@ -455,13 +569,40 @@ function TopBar({ networkState, nodeMessage }: { networkState: NetworkState; nod
       <div className="top-actions">
         <span className={`status-dot ${networkState}`} />
         <button type="button" aria-label="Notifiche">Notifiche</button>
-        <button type="button" aria-label="Profilo">Profilo beta</button>
+        {session ? <button type="button" aria-label="Profilo">{session.mail.address}</button> : null}
+        {session ? <button type="button" className="secondary" onClick={onLogout}>Esci</button> : null}
       </div>
     </header>
   );
 }
 
-function Home({ query, setQuery, onSubmit, onSearch, onOpen, onMail, viewerState, viewerMessage }: {
+function AccountGate(props: {
+  mode: AuthMode;
+  setMode: (mode: AuthMode) => void;
+  form: { username: string; password: string };
+  setForm: (form: { username: string; password: string }) => void;
+  message: string;
+  onSubmit: () => void;
+}) {
+  return (
+    <section className="account-gate">
+      <div>
+        <span className="eyebrow">ACCOUNT VELORA</span>
+        <h1>{props.mode === "register" ? "Crea il tuo accesso" : "Accedi a Velora"}</h1>
+      </div>
+      <div className="auth-controls">
+        <button className={props.mode === "register" ? "active" : ""} type="button" onClick={() => props.setMode("register")}>Registrati</button>
+        <button className={props.mode === "login" ? "active" : ""} type="button" onClick={() => props.setMode("login")}>Accedi</button>
+      </div>
+      <label>Alias<input value={props.form.username} onChange={(event) => props.setForm({ ...props.form, username: event.target.value })} placeholder="il-tuo-alias" /></label>
+      <label>Password<input type="password" value={props.form.password} onChange={(event) => props.setForm({ ...props.form, password: event.target.value })} placeholder="Password" /></label>
+      <button type="button" onClick={props.onSubmit}>{props.mode === "register" ? "Crea account" : "Accedi"}</button>
+      {props.message ? <p>{props.message}</p> : null}
+    </section>
+  );
+}
+
+function Home({ query, setQuery, onSubmit, onSearch, onOpen, onMail, viewerState, viewerMessage, session }: {
   query: string;
   setQuery: (query: string) => void;
   onSubmit: () => void;
@@ -470,6 +611,7 @@ function Home({ query, setQuery, onSubmit, onSearch, onOpen, onMail, viewerState
   onMail: () => void;
   viewerState: ViewerState;
   viewerMessage: string;
+  session: AccountSession | null;
 }) {
   return (
     <section className="home">
@@ -499,8 +641,8 @@ function Home({ query, setQuery, onSubmit, onSearch, onOpen, onMail, viewerState
         <article className="glass-card velomail-card">
           <span className="app-pill">App Velora</span>
           <h2>VeloMail</h2>
-          <p>La tua posta nell'Upper Web, collegata all'account Velora.</p>
-          <button type="button" onClick={onMail}>Apri VeloMail</button>
+          <p>{session ? `Casella attiva: ${session.mail.address}` : "Accedi per attivare la tua casella."}</p>
+          <button type="button" onClick={onMail} disabled={!session}>Apri VeloMail</button>
         </article>
         <FeatureBlock title="Siti verificati" sites={featuredSites.filter((site) => site.verified)} onOpen={onOpen} />
         <FeatureBlock title="Siti Emergenti" sites={featuredSites.slice(0, 2)} onOpen={onOpen} />
@@ -725,10 +867,12 @@ function Activity() {
   return <section className="page-card"><h1>Attivita</h1><p>Le visite e le pubblicazioni recenti appariranno qui quando disponibili.</p></section>;
 }
 
-function Identity() {
+function Identity({ session, onVerify }: { session: AccountSession | null; onVerify: () => void }) {
   return (
     <section className="page-card">
       <h1>Identita Velora</h1>
+      <p>{session ? `Account: ${session.user.username} - Livello ${session.user.identityLevel}` : "Accedi per verificare il dispositivo."}</p>
+      <button type="button" onClick={onVerify} disabled={!session || session.user.identityLevel >= 1}>Verifica dispositivo</button>
       <div className="plan-grid">
         {identityLevels.map(([level, title, text]) => <article key={level}><b>{level}</b><h3>{title}</h3><p>{text}</p></article>)}
       </div>
@@ -762,6 +906,7 @@ function VeloraDev(props: {
   validation: VeloraValidationResult | null;
   packaged: PublisherPackageResponse | null;
   releases: PublisherReleaseRecord[];
+  session: AccountSession | null;
   onValidate: () => void;
   onPackage: () => void;
   onRegister: () => void;
@@ -784,12 +929,13 @@ function VeloraDev(props: {
           <label>Cartella progetto<input value={props.sitePath} onChange={(event) => props.setSitePath(event.target.value)} /></label>
           <div className="button-row">
             <button onClick={props.onValidate}>Analizza</button>
-            <button onClick={props.onPackage}>Crea pacchetto</button>
-            <button onClick={props.onRegister} disabled={!props.packaged}>Invia revisione</button>
+            <button onClick={props.onPackage} disabled={!props.session}>Crea pacchetto</button>
+            <button onClick={props.onRegister} disabled={!props.packaged || !props.session}>Pubblica</button>
             <button onClick={props.onRefresh}>Release</button>
           </div>
           {props.validation ? <ReviewBox validation={props.validation} /> : null}
           {props.packaged ? <p className="safe-detail">Pacchetto pronto. Content CID e hash completi sono disponibili in diagnostica Dev.</p> : null}
+          {!props.session ? <p>Accedi per inviare una pubblicazione.</p> : null}
         </article>
         <article className="page-card">
           <h2>Piani publisher</h2>
@@ -839,6 +985,23 @@ function networkLabel(state: NetworkState) {
     limited: "Connessione limitata",
     offline: "Offline"
   }[state];
+}
+
+function loadStoredSession(): AccountSession | null {
+  try {
+    const raw = localStorage.getItem("velora.session");
+    return raw ? JSON.parse(raw) as AccountSession : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredSession(session: AccountSession) {
+  localStorage.setItem("velora.session", JSON.stringify(session));
+}
+
+function normalizeAccountSlug(value: string) {
+  return value.trim().toLowerCase().normalize("NFKC").replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 30) || "publisher";
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

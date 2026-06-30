@@ -122,6 +122,76 @@ struct LoadedSiteDocument {
     source: String,
 }
 
+#[derive(Deserialize)]
+struct LocalReleaseRequest {
+    #[serde(rename = "sitePath")]
+    site_path: String,
+    #[serde(rename = "publisherPublicKey")]
+    publisher_public_key: Option<String>,
+}
+
+#[derive(Serialize)]
+struct LocalValidationResult {
+    valid: bool,
+    errors: Vec<String>,
+    warnings: Vec<String>,
+    #[serde(rename = "excludedFiles")]
+    excluded_files: Vec<String>,
+    #[serde(rename = "includedFiles")]
+    included_files: Vec<String>,
+    #[serde(rename = "totalFiles")]
+    total_files: usize,
+    #[serde(rename = "totalSize")]
+    total_size: i64,
+    #[serde(rename = "requestedPermissions")]
+    requested_permissions: serde_json::Value,
+}
+
+#[derive(Serialize)]
+struct LocalReleaseFile {
+    path: String,
+    size: i64,
+    hash: String,
+}
+
+#[derive(Serialize)]
+struct LocalReleaseChunk {
+    #[serde(rename = "chunkIndex")]
+    chunk_index: usize,
+    #[serde(rename = "chunkHash")]
+    chunk_hash: String,
+    #[serde(rename = "chunkSize")]
+    chunk_size: i64,
+    #[serde(rename = "localPath")]
+    local_path: String,
+}
+
+#[derive(Serialize)]
+struct LocalPackageResponse {
+    address: String,
+    version: String,
+    #[serde(rename = "contentCid")]
+    content_cid: String,
+    #[serde(rename = "manifestJson")]
+    manifest_json: serde_json::Value,
+    #[serde(rename = "manifestHash")]
+    manifest_hash: String,
+    #[serde(rename = "packageHash")]
+    package_hash: String,
+    #[serde(rename = "publisherPublicKey")]
+    publisher_public_key: String,
+    #[serde(rename = "publisherSignature")]
+    publisher_signature: String,
+    #[serde(rename = "totalSize")]
+    total_size: i64,
+    #[serde(rename = "fileCount")]
+    file_count: usize,
+    files: Vec<LocalReleaseFile>,
+    chunks: Vec<LocalReleaseChunk>,
+    #[serde(rename = "packagePath")]
+    package_path: String,
+}
+
 #[tauri::command]
 fn init_local_store(app: AppHandle) -> Result<String, VeloraError> {
     let db_path = local_db_path(&app)?;
@@ -311,6 +381,74 @@ fn cache_search_results(app: AppHandle, results: Vec<SearchDocumentInput>) -> Re
 }
 
 #[tauri::command]
+fn validate_local_release(input: LocalReleaseRequest) -> Result<LocalValidationResult, VeloraError> {
+    validate_site_path(Path::new(&input.site_path))
+}
+
+#[tauri::command]
+fn package_local_release(input: LocalReleaseRequest) -> Result<LocalPackageResponse, VeloraError> {
+    let site_root = PathBuf::from(&input.site_path);
+    let validation = validate_site_path(&site_root)?;
+    if !validation.valid {
+        return Err(VeloraError::SiteNotFound("release is not valid".to_string()));
+    }
+
+    let manifest_path = site_root.join("velora.json");
+    let manifest_text = fs::read_to_string(&manifest_path)?;
+    let manifest_json: serde_json::Value = serde_json::from_str(&manifest_text)?;
+    let address = manifest_json["address"].as_str().unwrap_or("shop.demo").to_string();
+    let version = manifest_json["version"].as_str().unwrap_or("0.1.0").to_string();
+    let publisher_public_key = input.publisher_public_key.unwrap_or_else(|| "local-publisher".to_string());
+    let files = collect_site_files(&site_root)?;
+    let mut release_files = Vec::new();
+    let mut chunks = Vec::new();
+    let mut package_material = String::new();
+    let mut total_size = 0_i64;
+
+    for (index, relative_path) in files.iter().enumerate() {
+        let absolute = site_root.join(relative_path);
+        let bytes = fs::read(&absolute)?;
+        let hash = blake3::hash(&bytes).to_hex().to_string();
+        let size = bytes.len() as i64;
+        total_size += size;
+        package_material.push_str(relative_path);
+        package_material.push_str(&hash);
+        release_files.push(LocalReleaseFile {
+            path: relative_path.clone(),
+            size,
+            hash: format!("blake3:{hash}"),
+        });
+        chunks.push(LocalReleaseChunk {
+            chunk_index: index,
+            chunk_hash: format!("blake3:{hash}"),
+            chunk_size: size,
+            local_path: absolute.to_string_lossy().to_string(),
+        });
+    }
+
+    let manifest_hash = blake3::hash(manifest_text.as_bytes()).to_hex().to_string();
+    let package_hash = blake3::hash(package_material.as_bytes()).to_hex().to_string();
+    let content_cid = blake3::hash(format!("{address}:{package_hash}").as_bytes()).to_hex().to_string();
+    let signature = blake3::hash(format!("{publisher_public_key}:{address}:{version}:{package_hash}").as_bytes()).to_hex().to_string();
+
+    Ok(LocalPackageResponse {
+        address,
+        version,
+        content_cid: format!("blake3:{content_cid}"),
+        manifest_json,
+        manifest_hash: format!("blake3:{manifest_hash}"),
+        package_hash: format!("blake3:{package_hash}"),
+        publisher_public_key,
+        publisher_signature: format!("local-signature:{signature}"),
+        total_size,
+        file_count: release_files.len(),
+        files: release_files,
+        chunks,
+        package_path: manifest_path.to_string_lossy().to_string(),
+    })
+}
+
+#[tauri::command]
 fn load_site_document(app: AppHandle, input: LoadSiteRequest) -> Result<LoadedSiteDocument, VeloraError> {
     let address = input.address.trim().to_lowercase();
     let site_root = resolve_site_root(&app, &address, input.site_path.as_deref())?;
@@ -413,6 +551,87 @@ fn cache_history_visit(app: &AppHandle, address: &str, title: &str) -> Result<()
     Ok(())
 }
 
+fn validate_site_path(site_root: &Path) -> Result<LocalValidationResult, VeloraError> {
+    let mut errors = Vec::new();
+    let mut warnings = Vec::new();
+    let mut excluded_files = Vec::new();
+    let included_files = collect_site_files(site_root)?;
+    let manifest_path = site_root.join("velora.json");
+    let manifest_json = if manifest_path.is_file() {
+        serde_json::from_str::<serde_json::Value>(&fs::read_to_string(&manifest_path)?).unwrap_or_else(|_| {
+            errors.push("Manifest velora.json non valido.".to_string());
+            json!({})
+        })
+    } else {
+        errors.push("Manca velora.json.".to_string());
+        json!({})
+    };
+
+    if !site_root.join("index.html").is_file() {
+        errors.push("Manca index.html.".to_string());
+    }
+    if manifest_json["address"].as_str().unwrap_or("").split('.').count() != 2 {
+        errors.push("Indirizzo Velora non valido nel manifest.".to_string());
+    }
+    if manifest_json["title"].as_str().unwrap_or("").is_empty() {
+        errors.push("Titolo mancante nel manifest.".to_string());
+    }
+    if included_files.is_empty() {
+        warnings.push("Nessun file pubblicabile trovato.".to_string());
+    }
+
+    let mut total_size = 0_i64;
+    for file in &included_files {
+        total_size += fs::metadata(site_root.join(file))?.len() as i64;
+        if file.ends_with(".exe") || file.ends_with(".dll") || file.ends_with(".msi") || file.ends_with(".bat") || file.ends_with(".cmd") || file.ends_with(".ps1") {
+            excluded_files.push(file.clone());
+        }
+    }
+
+    let included_count = included_files.len();
+    Ok(LocalValidationResult {
+        valid: errors.is_empty(),
+        errors,
+        warnings,
+        excluded_files,
+        included_files: included_files.into_iter().filter(|file| !file.ends_with(".exe") && !file.ends_with(".dll") && !file.ends_with(".msi")).collect(),
+        total_files: included_count,
+        total_size,
+        requested_permissions: manifest_json.get("permissions").cloned().unwrap_or_else(|| json!({
+            "externalNetwork": false,
+            "clipboardRead": false,
+            "clipboardWrite": false,
+            "notifications": false,
+            "fileDownload": false
+        })),
+    })
+}
+
+fn collect_site_files(site_root: &Path) -> Result<Vec<String>, VeloraError> {
+    let mut files = Vec::new();
+    collect_site_files_inner(site_root, site_root, &mut files)?;
+    files.sort();
+    Ok(files)
+}
+
+fn collect_site_files_inner(root: &Path, current: &Path, files: &mut Vec<String>) -> Result<(), VeloraError> {
+    for entry in fs::read_dir(current)? {
+        let entry = entry?;
+        let path = entry.path();
+        let name = entry.file_name().to_string_lossy().to_string();
+        if name == ".git" || name == "node_modules" || name == "target" || name.starts_with(".env") {
+            continue;
+        }
+        if path.is_dir() {
+            collect_site_files_inner(root, &path, files)?;
+        } else {
+            let relative = path.strip_prefix(root).unwrap_or(&path).to_string_lossy().replace('\\', "/");
+            files.push(relative);
+        }
+    }
+    Ok(())
+}
+
 fn local_db_path(app: &AppHandle) -> Result<PathBuf, VeloraError> {
     let dir = app.path().app_data_dir().map_err(|_| VeloraError::AppDataUnavailable)?;
     fs::create_dir_all(&dir)?;
@@ -425,6 +644,8 @@ pub fn run() {
             init_local_store,
             get_or_create_node_identity,
             enroll_device,
+            validate_local_release,
+            package_local_release,
             cache_packaged_release,
             cache_search_results,
             load_site_document

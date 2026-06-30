@@ -92,6 +92,7 @@ export interface VeloraRepository {
   findUserByUsername(username: string): Promise<UserRecord | undefined>;
   findUserById(id: string): Promise<UserRecord | undefined>;
   enrollDevice(input: { userId: string; peerId: string; publicKey: string; deviceName?: string }): Promise<DeviceRecord>;
+  setIdentityLevel(userId: string, level: number): Promise<Record<string, unknown>>;
   getOrCreateVeloMailAccount(userId: string, preferredAlias?: string): Promise<VeloMailAccountRecord>;
   getVeloMailAccount(userId: string): Promise<VeloMailAccountRecord | undefined>;
   listVeloMailMessages(userId: string, folder: string): Promise<VeloMailMessageRecord[]>;
@@ -105,6 +106,7 @@ export interface VeloraRepository {
   createZoneRequest(input: ZoneRequestInput, requesterUserId: string, reservationHours: number): Promise<ZoneRequestRecord>;
   listZoneRequests(): Promise<ZoneRequestRecord[]>;
   assertUserCanPublishToZone(input: { address: string; userId: string; publisherPublicKey: string }): Promise<{ zoneId: string; address: string }>;
+  ensureBetaPublisherZone(input: { address: string; userId: string; publisherPublicKey: string }): Promise<{ zoneId: string; address: string }>;
   registerSiteRelease(input: ReleaseRegistrationInput): Promise<Record<string, unknown>>;
   listSiteReleases(address: string): Promise<Array<Record<string, unknown>>>;
   getSiteRelease(address: string, releaseId: string): Promise<Record<string, unknown> | undefined>;
@@ -180,6 +182,16 @@ export class PostgresRepository implements VeloraRepository {
     } finally {
       client.release();
     }
+  }
+
+  async setIdentityLevel(userId: string, level: number) {
+    const normalized = Math.max(0, Math.min(2, Math.trunc(level)));
+    const account = await this.getOrCreateVeloMailAccount(userId);
+    const result = await this.pool.query(
+      "UPDATE velomail_accounts SET identity_level = $1, updated_at = NOW() WHERE id = $2 RETURNING identity_level, address",
+      [normalized, account.id]
+    );
+    return { userId, identityLevel: result.rows[0]?.identity_level ?? normalized, address: result.rows[0]?.address ?? account.address };
   }
 
   async getOrCreateVeloMailAccount(userId: string, preferredAlias?: string) {
@@ -450,6 +462,49 @@ export class PostgresRepository implements VeloraRepository {
       throw new Error("PUBLISHER_KEY_NOT_AUTHORIZED");
     }
     return { zoneId: zone.id, address: zone.address };
+  }
+
+  async ensureBetaPublisherZone(input: { address: string; userId: string; publisherPublicKey: string }) {
+    const normalizedAddress = input.address.trim().toLowerCase();
+    const existing = await this.pool.query("SELECT id, owner_user_id, owner_public_key, status, address FROM navigation_zones WHERE address = $1", [normalizedAddress]);
+    const zone = existing.rows[0];
+    if (zone) {
+      if (zone.owner_user_id !== input.userId) {
+        throw new Error("ZONE_NOT_OWNED");
+      }
+      if (zone.status !== "ACTIVE") {
+        throw new Error("ZONE_NOT_ACTIVE");
+      }
+      if (zone.owner_public_key !== input.publisherPublicKey) {
+        await this.pool.query("UPDATE navigation_zones SET owner_public_key = $1, updated_at = NOW() WHERE id = $2", [input.publisherPublicKey, zone.id]);
+      }
+      return { zoneId: zone.id, address: zone.address };
+    }
+
+    const [category, ...slugParts] = normalizedAddress.split(".");
+    const slug = slugParts.join(".");
+    if (!category || !slug || !/^[a-z0-9][a-z0-9-]{1,62}$/.test(category) || !/^[a-z0-9][a-z0-9-]{1,62}$/.test(slug)) {
+      throw new Error("INVALID_ZONE_ADDRESS");
+    }
+
+    const zoneId = randomUUID();
+    const payload = {
+      version: 1,
+      address: normalizedAddress,
+      category,
+      slug,
+      owner_user_id: input.userId,
+      beta_auto_created: true,
+      approved_at: new Date().toISOString()
+    };
+    const signature = signJsonRecordForBeta(payload, config.zoneRegistrySigningPrivateKeyBase64);
+    await this.pool.query(
+      `INSERT INTO navigation_zones (
+        id, address, category, slug, owner_user_id, owner_public_key, status, record_payload, platform_signature
+      ) VALUES ($1,$2,$3,$4,$5,$6,'ACTIVE',$7,$8)`,
+      [zoneId, normalizedAddress, category, slug, input.userId, input.publisherPublicKey, payload, signature]
+    );
+    return { zoneId, address: normalizedAddress };
   }
 
   async registerSiteRelease(input: ReleaseRegistrationInput) {
@@ -970,6 +1025,14 @@ function normalizeMailFolder(folder: string) {
   const normalized = folder.trim().toUpperCase().replace(/\s+/g, "_");
   const allowed = new Set(["INBOX", "SENT", "DRAFTS", "STARRED", "ARCHIVE", "SPAM", "TRASH", "OUTBOX"]);
   return allowed.has(normalized) ? normalized : "INBOX";
+}
+
+function signJsonRecordForBeta(payload: Record<string, unknown>, privateKeyBase64: string) {
+  try {
+    return signJsonRecord(payload, privateKeyBase64);
+  } catch {
+    return `beta-signature:${hashValue(JSON.stringify(payload))}`;
+  }
 }
 
 export const repository = new PostgresRepository();

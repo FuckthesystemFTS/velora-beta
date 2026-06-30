@@ -638,6 +638,71 @@ pre {
   min-height: calc(100vh - 122px);
 }
 
+.account-gate {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(180px, 260px) minmax(180px, 260px) auto;
+  align-items: end;
+  gap: 14px;
+  border: 1px solid rgba(232, 196, 105, 0.22);
+  border-radius: 22px;
+  background: rgba(6, 22, 39, 0.84);
+  padding: 18px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow);
+}
+
+.account-gate h1,
+.account-gate p {
+  margin: 0;
+}
+
+.auth-controls {
+  display: inline-flex;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 4px;
+}
+
+.auth-controls button,
+.account-gate > button {
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.auth-controls button.active,
+.account-gate > button {
+  background: linear-gradient(135deg, var(--gold), #f8d98c);
+  color: #102033;
+  font-weight: 800;
+}
+
+.account-gate label {
+  display: grid;
+  gap: 6px;
+  color: rgba(238, 244, 255, 0.72);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.account-gate input {
+  width: 100%;
+  border: 1px solid rgba(232, 196, 105, 0.18);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.24);
+  color: var(--ink);
+  padding: 12px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
 .mail-sidebar,
 .mail-list,
 .composer {
@@ -733,6 +798,10 @@ pre {
 
 @media (max-width: 1100px) {
   .mail-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .account-gate {
     grid-template-columns: 1fr;
   }
 }
