@@ -1,0 +1,25 @@
+{
+  "name": "@velora/api",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.1.0",
+    "@fastify/sensible": "^6.0.3",
+    "@velora/shared": "workspace:*",
+    "fastify": "^5.4.0",
+    "pg": "^8.13.1",
+    "tweetnacl": "^1.0.3",
+    "uuid": "^11.1.0",
+    "zod": "^4.0.5"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10"
+  }
+}

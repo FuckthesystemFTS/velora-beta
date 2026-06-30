@@ -1,0 +1,42 @@
+{
+    "version":  "0.1.0-beta",
+    "channel":  "beta",
+    "releasedAt":  "2026-06-30T18:56:30.6681465Z",
+    "platforms":  {
+                      "windows-x64":  {
+                                          "available":  true,
+                                          "signed":  false,
+                                          "filename":  "Velora_0.1.0_x64_en-US.msi",
+                                          "downloadUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/downloads/windows/Velora_0.1.0_x64_en-US.msi",
+                                          "size":  4997120,
+                                          "sha256":  "4CF54797FECE6D7331902821ADEEF4ADB49D592EA372A999A5F1A4FE0E994D2C"
+                                      },
+                      "macos-universal":  {
+                                              "available":  false,
+                                              "signed":  false,
+                                              "notarized":  false,
+                                              "filename":  "",
+                                              "downloadUrl":  "",
+                                              "size":  0,
+                                              "sha256":  ""
+                                          },
+                      "macos-aarch64":  {
+                                            "available":  false,
+                                            "signed":  false,
+                                            "notarized":  false,
+                                            "filename":  "",
+                                            "downloadUrl":  "",
+                                            "size":  0,
+                                            "sha256":  ""
+                                        },
+                      "macos-x86_64":  {
+                                           "available":  false,
+                                           "signed":  false,
+                                           "notarized":  false,
+                                           "filename":  "",
+                                           "downloadUrl":  "",
+                                           "size":  0,
+                                           "sha256":  ""
+                                       }
+                  }
+}

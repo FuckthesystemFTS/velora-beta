@@ -1,0 +1,21 @@
+{
+  "formatVersion": 1,
+  "address": "shop.demo",
+  "title": "Demo Velora",
+  "description": "Sito dimostrativo pubblicato sulla rete Velora",
+  "category": "shop",
+  "entryFile": "index.html",
+  "languages": ["it"],
+  "keywords": ["demo", "shop", "velora"],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

@@ -1,0 +1,84 @@
+name: Build macOS Beta
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: macOS ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: apple-silicon
+            runner: macos-15
+            target: aarch64-apple-darwin
+          - name: intel
+            runner: macos-15-intel
+            target: x86_64-apple-darwin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+          key: macos-${{ matrix.target }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate macOS icon assets
+        working-directory: apps/desktop
+        run: pnpm exec tauri icon src-tauri/icons/icon.png
+
+      - name: Typecheck desktop
+        run: pnpm --filter @velora/desktop typecheck
+
+      - name: Test SDK
+        run: pnpm --filter @velora/sdk test
+
+      - name: Build desktop frontend
+        run: pnpm --filter @velora/desktop build
+
+      - name: Cargo check
+        working-directory: apps/desktop/src-tauri
+        run: cargo check --target ${{ matrix.target }}
+
+      - name: Build unsigned macOS beta
+        working-directory: apps/desktop
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ""
+        run: pnpm exec tauri build --target ${{ matrix.target }} --config src-tauri/tauri.macos.conf.json
+
+      - name: Compute SHA-256
+        shell: bash
+        run: |
+          mkdir -p releases/beta/macos/${{ matrix.name }}
+          find apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle -type f \( -name "*.dmg" -o -name "*.app.tar.gz" \) -print0 | while IFS= read -r -d '' file; do
+            cp "$file" "releases/beta/macos/${{ matrix.name }}/$(basename "$file")"
+            shasum -a 256 "$file" > "releases/beta/macos/${{ matrix.name }}/$(basename "$file").sha256.txt"
+          done
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: velora-macos-${{ matrix.name }}-unsigned-beta
+          path: releases/beta/macos/${{ matrix.name }}
+          if-no-files-found: error

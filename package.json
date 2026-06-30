@@ -1,0 +1,47 @@
+{
+  "name": "velora",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm --filter @velora/shared build && pnpm --filter @velora/sdk build && pnpm --filter @velora/api build && pnpm --filter @velora/portal build && pnpm --filter @velora/desktop build && pnpm --filter @velora/cli build",
+    "dev": "pnpm --filter @velora/api dev",
+    "dev:api": "pnpm --filter @velora/api dev",
+    "dev:portal": "pnpm --filter @velora/portal dev",
+    "dev:desktop": "pnpm --filter @velora/desktop dev",
+    "start:api": "pnpm --filter @velora/api start",
+    "test": "pnpm --filter @velora/shared test && pnpm --filter @velora/sdk test && pnpm --filter @velora/api test",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "pnpm --filter @velora/shared build && pnpm --filter @velora/sdk typecheck && pnpm --filter @velora/api typecheck && pnpm --filter @velora/portal typecheck && pnpm --filter @velora/desktop typecheck && pnpm --filter @velora/cli typecheck",
+    "seed:categories": "node scripts/seed-categories.mjs",
+    "seed:reserved-names": "node scripts/seed-reserved-names.mjs",
+    "generate:platform-keys": "node scripts/generate-platform-keys.mjs",
+    "bootstrap:admin": "node scripts/bootstrap-velora-admin.mjs",
+    "revoke:admin": "node scripts/revoke-velora-admin.mjs",
+    "create:first-license": "node scripts/create-first-license.mjs",
+    "create:database": "node scripts/create-database.mjs",
+    "run:migrations": "node scripts/run-migrations.mjs",
+    "build:windows": "node scripts/build-windows.mjs",
+    "build:installer": "node scripts/build-installer.mjs",
+    "publish:release": "node scripts/publish-release.mjs",
+    "verify:release": "node scripts/verify-release.mjs",
+    "admin:db-console": "node scripts/velora-admin-db-console.mjs",
+    "node:start": "node --import tsx scripts/velora-node.mjs",
+    "test:three-nodes": "node --import tsx scripts/test-three-nodes.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.3",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "hash-wasm": "^4.12.0",
+    "pg": "^8.13.1",
+    "tweetnacl": "^1.0.3"
+  },
+  "packageManager": "pnpm@10.14.0"
+}

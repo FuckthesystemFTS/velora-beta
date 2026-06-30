@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Velora",
+  "version": "0.1.0",
+  "identifier": "com.velora.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev --workspace @velora/desktop",
+    "beforeBuildCommand": "npm run build --workspace @velora/desktop",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Velora",
+        "width": 1440,
+        "height": 960
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:3000 https://velora-beta-20260629-9a9196313b42.herokuapp.com"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
+    "targets": [
+      "msi"
+    ]
+  }
+}

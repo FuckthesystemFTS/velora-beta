@@ -1,0 +1,9 @@
+build:
+  docker:
+    web: Dockerfile
+run:
+  web: pnpm start:api
+release:
+  image: web
+  command:
+    - pnpm run run:migrations
