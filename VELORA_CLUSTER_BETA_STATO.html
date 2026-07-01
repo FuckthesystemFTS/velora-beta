@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Velora Cluster Beta - Stato lavori</title>
+  <style>
+    body{margin:0;font-family:Georgia,'Times New Roman',serif;background:#07131f;color:#edf6ff;line-height:1.55}
+    main{max-width:1040px;margin:auto;padding:48px 22px}
+    h1{font-size:44px;color:#f5cf68;margin:0 0 8px}
+    h2{color:#f5cf68;margin-top:34px}
+    .card{background:linear-gradient(135deg,#0d2335,#102d41);border:1px solid #31506a;border-radius:20px;padding:22px;margin:18px 0}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+    .ok{color:#91f5b7}.warn{color:#ffd37a}.no{color:#ff9f9f}
+    code{background:#020a12;border:1px solid #20384d;border-radius:8px;padding:2px 6px}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Velora Cluster Beta</h1>
+  <p>Stato del lavoro per il cluster temporaneo a tre nodi logici sul backend Heroku esistente.</p>
+
+  <section class="card">
+    <h2>Implementato</h2>
+    <p class="ok">Tre nodi logici permanenti, lease PostgreSQL per coordinatore unico, heartbeat firmati, quorum 2/3, inventari logici e API di stato.</p>
+    <p>I nodi sono <code>velora-beta-node-1</code>, <code>velora-beta-node-2</code>, <code>velora-beta-node-3</code>.</p>
+  </section>
+
+  <section class="grid">
+    <div class="card"><h2>Architettura</h2><p><code>BetaLogicalNodeCluster</code> con storage PostgreSQL e tabelle additive.</p></div>
+    <div class="card"><h2>Quorum</h2><p>Replica desiderata 3, quorum minimo 2, lettura possibile con replica valida.</p></div>
+    <div class="card"><h2>Costi</h2><p class="ok">Zero costi aggiuntivi: nessun provider o add-on nuovo.</p></div>
+    <div class="card"><h2>Sleep risk</h2><p class="warn">Dipende dal piano Heroku rilevato. Eco comporta rischio sospensione.</p></div>
+  </section>
+
+  <section class="card">
+    <h2>Limiti reali</h2>
+    <p class="warn">Questa non è una rete fisicamente decentralizzata. I tre nodi sono attori logici nella stessa app Heroku e nello stesso PostgreSQL.</p>
+    <p>Non offre replica geografica e non protegge dal guasto completo di Heroku o del database.</p>
+  </section>
+
+  <section class="card">
+    <h2>Test richiesti</h2>
+    <p>Prima di dichiarare <code>BETA_LOGICAL_NODE_CLUSTER_READY</code> servono deploy Heroku, migrazione, flag attivo, heartbeat live, publish sentinella, quorum, failover suspend/resume e riavvio app.</p>
+  </section>
+
+  <section class="card">
+    <h2>Percorso futuro</h2>
+    <p>Il layer <code>NodeStorageProvider</code> permette di sostituire lo storage logico PostgreSQL con nodi remoti reali senza cambiare il contratto di publishing.</p>
+  </section>
+</main>
+</body>
+</html>

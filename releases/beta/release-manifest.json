@@ -21,13 +21,13 @@
                                               "sha256":  ""
                                           },
                       "macos-aarch64":  {
-                                            "available":  false,
+                                            "available":  true,
                                             "signed":  false,
                                             "notarized":  false,
-                                            "filename":  "",
-                                            "downloadUrl":  "",
-                                            "size":  0,
-                                            "sha256":  ""
+                                            "filename":  "Velora_0.1.0_aarch64.dmg",
+                                            "downloadUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/downloads/macos/Velora_0.1.0_aarch64.dmg",
+                                            "size":  6971055,
+                                            "sha256":  "449EBBFE2AE73430EA26971964A02A99CD8F9346D725E4D5C2B76B7B822BD6D5"
                                         },
                       "macos-x86_64":  {
                                            "available":  false,

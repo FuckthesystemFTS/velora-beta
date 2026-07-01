@@ -10,11 +10,17 @@ import { config } from "./config.js";
 import { buildLocalRelease, persistReleaseEvent, persistReleaseSnapshot } from "./content-store.js";
 import { hashPassword, verifySignedCommand } from "./crypto.js";
 import { repository } from "./repository.js";
+import { betaLogicalNodeCluster } from "./beta-logical-node-cluster.js";
 
 const betaDownloadRoots = [
   resolve("releases/beta/windows"),
   resolve("../releases/beta/windows"),
   resolve("../../releases/beta/windows")
+];
+const macosDownloadRoots = [
+  resolve("releases/beta/macos"),
+  resolve("../releases/beta/macos"),
+  resolve("../../releases/beta/macos")
 ];
 const publisherGuideCandidates = [
   resolve("VELORA_GUIDA_PUBBLICAZIONE.html"),
@@ -23,6 +29,8 @@ const publisherGuideCandidates = [
 ];
 const betaInstallerName = "Velora_0.1.0_x64_en-US.msi";
 const betaChecksumName = `${betaInstallerName}.sha256.txt`;
+const macosAarch64Name = "Velora_0.1.0_aarch64.dmg";
+const macosAarch64ChecksumName = `${macosAarch64Name}.sha256.txt`;
 
 export async function registerRoutes(app: FastifyInstance) {
   await app.register(cors, { origin: true, credentials: true });
@@ -49,7 +57,23 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get("/status", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("status")));
   app.get("/legal/privacy", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("privacy")));
   app.get("/legal/terms", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("terms")));
-  app.get("/health", async () => ({ ok: true, service: "velora-api" }));
+  app.get("/health", async () => {
+    if (!config.betaNodeClusterEnabled) {
+      return { ok: true, service: "velora-api", network: "cluster disattivato" };
+    }
+    return betaLogicalNodeCluster.publicStatus();
+  });
+  app.get("/api/network/status", async () => betaLogicalNodeCluster.publicStatus());
+  app.get("/api/network/nodes/summary", async () => {
+    const status = await betaLogicalNodeCluster.status();
+    return {
+      enabled: status.enabled,
+      network: status.operationalStatus,
+      sleepRisk: status.sleepRisk,
+      quorum: status.quorum,
+      nodes: status.nodes.map((node) => ({ id: node.id, name: node.name, role: node.role, status: node.status, lastHeartbeatAt: node.lastHeartbeatAt }))
+    };
+  });
   app.get("/release-manifest.json", async (_request, reply) => {
     const candidates = [resolve("releases/beta/release-manifest.json"), resolve("../releases/beta/release-manifest.json"), resolve("../../releases/beta/release-manifest.json")];
     for (const manifest of candidates) {
@@ -63,6 +87,8 @@ export async function registerRoutes(app: FastifyInstance) {
   });
   app.get(`/downloads/windows/${betaInstallerName}`, async (_request, reply) => sendBetaDownload(betaInstallerName, reply));
   app.get(`/downloads/windows/${betaChecksumName}`, async (_request, reply) => sendBetaDownload(betaChecksumName, reply));
+  app.get(`/downloads/macos/${macosAarch64Name}`, async (_request, reply) => sendMacosDownload(macosAarch64Name, reply));
+  app.get(`/downloads/macos/${macosAarch64ChecksumName}`, async (_request, reply) => sendMacosDownload(macosAarch64ChecksumName, reply));
   app.get("/downloads/windows/:file", async (request, reply) => {
     const file = routeParam(request.params, "file");
     if (![betaInstallerName, betaChecksumName].includes(file)) {
@@ -77,6 +103,22 @@ export async function registerRoutes(app: FastifyInstance) {
     reply.header("Content-Length", String(download.info.size));
     reply.header("Content-Disposition", `attachment; filename="${basename(download.path)}"`);
     reply.type(file.endsWith(".msi") ? "application/octet-stream" : "text/plain; charset=utf-8");
+    return reply.send(createReadStream(download.path));
+  });
+  app.get("/downloads/macos/:file", async (request, reply) => {
+    const file = routeParam(request.params, "file");
+    if (![macosAarch64Name, macosAarch64ChecksumName].includes(file)) {
+      return reply.notFound("download not found");
+    }
+
+    const download = await findMacosDownload(file);
+    if (!download) {
+      return reply.notFound("download not found");
+    }
+
+    reply.header("Content-Length", String(download.info.size));
+    reply.header("Content-Disposition", `attachment; filename="${basename(download.path)}"`);
+    reply.type(file.endsWith(".dmg") ? "application/octet-stream" : "text/plain; charset=utf-8");
     return reply.send(createReadStream(download.path));
   });
 
@@ -426,6 +468,20 @@ export async function registerRoutes(app: FastifyInstance) {
       };
       await repository.ensureBetaPublisherZone({ address: body.address, userId, publisherPublicKey: body.publisherPublicKey });
       const result = await repository.registerSiteRelease({ ...body, userId });
+      if (config.betaNodeClusterEnabled) {
+        const replication = await betaLogicalNodeCluster.storePublishedObject({
+          cid: body.contentCid,
+          address: body.address,
+          releaseId: String(result.releaseId ?? ""),
+          version: body.version,
+          manifestHash: body.manifestHash,
+          packageHash: body.packageHash
+        });
+        if (replication.quorum < config.betaNodeQuorum) {
+          return reply.code(503).send({ code: "BETA_NODE_QUORUM_NOT_REACHED", replication });
+        }
+        Object.assign(result, { betaNodeReplication: replication });
+      }
       await persistReleaseSnapshot({
         address: body.address,
         version: body.version,
@@ -684,6 +740,72 @@ export async function registerRoutes(app: FastifyInstance) {
     }
     return rejected;
   });
+
+  app.get("/api/admin/beta-nodes", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const status = await betaLogicalNodeCluster.status();
+    return {
+      ...status,
+      note: "I nodi Beta sono attori logici ospitati sulla stessa infrastruttura Heroku. Non rappresentano ancora repliche fisiche o geografiche indipendenti."
+    };
+  });
+
+  app.get("/api/admin/beta-nodes/:id", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const id = routeParam(request.params, "id");
+    const status = await betaLogicalNodeCluster.status();
+    const node = status.nodes.find((candidate) => candidate.id === id || candidate.name === id);
+    if (!node) {
+      return reply.notFound("beta node not found");
+    }
+    return { node };
+  });
+
+  app.post("/api/admin/beta-nodes/:id/restart", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    return betaLogicalNodeCluster.restartNode(routeParam(request.params, "id"));
+  });
+
+  app.post("/api/admin/beta-nodes/:id/suspend", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    return betaLogicalNodeCluster.suspendNode(routeParam(request.params, "id"));
+  });
+
+  app.post("/api/admin/beta-nodes/:id/resume", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    return betaLogicalNodeCluster.resumeNode(routeParam(request.params, "id"));
+  });
+
+  app.post("/api/admin/beta-nodes/:id/reconcile", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    return betaLogicalNodeCluster.reconcileNode(routeParam(request.params, "id"));
+  });
+
+  app.post("/api/admin/beta-nodes/repair", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    return betaLogicalNodeCluster.repairAll();
+  });
+
+  app.post("/api/admin/beta-nodes/test-failover", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    return betaLogicalNodeCluster.testFailover();
+  });
 }
 
 async function sendBetaDownload(file: string, reply: FastifyReply) {
@@ -712,6 +834,32 @@ async function findBetaDownload(file: string) {
   return undefined;
 }
 
+async function sendMacosDownload(file: string, reply: FastifyReply) {
+  const download = await findMacosDownload(file);
+  if (!download) {
+    return reply.notFound("download not found");
+  }
+
+  reply.header("Content-Length", String(download.info.size));
+  reply.header("Content-Disposition", `attachment; filename="${basename(download.path)}"`);
+  reply.type(file.endsWith(".dmg") ? "application/octet-stream" : "text/plain; charset=utf-8");
+  return reply.send(createReadStream(download.path));
+}
+
+async function findMacosDownload(file: string) {
+  for (const root of macosDownloadRoots) {
+    const path = resolve(root, file);
+    if (!path.startsWith(root)) {
+      continue;
+    }
+    const info = await stat(path).catch(() => undefined);
+    if (info?.isFile()) {
+      return { path, info };
+    }
+  }
+  return undefined;
+}
+
 function publicPage(page: string) {
   const title = {
     home: "VELORA - L'Upper Web",
@@ -728,17 +876,20 @@ function publicPage(page: string) {
   }[page] ?? "VELORA";
   const downloadUrl = "/downloads/windows/Velora_0.1.0_x64_en-US.msi";
   const checksumUrl = "/downloads/windows/Velora_0.1.0_x64_en-US.msi.sha256.txt";
+  const macosDownloadUrl = "/downloads/macos/Velora_0.1.0_aarch64.dmg";
+  const macosChecksumUrl = "/downloads/macos/Velora_0.1.0_aarch64.dmg.sha256.txt";
   const body = page === "download" ? `
     <section class="panel">
-      <h1>Scarica Velora per Windows</h1>
-      <p>Beta pubblica Windows x64. Dimensione reale: 4.993.024 byte. SHA-256 verificato.</p>
-      <a class="cta" href="${downloadUrl}">Scarica installer MSI</a>
-      <a class="ghost" href="${checksumUrl}">Scarica SHA-256</a>
+      <h1>Scarica Velora Beta</h1>
+      <p>Beta pubblica per Windows x64 e macOS Apple Silicon. I pacchetti non sono ancora firmati/notarizzati: il sistema operativo puo mostrare un avviso.</p>
+      <a class="cta" href="${downloadUrl}">Scarica MSI Windows</a>
+      <a class="ghost" href="${checksumUrl}">SHA-256 Windows</a>
+      <a class="cta" href="${macosDownloadUrl}">Scarica DMG macOS</a>
+      <a class="ghost" href="${macosChecksumUrl}">SHA-256 macOS</a>
       <dl>
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
-        <dt>File</dt><dd>Velora_0.1.0_x64_en-US.msi</dd>
-        <dt>SHA-256</dt><dd>4A55628031E1CEDE54C9459AC29CCA92B3B1E358371A1698D88A37FA2DCBE41B</dd>
-        <dt>Nota Windows</dt><dd>La beta non e ancora firmata con certificato pubblico: SmartScreen puo mostrare un avviso.</dd>
+        <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - 6290708890DB7D30DEF8EFD68D600347647E1C1DA87E3BFA18F1E14E0E3D9000</dd>
+        <dt>macOS</dt><dd>Velora_0.1.0_aarch64.dmg - 449EBBFE2AE73430EA26971964A02A99CD8F9346D725E4D5C2B76B7B822BD6D5</dd>
       </dl>
     </section>` : page === "publishers" ? `
     <section class="panel">
@@ -759,7 +910,7 @@ function publicPage(page: string) {
       <article><b>Livello 3</b><span>4,99 EUR/mese</span><p>Operazioni sensibili predisposte.</p></article>
       <article><b>Publisher Pro</b><span>19,90 EUR/mese</span><p>Supporto e strumenti avanzati.</p></article>
     </div></section>` : page === "status" ? `
-    <section class="panel"><h1>Status</h1><p>API pubblica: <a href="/health">/health</a>. Download Windows: operativo.</p></section>` : `
+    <section class="panel"><h1>Status</h1><p>API pubblica: <a href="/health">/health</a>. Download Windows e macOS Apple Silicon: operativi.</p></section>` : `
     <section class="hero">
       <span>VELORA - L'UPPER WEB</span>
       <h1>Sopra Internet, il futuro e ora</h1>

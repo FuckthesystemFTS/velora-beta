@@ -12,5 +12,14 @@ export const config = {
   maxSiteFileCount: Number(process.env.MAX_SITE_FILE_COUNT ?? 5000),
   targetReplicationFactor: Number(process.env.TARGET_REPLICATION_FACTOR ?? 3),
   zoneReservationHours: Number(process.env.ZONE_REQUEST_RESERVATION_HOURS ?? 48),
-  adminSessionMinutes: Number(process.env.ADMIN_SESSION_MINUTES ?? 15)
+  adminSessionMinutes: Number(process.env.ADMIN_SESSION_MINUTES ?? 15),
+  betaNodeClusterEnabled: process.env.VELORA_BETA_NODE_CLUSTER_ENABLED === "true",
+  betaNodeCount: Number(process.env.VELORA_BETA_NODE_COUNT ?? 3),
+  betaNodeQuorum: Number(process.env.VELORA_BETA_NODE_QUORUM ?? 2),
+  betaNodeHeartbeatSeconds: Number(process.env.VELORA_BETA_NODE_HEARTBEAT_SECONDS ?? 15),
+  betaNodeOfflineThresholdSeconds: Number(process.env.VELORA_BETA_NODE_OFFLINE_THRESHOLD_SECONDS ?? 60),
+  betaNodeMasterKey: process.env.VELORA_BETA_NODE_MASTER_KEY ?? "",
+  betaNodeLeaseSeconds: Number(process.env.VELORA_BETA_NODE_LEASE_SECONDS ?? 45),
+  betaNodeRepairIntervalSeconds: Number(process.env.VELORA_BETA_NODE_REPAIR_INTERVAL_SECONDS ?? 60),
+  betaNodeHerokuPlan: process.env.HEROKU_DYNO_PLAN ?? process.env.VELORA_HEROKU_DYNO_PLAN ?? "unknown"
 };

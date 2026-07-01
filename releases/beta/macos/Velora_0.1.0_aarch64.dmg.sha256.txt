@@ -1,0 +1,1 @@
+449ebbfe2ae73430ea26971964a02a99cd8f9346d725e4d5c2b76b7b822bd6d5  apps/desktop/src-tauri/target/release/bundle/dmg/Velora_0.1.0_aarch64.dmg
