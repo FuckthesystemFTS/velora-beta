@@ -881,11 +881,21 @@ function publicPage(page: string) {
   const body = page === "download" ? `
     <section class="panel">
       <h1>Scarica Velora Beta</h1>
-      <p>Beta pubblica per Windows x64 e macOS Apple Silicon. I pacchetti non sono ancora firmati/notarizzati: il sistema operativo puo mostrare un avviso.</p>
-      <a class="cta" href="${downloadUrl}">Scarica MSI Windows</a>
-      <a class="ghost" href="${checksumUrl}">SHA-256 Windows</a>
-      <a class="cta" href="${macosDownloadUrl}">Scarica DMG macOS</a>
-      <a class="ghost" href="${macosChecksumUrl}">SHA-256 macOS</a>
+      <p>Beta pubblica pronta per Windows x64 e macOS Apple Silicon<br>I pacchetti non sono ancora firmati o notarizzati, quindi il sistema operativo puo mostrare un avviso</p>
+      <section class="cards">
+        <article>
+          <b>Windows</b>
+          <p>Installer MSI per PC Windows x64</p>
+          <a class="cta" href="${downloadUrl}">Scarica per Windows</a>
+          <a class="ghost" href="${checksumUrl}">Verifica SHA-256</a>
+        </article>
+        <article>
+          <b>macOS</b>
+          <p>DMG per Mac Apple Silicon</p>
+          <a class="cta" href="${macosDownloadUrl}">Scarica per macOS</a>
+          <a class="ghost" href="${macosChecksumUrl}">Verifica SHA-256</a>
+        </article>
+      </section>
       <dl>
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
         <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - 6290708890DB7D30DEF8EFD68D600347647E1C1DA87E3BFA18F1E14E0E3D9000</dd>
@@ -914,9 +924,9 @@ function publicPage(page: string) {
     <section class="hero">
       <span>VELORA - L'UPPER WEB</span>
       <h1>Sopra Internet, il futuro e ora</h1>
-      <p>Sicuro. Veloce. Semplice. Per tutti.</p>
-      <div><a class="cta" href="/download">Scarica Velora per Windows</a><a class="ghost" href="/what-is-velora">Scopri l'Upper Web</a></div>
-      <strong>Velora non sostituisce Internet. Lo eleva.</strong>
+      <p>Sicuro<br>Veloce<br>Semplice<br>Per tutti</p>
+      <div><a class="cta" href="/download">Scarica Velora Beta</a><a class="ghost" href="/what-is-velora">Scopri l'Upper Web</a></div>
+      <strong>Velora non sostituisce Internet<br>Lo eleva</strong>
     </section>
     <section class="cards">
       <article><b>Upper Web</b><p>Zone verificate, ricerca interna e identita Velora.</p></article>
