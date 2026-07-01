@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Velora - Stato lavori beta</title>
+  <style>
+    :root {
+      --bg: #071421;
+      --panel: #0d1c2b;
+      --panel-2: #12273a;
+      --text: #eef6ff;
+      --muted: #a9bdd2;
+      --gold: #f1ca62;
+      --green: #54d18a;
+      --orange: #ffb057;
+      --red: #ff6d6d;
+      --line: rgba(241, 202, 98, 0.28);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top right, #153757 0, transparent 34%), linear-gradient(135deg, #06111d, var(--bg));
+      color: var(--text);
+      line-height: 1.55;
+    }
+    main { max-width: 1180px; margin: 0 auto; padding: 42px 22px 64px; }
+    header {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 34px;
+      background: linear-gradient(135deg, rgba(18, 39, 58, 0.96), rgba(7, 20, 33, 0.96));
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+    }
+    .eyebrow { color: var(--gold); text-transform: uppercase; letter-spacing: 0.18em; font-size: 12px; font-weight: 700; }
+    h1 { font-size: clamp(34px, 5vw, 64px); line-height: 0.95; margin: 12px 0 18px; }
+    h2 { margin: 0 0 16px; font-size: 26px; }
+    h3 { margin: 0 0 8px; font-size: 18px; }
+    p { margin: 0 0 12px; color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 22px; }
+    .card {
+      background: rgba(13, 28, 43, 0.88);
+      border: 1px solid rgba(169, 189, 210, 0.18);
+      border-radius: 22px;
+      padding: 22px;
+    }
+    .section { margin-top: 24px; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .done { background: rgba(84, 209, 138, 0.15); color: var(--green); }
+    .progress { background: rgba(255, 176, 87, 0.15); color: var(--orange); }
+    .todo { background: rgba(255, 109, 109, 0.14); color: var(--red); }
+    ul { padding-left: 20px; margin: 12px 0 0; color: var(--muted); }
+    li { margin: 8px 0; }
+    code {
+      color: var(--gold);
+      background: rgba(241, 202, 98, 0.08);
+      border: 1px solid rgba(241, 202, 98, 0.18);
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+    table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 18px; }
+    th, td { text-align: left; padding: 14px; border-bottom: 1px solid rgba(169, 189, 210, 0.14); vertical-align: top; }
+    th { color: var(--gold); background: rgba(241, 202, 98, 0.07); }
+    a { color: var(--gold); }
+    .note { border-left: 4px solid var(--gold); padding: 14px 18px; background: rgba(241, 202, 98, 0.08); border-radius: 12px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } header { padding: 24px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">Velora beta - stato lavori</div>
+      <h1>Distribuzione beta e funzioni core</h1>
+      <p>Documento operativo aggiornato al 1 luglio 2026. Riassume cosa e gia stato creato, cosa ha basi tecniche presenti ma richiede completamento reale, e cosa resta da implementare per una distribuzione pubblica completa.</p>
+      <p class="note">Stato sintetico: backend online e funzionante su Heroku, registrazione/login/VeloMail/identita base/pubblicazione beta attivi, MSI Windows generato e pubblicato. Build macOS preparata via GitHub Actions, ma bloccata dall'assegnazione runner macOS GitHub, quindi il pacchetto macOS non e ancora disponibile.</p>
+    </header>
+
+    <section class="grid section">
+      <article class="card">
+        <span class="status done">Online</span>
+        <h2>Backend Heroku</h2>
+        <p>API pubblica attiva con database PostgreSQL collegato.</p>
+        <ul>
+          <li>Health check: <code>/health</code></li>
+          <li>Manifest release: <code>/release-manifest.json</code></li>
+          <li>Download MSI: <code>/downloads/windows/Velora_0.1.0_x64_en-US.msi</code></li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="status done">Beta Windows</span>
+        <h2>Installer MSI</h2>
+        <p>Pacchetto Windows x64 generato con Tauri e distribuito online.</p>
+        <ul>
+          <li>Dimensione verificata: <code>5021696</code> byte</li>
+          <li>SHA-256: <code>2230DFEDF839F8325B3308B44E8F1904B987EB4EF923775CA7D4AC8B0252DD3E</code></li>
+          <li>Firma codice: non ancora presente</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="status progress">Mac in attesa</span>
+        <h2>macOS</h2>
+        <p>Workflow predisposto, ma GitHub non assegna il runner macOS all'account/repo.</p>
+        <ul>
+          <li>Config Tauri macOS presente</li>
+          <li>Workflow manuale <code>build-macos-beta.yml</code> presente</li>
+          <li>DMG non ancora prodotto</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="card section">
+      <h2>Cosa e gia reale</h2>
+      <table>
+        <thead><tr><th>Area</th><th>Stato</th><th>Dettaglio</th></tr></thead>
+        <tbody>
+          <tr><td>Registrazione account</td><td><span class="status done">Funzionante</span></td><td>Endpoint <code>/api/v1/auth/register</code> crea utente e mailbox <code>@velora</code>.</td></tr>
+          <tr><td>Login</td><td><span class="status done">Funzionante</span></td><td>Endpoint <code>/api/v1/auth/login</code> restituisce sessione, utente, livello identita e mailbox.</td></tr>
+          <tr><td>VeloMail</td><td><span class="status done">Funzionante beta</span></td><td>Invio e lettura messaggi via API con header <code>x-user-id</code>. Persistenza su PostgreSQL.</td></tr>
+          <tr><td>Identita base</td><td><span class="status done">Funzionante beta</span></td><td>Endpoint <code>/api/v1/identity/verify-basic</code> porta l'account a livello 1.</td></tr>
+          <tr><td>Device enrollment</td><td><span class="status done">Integrato</span></td><td>Il desktop invia il dispositivo dell'utente dopo registrazione/login.</td></tr>
+          <tr><td>Publishing beta</td><td><span class="status done">Funzionante beta</span></td><td>Il desktop prepara pacchetto locale, valida progetto e registra release online.</td></tr>
+          <tr><td>Ricerca zone</td><td><span class="status progress">Base presente</span></td><td>Ricerca locale e remota integrate, ma indice e ranking devono diventare completi.</td></tr>
+          <tr><td>Desktop Tauri</td><td><span class="status done">Compilabile</span></td><td>Build Windows completata. SQLite locale e comandi Rust attivi.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="grid section">
+      <article class="card">
+        <span class="status progress">Base presente</span>
+        <h2>Da rendere completo</h2>
+        <ul>
+          <li>Verifica identita forte con documento, liveness, audit e revisione.</li>
+          <li>Record firmati finali con chiave di produzione reale, rotazione e gestione revoche.</li>
+          <li>Release flow completo con activate/revoke/rollback esposto in UI e API pubbliche stabili.</li>
+          <li>Content store locale con chunking completo e replica.</li>
+          <li>Indice/search persistente con crawling zone, ranking e aggiornamento incrementale.</li>
+          <li>Moderazione e policy contenuti per beta pubblica.</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="status todo">Da implementare</span>
+        <h2>Distribuzione production-grade</h2>
+        <ul>
+          <li>Firma codice Windows con certificato reale.</li>
+          <li>Build macOS su runner macOS disponibile.</li>
+          <li>Apple Developer ID, firma e notarizzazione macOS.</li>
+          <li>Auto-update Tauri firmato.</li>
+          <li>Storage oggetti per release pesanti, CDN e retention policy.</li>
+          <li>Backup database e monitoraggio uptime/log/errori.</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="status progress">In corso</span>
+        <h2>UI beta pubblica</h2>
+        <ul>
+          <li>Rimosse le principali stringhe tecniche visibili agli utenti.</li>
+          <li>Area pubblicazione rinominata in "Pubblica sito".</li>
+          <li>Diagnostica JSON rimossa dalle impostazioni pubbliche.</li>
+          <li>Serve rigenerare e ripubblicare l'MSI finale dopo ogni modifica UI.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="card section">
+      <h2>Link e percorsi utili</h2>
+      <ul>
+        <li>Portale beta: <a href="https://velora-beta-20260629-9a9196313b42.herokuapp.com/">https://velora-beta-20260629-9a9196313b42.herokuapp.com/</a></li>
+        <li>Repo pubblico beta: <a href="https://github.com/FuckthesystemFTS/velora-beta">https://github.com/FuckthesystemFTS/velora-beta</a></li>
+        <li>MSI locale: <code>C:\Users\Hp\Desktop\VELORA\releases\beta\windows\Velora_0.1.0_x64_en-US.msi</code></li>
+        <li>Manifest locale: <code>C:\Users\Hp\Desktop\VELORA\releases\beta\release-manifest.json</code></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

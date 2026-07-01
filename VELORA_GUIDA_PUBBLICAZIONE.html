@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Velora - Guida ufficiale alla pubblicazione nell'Upper Web</title>
+  <style>
+    :root{--bg:#06111f;--panel:#0d1c2b;--text:#eef6ff;--muted:#a9bdd2;--gold:#f1ca62;--line:rgba(241,202,98,.28);--green:#54d18a;--blue:#76c8ff;--orange:#ffb057;--red:#ff6d6d}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Segoe UI",sans-serif;background:radial-gradient(circle at 80% 0,rgba(241,202,98,.18),transparent 32%),linear-gradient(135deg,#06111f,#0b2238);color:var(--text);line-height:1.58}
+    header,main{max-width:1160px;margin:auto;padding:28px}
+    header{padding-top:44px}
+    .hero{border:1px solid var(--line);border-radius:30px;padding:34px;background:rgba(13,28,43,.9);box-shadow:0 24px 80px rgba(0,0,0,.28)}
+    .eyebrow{color:var(--gold);letter-spacing:.16em;text-transform:uppercase;font-weight:800;font-size:12px}
+    h1{font-size:clamp(34px,6vw,72px);line-height:.95;margin:12px 0}
+    h2{margin-top:0;color:var(--text)}
+    p,li{color:var(--muted)}
+    a{color:var(--gold)}
+    nav.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:24px 0}
+    nav.toc a{padding:10px 12px;border:1px solid rgba(169,189,210,.16);border-radius:14px;background:rgba(13,28,43,.7);text-decoration:none}
+    section{page-break-inside:avoid;border:1px solid rgba(169,189,210,.14);border-radius:22px;padding:22px;margin:16px 0;background:rgba(13,28,43,.76)}
+    code,pre{background:rgba(241,202,98,.08);border:1px solid rgba(241,202,98,.16);border-radius:10px;color:var(--gold)}
+    code{padding:2px 6px}
+    pre{padding:14px;overflow:auto}
+    .badge{display:inline-block;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+    .ok{background:rgba(84,209,138,.14);color:var(--green)}.beta{background:rgba(118,200,255,.14);color:var(--blue)}.prep{background:rgba(255,176,87,.14);color:var(--orange)}.no{background:rgba(255,109,109,.14);color:var(--red)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+    @media print{body{background:#fff;color:#111}p,li{color:#333}section,.hero,nav.toc a{box-shadow:none;background:#fff;color:#111}a{color:#111}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hero">
+      <span class="eyebrow">Velora Publisher Guide</span>
+      <h1>Velora - Guida ufficiale alla pubblicazione nell'Upper Web</h1>
+      <p>Dalla richiesta della zona alla prima release pubblicata. Versione 0.1.0-beta, aggiornata al 1 luglio 2026.</p>
+      <p>Questa guida distingue cio che e disponibile oggi da cio che e ancora in preparazione. Non promette funzioni non operative.</p>
+    </div>
+    <nav class="toc">
+      <a href="#zona">1. Zona Velora</a><a href="#publisher">2. Chi puo pubblicare</a><a href="#requisiti">3. Requisiti</a><a href="#account">4. Account</a>
+      <a href="#zone">5. Zone</a><a href="#identita">6. Livelli identita</a><a href="#sdk">7. SDK</a><a href="#progetto">8. Progetto</a>
+      <a href="#manifest">9. Manifest</a><a href="#sicurezza">10. Sicurezza</a><a href="#studio">11. Publisher Studio</a><a href="#release">12. Release</a>
+      <a href="#rollback">13. Rollback e revoca</a><a href="#esempi">14. Esempi</a><a href="#faq">15. FAQ</a>
+    </nav>
+  </header>
+  <main>
+    <section id="zona"><span class="badge beta">Beta</span><h2>1. Cos'e una zona Velora</h2><p>Una zona Velora e un indirizzo dell'Upper Web, come <code>shop.nome</code> o <code>app.nome</code>. Il publisher prepara una release, Velora la verifica e la rende apribile dai client.</p></section>
+    <section id="publisher"><span class="badge ok">Disponibile</span><h2>2. Chi puo pubblicare</h2><p>Serve un account Velora. Nella beta sono supportati Livello 0 e Livello 1. Livelli superiori sono in preparazione.</p></section>
+    <section id="requisiti"><span class="badge ok">Disponibile</span><h2>3. Requisiti iniziali</h2><ul><li>Desktop Velora beta.</li><li>Account Velora.</li><li>Cartella con <code>index.html</code> e <code>velora.json</code>.</li><li>Nessun segreto nella cartella pubblicata.</li></ul></section>
+    <section id="account"><span class="badge ok">Disponibile</span><h2>4. Creazione account publisher</h2><p>Registrati da Velora Desktop. Velora crea utente, mailbox <code>@velora</code> e associa il dispositivo. Se l'alias e occupato, scegli un alias diverso.</p></section>
+    <section><span class="badge beta">Beta</span><h2>5. Differenza fra utente e publisher</h2><p>L'utente naviga e comunica. Il publisher usa anche l'area "Pubblica sito" per controllare, preparare e pubblicare release.</p></section>
+    <section id="zone"><span class="badge beta">Beta</span><h2>6-9. Richiesta e tipi di zona</h2><div class="grid"><p><b>Standard:</b> <code>info.nome</code>, <code>shop.nome</code>, <code>app.nome</code>.</p><p><b>Riservate:</b> brand e settori sensibili richiederanno revisione.</p><p><b>Sistema:</b> prefissi Velora interni, non consentiti ai publisher.</p></div></section>
+    <section id="identita"><span class="badge beta">Beta</span><h2>10. Livelli identita</h2><ul><li>Livello 0: sito statico, nessun login.</li><li>Livello 1: account Velora e SDK.</li><li>Livello 2: identita forte, in preparazione.</li><li>Livello 3: MFA e operazioni sensibili, in preparazione.</li></ul></section>
+    <section id="sdk"><span class="badge beta">Beta</span><h2>11. Quando serve Velora SDK</h2><p>Serve per Livello 1 o superiore. Login/password paralleli sono vietati. Se una capability non e disponibile, il sito deve mostrare <code>NOT_YET_AVAILABLE</code>.</p></section>
+    <section id="progetto"><span class="badge ok">Disponibile</span><h2>12-13. Struttura progetto e cartella dist</h2><pre>dist/
+  index.html
+  assets/
+  velora.json</pre><p>Velora non deve eseguire script non fidati sul sistema host. Pubblica una build statica gia pronta.</p></section>
+    <section id="manifest"><span class="badge ok">Disponibile</span><h2>14-16. Manifest, permessi e API esterne</h2><pre>{
+  "formatVersion": 1,
+  "address": "shop.nome",
+  "title": "Nome sito",
+  "description": "Descrizione breve",
+  "version": "1.0.0",
+  "category": "shop",
+  "entrypoint": "index.html",
+  "requiredIdentityLevel": 0,
+  "usesVeloraSdk": false,
+  "permissions": {
+    "identity": false,
+    "notifications": false,
+    "mail": false,
+    "payments": false,
+    "wallet": false
+  },
+  "allowedExternalOrigins": [],
+  "visibility": "public",
+  "familySafe": true
+}</pre></section>
+    <section id="sicurezza"><span class="badge ok">Disponibile</span><h2>17-18. File vietati e controlli</h2><p>Non pubblicare <code>.env</code>, chiavi private, token, password, database locali, <code>node_modules</code>, <code>.git</code>, cache o log. Velora controlla manifest, entrypoint, permessi, origini esterne e file vietati.</p></section>
+    <section id="studio"><span class="badge beta">Beta</span><h2>19-25. Publisher Studio, validazione e review</h2><p>Nel desktop apri "Pubblica sito", scegli zona e cartella, premi "Controlla", poi "Prepara" e "Pubblica". Gli score completi e la review manuale sono in preparazione.</p></section>
+    <section id="release"><span class="badge beta">Beta</span><h2>26-31. Approvazione, pubblicazione, indice e aggiornamenti</h2><p>La beta registra e attiva release base. Per aggiornare un sito incrementa <code>version</code> e ripeti il flusso. L'indicizzazione distribuita completa e in preparazione.</p></section>
+    <section id="rollback"><span class="badge prep">In preparazione</span><h2>32-35. Rollback, revoca, sospensione e statistiche</h2><p>Rollback, revoca propagata, sospensione e statistiche privacy-preserving non sono ancora dichiarati completi nella beta pubblica.</p></section>
+    <section><span class="badge beta">Beta</span><h2>36. Errori comuni</h2><ul><li><code>VELORA_MANIFEST_MISSING</code>: aggiungi <code>velora.json</code>.</li><li><code>VELORA_ENTRYPOINT_MISSING</code>: aggiungi <code>index.html</code>.</li><li><code>VELORA_SECRET_DETECTED</code>: rimuovi segreti.</li><li><code>VELORA_IDENTITY_LEVEL_MISMATCH</code>: correggi livello o SDK.</li></ul></section>
+    <section id="faq"><span class="badge ok">Disponibile</span><h2>37. FAQ</h2><p>Velora non sostituisce Internet: lo eleva con zone, identita e pubblicazione verificata.</p></section>
+    <section id="esempi"><span class="badge ok">Disponibile</span><h2>38-40. Esempi e assistenza</h2><p>Esempi locali: <code>examples/publisher/level-0-static</code> e <code>examples/publisher/level-1-account</code>. Specifica tecnica: <code>docs/VELORA_PUBLISHER_SPEC.md</code>. Schema: <code>schemas/velora-manifest.schema.json</code>.</p></section>
+  </main>
+</body>
+</html>

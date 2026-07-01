@@ -1,0 +1,21 @@
+{
+  "formatVersion": 1,
+  "address": "info.level0",
+  "title": "Level 0 Static",
+  "description": "Esempio di sito informativo Velora senza login",
+  "version": "1.0.0",
+  "category": "education",
+  "entrypoint": "index.html",
+  "requiredIdentityLevel": 0,
+  "usesVeloraSdk": false,
+  "permissions": {
+    "identity": false,
+    "notifications": false,
+    "mail": false,
+    "payments": false,
+    "wallet": false
+  },
+  "allowedExternalOrigins": [],
+  "visibility": "public",
+  "familySafe": true
+}

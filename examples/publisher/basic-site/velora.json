@@ -1,0 +1,21 @@
+{
+  "formatVersion": 1,
+  "address": "health.happymeter",
+  "title": "HappyMeter",
+  "description": "Misura la tua felicita nell'Upper Web",
+  "version": "1.0.0",
+  "category": "health",
+  "entrypoint": "index.html",
+  "requiredIdentityLevel": 1,
+  "usesVeloraSdk": true,
+  "permissions": {
+    "identity": true,
+    "notifications": false,
+    "mail": false,
+    "payments": false,
+    "wallet": false
+  },
+  "allowedExternalOrigins": [],
+  "visibility": "public",
+  "familySafe": true
+}

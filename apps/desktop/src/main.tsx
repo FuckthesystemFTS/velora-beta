@@ -135,7 +135,6 @@ function App() {
   const [validation, setValidation] = React.useState<VeloraValidationResult | null>(null);
   const [packaged, setPackaged] = React.useState<PublisherPackageResponse | null>(null);
   const [releases, setReleases] = React.useState<PublisherReleaseRecord[]>([]);
-  const [diagnostics, setDiagnostics] = React.useState("I dettagli tecnici sono disponibili solo qui.");
   const [session, setSession] = React.useState<AccountSession | null>(() => loadStoredSession());
   const [authMode, setAuthMode] = React.useState<AuthMode>("register");
   const [authForm, setAuthForm] = React.useState({ username: "", password: "" });
@@ -175,7 +174,6 @@ function App() {
     } catch (error) {
       setNetworkState("limited");
       setNodeMessage("Velora sta preparando la connessione. Puoi continuare a esplorare.");
-      setDiagnostics(String(error));
     }
   }
 
@@ -201,7 +199,6 @@ function App() {
       await loadMail("INBOX", nextSession.user.id);
     } catch (error) {
       setAuthMessage(error instanceof Error ? error.message : "Accesso non riuscito");
-      setDiagnostics(String(error));
     }
   }
 
@@ -274,7 +271,6 @@ function App() {
       setLoadedSite(null);
       setViewerState(normalized === "shop.demo" ? "error" : "not-found");
       setViewerMessage(normalized === "shop.demo" ? "Errore temporaneo nella preparazione della zona." : "Zona non trovata.");
-      setDiagnostics(String(error));
     }
   }
 
@@ -353,7 +349,7 @@ function App() {
         status: result.status
       }
     });
-    setDiagnostics(`Release registrata: ${result.status}`);
+    setNodeMessage(result.status === "ACTIVE" ? "Sito pubblicato su Velora" : "Pubblicazione inviata");
     await loadReleases();
   }
 
@@ -387,7 +383,6 @@ function App() {
       setMailStatus("Sincronizzato");
     } catch (error) {
       setMailStatus("VeloMail non disponibile in questo momento");
-      setDiagnostics(String(error));
     }
   }
 
@@ -411,7 +406,6 @@ function App() {
       await loadMail("SENT");
     } catch (error) {
       setMailStatus("Invio non riuscito");
-      setDiagnostics(String(error));
     }
   }
 
@@ -448,7 +442,6 @@ function App() {
       }
       setNodeMessage("Identita verificata su questo dispositivo");
     } catch (error) {
-      setDiagnostics(String(error));
       setNodeMessage("Verifica identita non riuscita");
     }
   }
@@ -502,7 +495,7 @@ function App() {
         {workspace === "activity" ? <Activity /> : null}
         {workspace === "identity" ? <Identity session={session} onVerify={() => void verifyIdentity()} /> : null}
         {workspace === "notifications" ? <Notifications /> : null}
-        {workspace === "settings" ? <Settings diagnostics={diagnostics} nodeMessage={nodeMessage} networkState={networkState} onRetry={() => void prepareVelora()} /> : null}
+        {workspace === "settings" ? <Settings nodeMessage={nodeMessage} onRetry={() => void prepareVelora()} /> : null}
         {workspace === "dev" ? (
           <VeloraDev
             sitePath={publisherSitePath}
@@ -550,7 +543,7 @@ function Sidebar({ workspace, setWorkspace, networkState }: { workspace: Workspa
         ))}
       </nav>
       <div className="sidebar-bottom">
-        <button className={workspace === "dev" ? "active dev-entry" : "dev-entry"} onClick={() => setWorkspace("dev")}>Velora Dev</button>
+        <button className={workspace === "dev" ? "active dev-entry" : "dev-entry"} onClick={() => setWorkspace("dev")}>Pubblica sito</button>
         {isAdminSessionEnabled ? <button className={workspace === "control" ? "active" : ""} onClick={() => setWorkspace("control")}>Control Center</button> : null}
         <button className={workspace === "settings" ? "active" : ""} onClick={() => setWorkspace("settings")}>Impostazioni</button>
         <span className={`network ${networkState}`}>{networkLabel(networkState)}</span>
@@ -884,16 +877,12 @@ function Notifications() {
   return <section className="page-card"><h1>Notifiche</h1><p>Nessuna notifica. Velora ti avvisera quando una zona, release o replica richiede attenzione.</p></section>;
 }
 
-function Settings({ diagnostics, nodeMessage, networkState, onRetry }: { diagnostics: string; nodeMessage: string; networkState: NetworkState; onRetry: () => void }) {
+function Settings({ nodeMessage, onRetry }: { nodeMessage: string; onRetry: () => void }) {
   return (
     <section className="page-card">
       <h1>Impostazioni</h1>
       <p>{nodeMessage}</p>
       <button type="button" onClick={onRetry}>Riprova preparazione</button>
-      <details>
-        <summary>Avanzate / Diagnostica</summary>
-        <pre>{JSON.stringify({ networkState, diagnostics }, null, 2)}</pre>
-      </details>
     </section>
   );
 }
@@ -915,26 +904,26 @@ function VeloraDev(props: {
   return (
     <section className="dev-workspace">
       <header className="workspace-heading">
-        <span className="eyebrow">VELORA DEV</span>
-        <h1>Publisher ecosystem</h1>
-        <p>Zona, manifest, SDK e review sono separati dall'esperienza dell'utente normale.</p>
+        <span className="eyebrow">VELORA</span>
+        <h1>Pubblica un sito</h1>
+        <p>Prepara una zona, verifica i contenuti e rendila disponibile su Velora.</p>
       </header>
       <div className="dev-layout">
         <article className="page-card">
-          <h2>Publisher Studio guidato</h2>
+          <h2>Studio di pubblicazione</h2>
           <ol className="flow-list">
-            {["Seleziona la zona", "Seleziona progetto o dist", "Analisi del progetto", "Configura identita e permessi", "Verifica manifest", "Anteprima", "Crea pacchetto", "Invia alla revisione"].map((step) => <li key={step}>{step}</li>)}
+            {["Scegli la zona", "Seleziona la cartella del sito", "Controlla i contenuti", "Conferma identita", "Pubblica"].map((step) => <li key={step}>{step}</li>)}
           </ol>
           <label>Zona<input value={props.address} onChange={(event) => props.setAddress(event.target.value)} /></label>
           <label>Cartella progetto<input value={props.sitePath} onChange={(event) => props.setSitePath(event.target.value)} /></label>
           <div className="button-row">
-            <button onClick={props.onValidate}>Analizza</button>
-            <button onClick={props.onPackage} disabled={!props.session}>Crea pacchetto</button>
+            <button onClick={props.onValidate}>Controlla</button>
+            <button onClick={props.onPackage} disabled={!props.session}>Prepara</button>
             <button onClick={props.onRegister} disabled={!props.packaged || !props.session}>Pubblica</button>
             <button onClick={props.onRefresh}>Release</button>
           </div>
           {props.validation ? <ReviewBox validation={props.validation} /> : null}
-          {props.packaged ? <p className="safe-detail">Pacchetto pronto. Content CID e hash completi sono disponibili in diagnostica Dev.</p> : null}
+          {props.packaged ? <p className="safe-detail">Sito pronto per la pubblicazione.</p> : null}
           {!props.session ? <p>Accedi per inviare una pubblicazione.</p> : null}
         </article>
         <article className="page-card">
@@ -972,7 +961,7 @@ function ControlCenter() {
       <h1>{desktopBranding.controlCenterName}</h1>
       <p>Ambiente amministrativo riservato. In questa beta desktop non e mostrato agli utenti normali.</p>
       <div className="tag-cloud">
-        {["Panoramica", "Richieste zone", "Revisioni", "Publisher", "Sicurezza", "Audit", "Revoche", "Diagnostica"].map((item) => <span key={item}>{item}</span>)}
+        {["Panoramica", "Richieste zone", "Revisioni", "Publisher", "Sicurezza", "Audit", "Revoche"].map((item) => <span key={item}>{item}</span>)}
       </div>
     </section>
   );

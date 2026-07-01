@@ -1,0 +1,26 @@
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  font-family: "Segoe UI", sans-serif;
+  background: #071421;
+  color: #eef6ff;
+}
+main {
+  width: min(760px, calc(100vw - 32px));
+  padding: 40px;
+  border: 1px solid rgba(241, 202, 98, 0.35);
+  border-radius: 28px;
+  background: #0d1c2b;
+}
+button {
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 18px;
+  background: #f1ca62;
+  color: #071421;
+  font-weight: 700;
+}
+pre { white-space: pre-wrap; color: #a9bdd2; }
+.badge { color: #f1ca62; text-transform: uppercase; letter-spacing: 0.14em; }

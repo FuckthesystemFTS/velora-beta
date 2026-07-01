@@ -1,0 +1,21 @@
+{
+  "formatVersion": 1,
+  "address": "app.level1",
+  "title": "Level 1 Account",
+  "description": "Esempio di app Velora con sessione account unificata",
+  "version": "1.0.0",
+  "category": "app",
+  "entrypoint": "index.html",
+  "requiredIdentityLevel": 1,
+  "usesVeloraSdk": true,
+  "permissions": {
+    "identity": true,
+    "notifications": false,
+    "mail": false,
+    "payments": false,
+    "wallet": false
+  },
+  "allowedExternalOrigins": [],
+  "visibility": "public",
+  "familySafe": true
+}

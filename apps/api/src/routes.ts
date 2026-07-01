@@ -16,6 +16,11 @@ const betaDownloadRoots = [
   resolve("../releases/beta/windows"),
   resolve("../../releases/beta/windows")
 ];
+const publisherGuideCandidates = [
+  resolve("VELORA_GUIDA_PUBBLICAZIONE.html"),
+  resolve("../VELORA_GUIDA_PUBBLICAZIONE.html"),
+  resolve("../../VELORA_GUIDA_PUBBLICAZIONE.html")
+];
 const betaInstallerName = "Velora_0.1.0_x64_en-US.msi";
 const betaChecksumName = `${betaInstallerName}.sha256.txt`;
 
@@ -28,6 +33,16 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get("/what-is-velora", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("what-is-velora")));
   app.get("/security", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("security")));
   app.get("/publishers", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("publishers")));
+  app.get("/publishers/guide", async (_request, reply) => {
+    for (const guide of publisherGuideCandidates) {
+      try {
+        return reply.type("text/html; charset=utf-8").send(await readFile(guide, "utf8"));
+      } catch {
+        continue;
+      }
+    }
+    return reply.notFound("publisher guide not found");
+  });
   app.get("/developers", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("developers")));
   app.get("/pricing", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("pricing")));
   app.get("/faq", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("faq")));
@@ -665,6 +680,17 @@ function publicPage(page: string) {
         <dt>SHA-256</dt><dd>4A55628031E1CEDE54C9459AC29CCA92B3B1E358371A1698D88A37FA2DCBE41B</dd>
         <dt>Nota Windows</dt><dd>La beta non e ancora firmata con certificato pubblico: SmartScreen puo mostrare un avviso.</dd>
       </dl>
+    </section>` : page === "publishers" ? `
+    <section class="panel">
+      <h1>Pubblica nell'Upper Web</h1>
+      <p>Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.</p>
+      <a class="cta" href="/publishers/guide">Apri guida publisher</a>
+      <a class="ghost" href="/developers">SDK e documentazione tecnica</a>
+    </section>
+    <section class="cards">
+      <article><b>Livello 0</b><p>Siti statici senza login.</p></article>
+      <article><b>Livello 1</b><p>Account Velora e SDK.</p></article>
+      <article><b>Review</b><p>Manifest, permessi e controlli di sicurezza.</p></article>
     </section>` : page === "pricing" ? `
     <section class="panel"><h1>Piani publisher</h1><div class="cards">
       <article><b>Livello 0</b><span>Gratis</span><p>Siti informativi.</p></article>
@@ -715,7 +741,7 @@ function publicPage(page: string) {
   </style>
 </head>
 <body>
-  <header><nav><a href="/">VELORA</a><a href="/download">Download</a><a href="/what-is-velora">Upper Web</a><a href="/security">Sicurezza</a><a href="/publishers">Publisher</a><a href="/developers">Developers</a><a href="/pricing">Pricing</a><a href="/status">Status</a></nav></header>
+  <header><nav><a href="/">VELORA</a><a href="/download">Download</a><a href="/what-is-velora">Upper Web</a><a href="/security">Sicurezza</a><a href="/publishers">Publisher</a><a href="/publishers/guide">Guida</a><a href="/developers">Developers</a><a href="/pricing">Pricing</a><a href="/status">Status</a></nav></header>
   <main>${body}</main>
   <footer>Sei pronto per Velora? Non vedo l'ora.</footer>
 </body>
