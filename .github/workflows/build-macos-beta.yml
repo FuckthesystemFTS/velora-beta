@@ -39,6 +39,9 @@ jobs:
         working-directory: apps/desktop
         run: pnpm exec tauri icon src-tauri/icons/icon.png
 
+      - name: Build shared package
+        run: pnpm --filter @velora/shared build
+
       - name: Typecheck desktop
         run: pnpm --filter @velora/desktop typecheck
 
