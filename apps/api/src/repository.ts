@@ -67,7 +67,22 @@ export interface VeloMailSendInput {
   to: string[];
   subject: string;
   body: string;
+  subjectCiphertext?: string;
+  bodyCiphertext?: string;
+  encryptedByClient?: boolean;
   draft?: boolean;
+}
+
+export interface AuthSessionRecord {
+  token: string;
+  refreshToken: string;
+  expiresAt: string;
+  refreshExpiresAt: string;
+}
+
+export interface AdminSessionRecord {
+  adminSessionToken: string;
+  expiresAt: string;
 }
 
 export interface ReleaseRegistrationInput {
@@ -91,6 +106,10 @@ export interface VeloraRepository {
   createUser(username: string, password: string): Promise<UserRecord>;
   findUserByUsername(username: string): Promise<UserRecord | undefined>;
   findUserById(id: string): Promise<UserRecord | undefined>;
+  createAuthSession(userId: string, devicePeerId?: string): Promise<AuthSessionRecord>;
+  refreshAuthSession(refreshToken: string): Promise<AuthSessionRecord & { userId: string }>;
+  resolveAuthSession(accessToken: string): Promise<UserRecord | undefined>;
+  revokeAuthSession(accessToken: string): Promise<{ revoked: boolean }>;
   enrollDevice(input: { userId: string; peerId: string; publicKey: string; deviceName?: string }): Promise<DeviceRecord>;
   setIdentityLevel(userId: string, level: number): Promise<Record<string, unknown>>;
   getOrCreateVeloMailAccount(userId: string, preferredAlias?: string): Promise<VeloMailAccountRecord>;
@@ -123,6 +142,8 @@ export interface VeloraRepository {
   rejectZoneRequest(id: string, command: SignedAdminCommand, reason: string): Promise<ZoneRequestRecord | null>;
   createAdminChallenge(adminId: string, deviceId: string): Promise<{ challengeId: string; challenge: string; expiresAt: string }>;
   verifyAndConsumeAdminChallenge(challengeId: string): Promise<boolean>;
+  createAdminSession(challengeId: string): Promise<AdminSessionRecord>;
+  resolveAdminSession(token: string): Promise<{ adminId: string } | undefined>;
   rememberAdminNonce(command: SignedAdminCommand): Promise<boolean>;
   dashboard(): Promise<Record<string, number>>;
 }
@@ -146,14 +167,93 @@ export class PostgresRepository implements VeloraRepository {
     return mapUser(result.rows[0]);
   }
 
+  async createAuthSession(userId: string, devicePeerId?: string) {
+    const token = `vla_${randomUUID()}_${randomUUID()}`;
+    const refreshToken = `vlr_${randomUUID()}_${randomUUID()}`;
+    const expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
+    const refreshExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    await this.pool.query(
+      `INSERT INTO auth_sessions (
+        id, user_id, access_token_hash, refresh_token_hash, device_peer_id, expires_at, refresh_expires_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [randomUUID(), userId, hashValue(token), hashValue(refreshToken), devicePeerId ?? null, expiresAt, refreshExpiresAt]
+    );
+    return { token, refreshToken, expiresAt, refreshExpiresAt };
+  }
+
+  async refreshAuthSession(refreshToken: string) {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const existing = await client.query(
+        `SELECT * FROM auth_sessions
+         WHERE refresh_token_hash = $1 AND status = 'ACTIVE' AND refresh_expires_at > NOW()
+         FOR UPDATE`,
+        [hashValue(refreshToken)]
+      );
+      const row = existing.rows[0];
+      if (!row) {
+        throw new Error("INVALID_REFRESH_TOKEN");
+      }
+      await client.query("UPDATE auth_sessions SET status = 'ROTATED' WHERE id = $1", [row.id]);
+      const next = await this.createAuthSession(row.user_id, row.device_peer_id ?? undefined);
+      await client.query("COMMIT");
+      return { ...next, userId: row.user_id };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async resolveAuthSession(accessToken: string) {
+    const result = await this.pool.query(
+      `SELECT u.id, u.username, u.password_hash
+       FROM auth_sessions s
+       JOIN users u ON u.id = s.user_id
+       WHERE s.access_token_hash = $1 AND s.status = 'ACTIVE' AND s.expires_at > NOW()`,
+      [hashValue(accessToken)]
+    );
+    if (result.rows[0]) {
+      await this.pool.query("UPDATE auth_sessions SET last_seen_at = NOW() WHERE access_token_hash = $1", [hashValue(accessToken)]);
+    }
+    return mapUser(result.rows[0]);
+  }
+
+  async revokeAuthSession(accessToken: string) {
+    const result = await this.pool.query("UPDATE auth_sessions SET status = 'REVOKED' WHERE access_token_hash = $1 AND status = 'ACTIVE'", [hashValue(accessToken)]);
+    return { revoked: Boolean(result.rowCount) };
+  }
+
   async enrollDevice(input: { userId: string; peerId: string; publicKey: string; deviceName?: string }) {
     const client = await this.pool.connect();
     try {
       await client.query("BEGIN");
-      const deviceId = randomUUID();
+      const existingDevice = await client.query("SELECT id, public_key, status FROM devices WHERE peer_id = $1 FOR UPDATE", [input.peerId]);
+      let deviceId = existingDevice.rows[0]?.id as string | undefined;
+      if (!deviceId) {
+        deviceId = randomUUID();
+        await client.query(
+          "INSERT INTO devices (id, user_id, device_name, peer_id, public_key, status) VALUES ($1, $2, $3, $4, $5, 'ACTIVE')",
+          [deviceId, input.userId, input.deviceName ?? "Velora beta device", input.peerId, input.publicKey]
+        );
+      } else {
+        await client.query("UPDATE devices SET public_key = $1, status = 'ACTIVE', updated_at = NOW() WHERE id = $2", [input.publicKey, deviceId]);
+      }
+
+      const linkCount = await client.query(
+        "SELECT COUNT(*)::int AS count FROM device_account_links WHERE device_id = $1 AND status = 'ACTIVE' AND user_id <> $2",
+        [deviceId, input.userId]
+      );
+      if (Number(linkCount.rows[0]?.count ?? 0) >= 3) {
+        throw new Error("DEVICE_ACCOUNT_LIMIT_REACHED");
+      }
       await client.query(
-        "INSERT INTO devices (id, user_id, device_name, peer_id, public_key, status) VALUES ($1, $2, $3, $4, $5, 'ACTIVE')",
-        [deviceId, input.userId, input.deviceName ?? "Velora beta device", input.peerId, input.publicKey]
+        `INSERT INTO device_account_links (id, device_id, user_id, status)
+         VALUES ($1,$2,$3,'ACTIVE')
+         ON CONFLICT (device_id, user_id) DO UPDATE SET status = 'ACTIVE', revoked_at = NULL, linked_at = NOW()`,
+        [randomUUID(), deviceId, input.userId]
       );
 
       const certificate = {
@@ -247,12 +347,20 @@ export class PostgresRepository implements VeloraRepository {
     if (!recipients.length) {
       throw new Error("RECIPIENT_REQUIRED");
     }
-    const contentHash = hashValue(`${account.address}:${recipients.join(",")}:${input.subject}:${input.body}`);
+    if (!input.encryptedByClient || !input.bodyCiphertext) {
+      throw new Error("VELOMAIL_CLIENT_ENCRYPTION_REQUIRED");
+    }
+    const contentHash = hashValue(`${account.address}:${recipients.join(",")}:${input.subject}:${input.bodyCiphertext}`);
     const messageId = `velomail:${randomUUID()}`;
     const folder = input.draft ? "DRAFTS" : "SENT";
     const status = input.draft ? "DRAFT" : "DELIVERED_TO_MAILBOX";
-    const bodyCiphertext = Buffer.from(input.body, "utf8").toString("base64");
-    const preview = input.body.replace(/\s+/g, " ").slice(0, 140);
+    const bodyCiphertext = input.bodyCiphertext;
+    const subjectCiphertext = input.subjectCiphertext ?? "";
+    const encryptedByClient = true;
+    const preview = "Messaggio cifrato";
+    const storedSubject = "Messaggio cifrato";
+    const encryptionScheme = "CLIENT_SEALED_V1";
+    const replicationStatus = input.draft ? "LOCAL_DRAFT" : "STORE_AND_FORWARD_PENDING";
 
     const client = await this.pool.connect();
     try {
@@ -260,10 +368,11 @@ export class PostgresRepository implements VeloraRepository {
       const sent = await client.query(
         `INSERT INTO velomail_messages (
           id, message_id, account_id, direction, folder, sender_address, recipient_addresses,
-          subject, body_ciphertext, body_preview, content_hash, envelope_signature, delivery_status, is_read
-        ) VALUES ($1,$2,$3,'OUTBOUND',$4,$5,$6,$7,$8,$9,$10,$11,$12,true)
+          subject, subject_ciphertext, body_ciphertext, body_preview, content_hash, envelope_signature,
+          delivery_status, is_read, encryption_scheme, replication_status, replica_count, encrypted_by_client
+        ) VALUES ($1,$2,$3,'OUTBOUND',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true,$14,$15,$16,$17)
         RETURNING *`,
-        [randomUUID(), messageId, account.id, folder, account.address, recipients, input.subject, bodyCiphertext, preview, contentHash, hashValue(`${messageId}:sender:${contentHash}`), status]
+        [randomUUID(), messageId, account.id, folder, account.address, recipients, storedSubject, subjectCiphertext, bodyCiphertext, preview, contentHash, hashValue(`${messageId}:sender:${contentHash}`), status, encryptionScheme, replicationStatus, encryptedByClient ? 1 : 0, encryptedByClient]
       );
 
       if (!input.draft) {
@@ -280,9 +389,10 @@ export class PostgresRepository implements VeloraRepository {
           await client.query(
             `INSERT INTO velomail_messages (
               id, message_id, account_id, direction, folder, sender_address, recipient_addresses,
-              subject, body_ciphertext, body_preview, content_hash, envelope_signature, delivery_status, is_read
-            ) VALUES ($1,$2,$3,'INBOUND','INBOX',$4,$5,$6,$7,$8,$9,$10,'DELIVERED_TO_MAILBOX',false)`,
-            [randomUUID(), `${messageId}:copy:${targetAccount.id}`, targetAccount.id, account.address, recipients, input.subject, bodyCiphertext, preview, contentHash, hashValue(`${messageId}:recipient:${targetAccount.id}:${contentHash}`)]
+              subject, subject_ciphertext, body_ciphertext, body_preview, content_hash, envelope_signature,
+              delivery_status, is_read, encryption_scheme, replication_status, replica_count, encrypted_by_client
+            ) VALUES ($1,$2,$3,'INBOUND','INBOX',$4,$5,$6,$7,$8,$9,$10,$11,'DELIVERED_TO_MAILBOX',false,$12,$13,$14,$15)`,
+            [randomUUID(), `${messageId}:copy:${targetAccount.id}`, targetAccount.id, account.address, recipients, storedSubject, subjectCiphertext, bodyCiphertext, preview, contentHash, hashValue(`${messageId}:recipient:${targetAccount.id}:${contentHash}`), encryptionScheme, "MAILBOX_DELIVERED", encryptedByClient ? 1 : 0, encryptedByClient]
           );
         }
       }
@@ -368,14 +478,16 @@ export class PostgresRepository implements VeloraRepository {
     await this.pool.query(
       `INSERT INTO velomail_messages (
         id, message_id, account_id, direction, folder, sender_address, recipient_addresses,
-        subject, body_ciphertext, body_preview, content_hash, envelope_signature, delivery_status, is_read
-      ) VALUES ($1,$2,$3,'INBOUND','INBOX','updates@velora',$4,$5,$6,$7,$8,$9,'DELIVERED_TO_MAILBOX',false)`,
+        subject, subject_ciphertext, body_ciphertext, body_preview, content_hash, envelope_signature,
+        delivery_status, is_read, encryption_scheme, replication_status, replica_count, encrypted_by_client
+      ) VALUES ($1,$2,$3,'INBOUND','INBOX','updates@velora',$4,$5,$6,$7,$8,$9,$10,'DELIVERED_TO_MAILBOX',false,'LEGACY_CENTRALIZED','CENTRALIZED',0,false)`,
       [
         randomUUID(),
         `system:${randomUUID()}`,
         account.id,
         [account.address],
         "Benvenuto in VeloMail",
+        "",
         Buffer.from(body, "utf8").toString("base64"),
         body.slice(0, 140),
         hashValue(body),
@@ -895,6 +1007,36 @@ export class PostgresRepository implements VeloraRepository {
       [challengeId]
     );
     return Boolean(result.rowCount);
+  }
+
+  async createAdminSession(challengeId: string) {
+    const challenge = await this.pool.query("SELECT admin_id FROM admin_challenges WHERE id = $1 AND consumed_at IS NOT NULL", [challengeId]);
+    const adminId = challenge.rows[0]?.admin_id;
+    if (!adminId) {
+      throw new Error("ADMIN_CHALLENGE_NOT_CONSUMED");
+    }
+    const admin = await this.pool.query("SELECT id FROM admin_accounts WHERE id = $1 AND status = 'ACTIVE'", [adminId]);
+    if (!admin.rows[0]) {
+      throw new Error("ADMIN_NOT_ACTIVE");
+    }
+    const adminSessionToken = `vla_admin_${randomUUID()}_${randomUUID()}`;
+    const expiresAt = new Date(Date.now() + config.adminSessionMinutes * 60 * 1000).toISOString();
+    await this.pool.query(
+      "INSERT INTO admin_sessions (id, admin_id, session_token_hash, challenge_id, expires_at) VALUES ($1,$2,$3,$4,$5)",
+      [randomUUID(), adminId, hashValue(adminSessionToken), challengeId, expiresAt]
+    );
+    return { adminSessionToken, expiresAt };
+  }
+
+  async resolveAdminSession(token: string) {
+    const result = await this.pool.query(
+      "SELECT admin_id FROM admin_sessions WHERE session_token_hash = $1 AND status = 'ACTIVE' AND expires_at > NOW()",
+      [hashValue(token)]
+    );
+    if (result.rows[0]) {
+      await this.pool.query("UPDATE admin_sessions SET last_seen_at = NOW() WHERE session_token_hash = $1", [hashValue(token)]);
+    }
+    return result.rows[0] ? { adminId: String(result.rows[0].admin_id) } : undefined;
   }
 
   async rememberAdminNonce(command: SignedAdminCommand) {

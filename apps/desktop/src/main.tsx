@@ -49,6 +49,8 @@ type MailMessage = {
 
 type AccountSession = {
   token: string;
+  refreshToken?: string;
+  expiresAt?: string;
   user: {
     id: string;
     username: string;
@@ -195,8 +197,8 @@ function App() {
       setAuthMessage("Account pronto");
       setNodeMessage("Velora e pronta");
       setNetworkState("ready");
-      await enrollActiveDevice(nextSession.user.id);
-      await loadMail("INBOX", nextSession.user.id);
+      await enrollActiveDevice(nextSession);
+      await loadMail("INBOX", nextSession);
     } catch (error) {
       setAuthMessage(error instanceof Error ? error.message : "Accesso non riuscito");
     }
@@ -216,13 +218,16 @@ function App() {
     setMailAddress(nextSession.mail.address);
   }
 
-  async function enrollActiveDevice(userId: string) {
+  async function enrollActiveDevice(activeSession: AccountSession) {
     const identity = await invoke<{ peer_id: string; public_key: string }>("get_or_create_node_identity");
-    await fetch(`${apiBaseUrl}/api/v1/devices/enroll`, {
+    const response = await fetch(`${apiBaseUrl}/api/v1/devices/enroll`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-user-id": userId },
+      headers: { "content-type": "application/json", ...authHeaders(activeSession) },
       body: JSON.stringify({ peerId: identity.peer_id, publicKey: identity.public_key, deviceName: "Velora Desktop" })
     });
+    if (response.status === 409) {
+      setNodeMessage("Hai gia associato tre account a questo dispositivo.");
+    }
   }
 
   function looksLikeTraditionalWeb(value: string) {
@@ -341,7 +346,7 @@ function App() {
       return;
     }
     const userId = await requireSessionUserId();
-    const result = await siteApi.registerRelease({ ...packaged, userId });
+    const result = await siteApi.registerRelease({ ...packaged, token: session?.token, userId });
     await invoke("cache_packaged_release", {
       input: {
         ...packaged,
@@ -362,19 +367,21 @@ function App() {
     setFavorites((current) => current.includes(zone) ? current.filter((item) => item !== zone) : [...current, zone]);
   }
 
-  async function loadMail(folder = mailFolder, sessionUserId?: string) {
+  async function loadMail(folder = mailFolder, activeSession = session) {
     setWorkspace("mail");
     setMailFolder(folder);
     setMailStatus("Sincronizzazione in corso");
     try {
-      const userId = sessionUserId ?? await requireSessionUserId();
-      const accountResponse = await fetch(`${apiBaseUrl}/api/v1/mail/account`, { headers: { "x-user-id": userId } });
+      if (!activeSession) {
+        throw new Error("SESSION_REQUIRED");
+      }
+      const accountResponse = await fetch(`${apiBaseUrl}/api/v1/mail/account`, { headers: authHeaders(activeSession) });
       if (accountResponse.ok) {
         const account = await accountResponse.json() as { address: string };
         setMailAddress(account.address);
       }
       const endpoint = folder === "INBOX" ? "/api/v1/mail/inbox" : `/api/v1/mail/folders/${encodeURIComponent(folder)}`;
-      const response = await fetch(`${apiBaseUrl}${endpoint}`, { headers: { "x-user-id": userId } });
+      const response = await fetch(`${apiBaseUrl}${endpoint}`, { headers: authHeaders(activeSession) });
       if (!response.ok) {
         throw new Error("MAIL_SYNC_FAILED");
       }
@@ -389,14 +396,20 @@ function App() {
   async function sendMail() {
     setMailStatus("Invio in corso");
     try {
-      const userId = await requireSessionUserId();
+      await requireSessionUserId();
+      if (!session) {
+        throw new Error("SESSION_REQUIRED");
+      }
+      const sealed = await sealVeloMailDraft(mailDraft.subject, mailDraft.body);
       const response = await fetch(`${apiBaseUrl}/api/v1/mail/send`, {
         method: "POST",
-        headers: { "content-type": "application/json", "x-user-id": userId },
+        headers: { "content-type": "application/json", ...authHeaders(session) },
         body: JSON.stringify({
           to: mailDraft.to.split(",").map((item: string) => item.trim()).filter(Boolean),
           subject: mailDraft.subject,
-          body: mailDraft.body
+          subjectCiphertext: sealed.subjectCiphertext,
+          bodyCiphertext: sealed.bodyCiphertext,
+          encryptedByClient: true
         })
       });
       if (!response.ok) {
@@ -422,10 +435,13 @@ function App() {
 
   async function verifyIdentity() {
     try {
-      const userId = await requireSessionUserId();
+      await requireSessionUserId();
+      if (!session) {
+        throw new Error("SESSION_REQUIRED");
+      }
       const response = await fetch(`${apiBaseUrl}/api/v1/identity/verify-basic`, {
         method: "POST",
-        headers: { "x-user-id": userId }
+        headers: authHeaders(session)
       });
       if (!response.ok) {
         throw new Error("IDENTITY_VERIFICATION_FAILED");
@@ -974,6 +990,32 @@ function networkLabel(state: NetworkState) {
     limited: "Connessione limitata",
     offline: "Offline"
   }[state];
+}
+
+function authHeaders(session: AccountSession) {
+  return { authorization: `Bearer ${session.token}` };
+}
+
+async function sealVeloMailDraft(subject: string, body: string) {
+  const key = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt"]);
+  const nonce = crypto.getRandomValues(new Uint8Array(12));
+  const encoder = new TextEncoder();
+  const seal = async (value: string) => {
+    const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, key, encoder.encode(value));
+    return `v1.${base64Url(nonce)}.${base64Url(new Uint8Array(ciphertext))}`;
+  };
+  return {
+    subjectCiphertext: await seal(subject),
+    bodyCiphertext: await seal(body)
+  };
+}
+
+function base64Url(bytes: Uint8Array) {
+  let binary = "";
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
 function loadStoredSession(): AccountSession | null {

@@ -92,8 +92,12 @@ export async function registerRoutes(app: FastifyInstance) {
 
     const user = await repository.createUser(body.username, hashPassword(body.password));
     const mail = await repository.getOrCreateVeloMailAccount(user.id, user.username);
+    const session = await repository.createAuthSession(user.id);
     return {
-      token: `dev-${user.id}`,
+      token: session.token,
+      accessToken: session.token,
+      refreshToken: session.refreshToken,
+      expiresAt: session.expiresAt,
       user: { id: user.id, username: user.username, identityLevel: mail.identityLevel },
       mail
     };
@@ -107,14 +111,29 @@ export async function registerRoutes(app: FastifyInstance) {
     }
 
     const mail = await repository.getOrCreateVeloMailAccount(user.id, user.username);
+    const session = await repository.createAuthSession(user.id);
     return {
-      token: `dev-${user.id}`,
+      token: session.token,
+      accessToken: session.token,
+      refreshToken: session.refreshToken,
+      expiresAt: session.expiresAt,
       user: { id: user.id, username: user.username, identityLevel: mail.identityLevel },
       mail
     };
   });
 
-  app.post("/api/v1/auth/refresh", async () => ({ token: "beta-refresh-token" }));
+  app.post("/api/v1/auth/refresh", async (request, reply) => {
+    const body = request.body as { refreshToken?: string };
+    if (!body?.refreshToken) {
+      return reply.badRequest("refreshToken is required");
+    }
+    try {
+      const session = await repository.refreshAuthSession(body.refreshToken);
+      return { token: session.token, accessToken: session.token, refreshToken: session.refreshToken, expiresAt: session.expiresAt };
+    } catch {
+      return reply.unauthorized("invalid refresh token");
+    }
+  });
 
   app.post("/api/v1/beta/session", async (request) => {
     const body = request.body as { installationId?: string };
@@ -124,14 +143,14 @@ export async function registerRoutes(app: FastifyInstance) {
     const user = existing ?? await repository.createUser(username, hashPassword(`velora-beta:${suffix}`));
     const mail = await repository.getOrCreateVeloMailAccount(user.id, username);
     return {
-      token: `dev-${user.id}`,
+      token: (await repository.createAuthSession(user.id)).token,
       user: { id: user.id, username: user.username },
       mail
     };
   });
 
   app.get("/api/v1/mail/account", async (request, reply) => {
-    const userId = requireBetaUserId(request, reply);
+    const userId = await requireSessionUserId(request, reply);
     if (!userId) {
       return;
     }
@@ -139,7 +158,7 @@ export async function registerRoutes(app: FastifyInstance) {
   });
 
   app.get("/api/v1/mail/inbox", async (request, reply) => {
-    const userId = requireBetaUserId(request, reply);
+    const userId = await requireSessionUserId(request, reply);
     if (!userId) {
       return;
     }
@@ -147,7 +166,7 @@ export async function registerRoutes(app: FastifyInstance) {
   });
 
   app.get("/api/v1/mail/folders/:folder", async (request, reply) => {
-    const userId = requireBetaUserId(request, reply);
+    const userId = await requireSessionUserId(request, reply);
     if (!userId) {
       return;
     }
@@ -155,7 +174,7 @@ export async function registerRoutes(app: FastifyInstance) {
   });
 
   app.get("/api/v1/mail/messages/:id", async (request, reply) => {
-    const userId = requireBetaUserId(request, reply);
+    const userId = await requireSessionUserId(request, reply);
     if (!userId) {
       return;
     }
@@ -167,27 +186,35 @@ export async function registerRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/mail/send", async (request, reply) => {
-    const userId = requireBetaUserId(request, reply);
+    const userId = await requireSessionUserId(request, reply);
     if (!userId) {
       return;
     }
-    const body = request.body as { to?: string[]; subject?: string; body?: string };
-    if (!Array.isArray(body?.to) || !body.subject || !body.body) {
-      return reply.badRequest("to, subject and body are required");
+    const body = request.body as { to?: string[]; subject?: string; body?: string; subjectCiphertext?: string; bodyCiphertext?: string; encryptedByClient?: boolean };
+    if (!Array.isArray(body?.to) || !body.subject || !body.bodyCiphertext || body.encryptedByClient !== true) {
+      return reply.badRequest("to, subject, bodyCiphertext and encryptedByClient=true are required");
     }
-    return repository.sendVeloMail({ userId, to: body.to, subject: body.subject, body: body.body });
+    return repository.sendVeloMail({
+      userId,
+      to: body.to,
+      subject: body.subject,
+      body: body.body ?? "",
+      subjectCiphertext: body.subjectCiphertext,
+      bodyCiphertext: body.bodyCiphertext,
+      encryptedByClient: body.encryptedByClient
+    });
   });
 
   app.post("/api/v1/mail/drafts", async (request, reply) => {
-    const userId = requireBetaUserId(request, reply);
+    const userId = await requireSessionUserId(request, reply);
     if (!userId) {
       return;
     }
-    const body = request.body as { to?: string[]; subject?: string; body?: string };
-    if (!Array.isArray(body?.to) || !body.subject) {
-      return reply.badRequest("to and subject are required");
+    const body = request.body as { to?: string[]; subject?: string; body?: string; subjectCiphertext?: string; bodyCiphertext?: string; encryptedByClient?: boolean };
+    if (!Array.isArray(body?.to) || !body.subject || !body.bodyCiphertext || body.encryptedByClient !== true) {
+      return reply.badRequest("to, subject, bodyCiphertext and encryptedByClient=true are required");
     }
-    return repository.sendVeloMail({ userId, to: body.to, subject: body.subject, body: body.body ?? "", draft: true });
+    return repository.sendVeloMail({ userId, to: body.to, subject: body.subject, body: body.body ?? "", subjectCiphertext: body.subjectCiphertext, bodyCiphertext: body.bodyCiphertext, encryptedByClient: body.encryptedByClient, draft: true });
   });
 
   for (const [path, action] of [
@@ -199,7 +226,7 @@ export async function registerRoutes(app: FastifyInstance) {
     ["unstar", "unstar"]
   ] as const) {
     app.post(`/api/v1/mail/messages/:id/${path}`, async (request, reply) => {
-      const userId = requireBetaUserId(request, reply);
+      const userId = await requireSessionUserId(request, reply);
       if (!userId) {
         return;
       }
@@ -208,7 +235,7 @@ export async function registerRoutes(app: FastifyInstance) {
   }
 
   app.post("/api/v1/mail/block-sender", async (request, reply) => {
-    const userId = requireBetaUserId(request, reply);
+    const userId = await requireSessionUserId(request, reply);
     if (!userId) {
       return;
     }
@@ -220,7 +247,7 @@ export async function registerRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/mail/messages/:id/report-spam", async (request, reply) => {
-    const userId = requireBetaUserId(request, reply);
+    const userId = await requireSessionUserId(request, reply);
     if (!userId) {
       return;
     }
@@ -229,7 +256,7 @@ export async function registerRoutes(app: FastifyInstance) {
   });
 
   app.get("/api/v1/mail/search", async (request, reply) => {
-    const userId = requireBetaUserId(request, reply);
+    const userId = await requireSessionUserId(request, reply);
     if (!userId) {
       return;
     }
@@ -247,13 +274,13 @@ export async function registerRoutes(app: FastifyInstance) {
       p2pLayer: "PARTIAL"
     }
   }));
-  app.post("/api/v1/auth/logout", async () => ({ ok: true }));
+  app.post("/api/v1/auth/logout", async (request) => repository.revokeAuthSession(readBearerToken(request) ?? ""));
   app.post("/api/v1/auth/recovery", async () => ({ ok: true, delivery: "internal-notification" }));
 
   app.get("/api/v1/account", async (request, reply) => {
-    const userId = request.headers["x-user-id"];
-    if (typeof userId !== "string") {
-      return reply.unauthorized("missing x-user-id header");
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
     }
     const user = await repository.findUserById(userId);
     if (!user) {
@@ -264,17 +291,17 @@ export async function registerRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/identity/verify-basic", async (request, reply) => {
-    const userId = request.headers["x-user-id"];
-    if (typeof userId !== "string") {
-      return reply.unauthorized("missing x-user-id header");
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
     }
     return repository.setIdentityLevel(userId, 1);
   });
 
   app.post("/api/v1/devices/enroll", async (request, reply) => {
-    const userId = request.headers["x-user-id"];
-    if (typeof userId !== "string") {
-      return reply.unauthorized("missing x-user-id header");
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
     }
     const body = request.body as { peerId?: string; publicKey?: string; deviceName?: string };
     if (!body.peerId || !body.publicKey) {
@@ -284,6 +311,12 @@ export async function registerRoutes(app: FastifyInstance) {
       return await repository.enrollDevice({ userId, peerId: body.peerId, publicKey: body.publicKey, deviceName: body.deviceName });
     } catch (error) {
       request.log.error(error);
+      if (error instanceof Error && error.message === "DEVICE_ACCOUNT_LIMIT_REACHED") {
+        return reply.code(409).send({
+          code: "DEVICE_ACCOUNT_LIMIT_REACHED",
+          message: "Hai gia associato tre account a questo dispositivo. Utilizza uno degli account esistenti oppure rimuovine uno dalle impostazioni."
+        });
+      }
       return reply.failedDependency("membership signing key is not configured");
     }
   });
@@ -321,9 +354,9 @@ export async function registerRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/zones/requests", async (request, reply) => {
-    const userId = request.headers["x-user-id"];
-    if (typeof userId !== "string") {
-      return reply.unauthorized("missing x-user-id header");
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
     }
 
     const body = zoneRequestSchema.parse(request.body);
@@ -359,9 +392,9 @@ export async function registerRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/sites/package-release", async (request, reply) => {
-    const userId = request.headers["x-user-id"];
-    if (typeof userId !== "string") {
-      return reply.unauthorized("missing x-user-id header");
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
     }
     const body = request.body as { sitePath?: string; publisherPublicKey?: string };
     if (!body.sitePath || !body.publisherPublicKey) {
@@ -371,9 +404,9 @@ export async function registerRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/sites/register-release", async (request, reply) => {
-    const userId = request.headers["x-user-id"];
-    if (typeof userId !== "string") {
-      return reply.unauthorized("missing x-user-id header");
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
     }
     try {
       const body = request.body as {
@@ -571,16 +604,40 @@ export async function registerRoutes(app: FastifyInstance) {
     if (!ok) {
       return reply.forbidden("invalid or expired challenge");
     }
-    return { adminSessionToken: "beta-admin-session", expiresInMinutes: config.adminSessionMinutes };
+    try {
+      const session = await repository.createAdminSession(body.challengeId);
+      return { adminSessionToken: session.adminSessionToken, expiresAt: session.expiresAt, expiresInMinutes: config.adminSessionMinutes };
+    } catch {
+      return reply.forbidden("admin account is not active");
+    }
   });
 
-  app.post("/api/v1/control/session/refresh", async () => ({ adminSessionToken: "beta-admin-session", expiresInMinutes: config.adminSessionMinutes }));
+  app.post("/api/v1/control/session/refresh", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) {
+      return;
+    }
+    return { ok: true, adminId: admin.adminId, expiresInMinutes: config.adminSessionMinutes };
+  });
   app.post("/api/v1/control/session/lock", async () => ({ ok: true }));
 
-  app.get("/api/v1/control/dashboard", async () => repository.dashboard());
-  app.get("/api/v1/control/zone-requests", async () => repository.listZoneRequests());
+  app.get("/api/v1/control/dashboard", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    return repository.dashboard();
+  });
+  app.get("/api/v1/control/zone-requests", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    return repository.listZoneRequests();
+  });
 
   app.post("/api/v1/control/zone-requests/:id/approve", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
     const parsed = signedAdminCommandSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.code(400).send(parsed.error.flatten());
@@ -608,6 +665,9 @@ export async function registerRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/control/zone-requests/:id/reject", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
     const parsed = signedAdminCommandSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.code(400).send(parsed.error.flatten());
@@ -752,12 +812,37 @@ function routeParam(params: unknown, key: string) {
   return String((params as Record<string, string>)[key]);
 }
 
-function requireBetaUserId(request: { headers: Record<string, string | string[] | undefined> }, reply: FastifyReply) {
-  const raw = request.headers["x-user-id"];
-  const userId = Array.isArray(raw) ? raw[0] : raw;
-  if (!userId) {
-    reply.unauthorized("x-user-id header is required for beta mail APIs");
+function readBearerToken(request: { headers: Record<string, string | string[] | undefined> }) {
+  const raw = request.headers.authorization;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  const match = /^Bearer\s+(.+)$/i.exec(value ?? "");
+  return match?.[1];
+}
+
+async function requireSessionUserId(request: { headers: Record<string, string | string[] | undefined> }, reply: FastifyReply) {
+  const token = readBearerToken(request);
+  if (!token) {
+    reply.unauthorized("Authorization bearer token is required");
     return undefined;
   }
-  return userId;
+  const user = await repository.resolveAuthSession(token);
+  if (!user) {
+    reply.unauthorized("invalid or expired session");
+    return undefined;
+  }
+  return user.id;
+}
+
+async function requireAdminSession(request: { headers: Record<string, string | string[] | undefined> }, reply: FastifyReply) {
+  const token = readBearerToken(request);
+  if (!token) {
+    reply.unauthorized("admin bearer token is required");
+    return undefined;
+  }
+  const admin = await repository.resolveAdminSession(token);
+  if (!admin) {
+    reply.forbidden("invalid or expired admin session");
+    return undefined;
+  }
+  return admin;
 }

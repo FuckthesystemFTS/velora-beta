@@ -9,6 +9,7 @@ export type NotYetAvailable = {
 export type VeloraSession = {
   available: true;
   userId: string;
+  token?: string;
   identityLevel: VeloraIdentityLevel;
   scopes: string[];
 };
@@ -86,11 +87,14 @@ async function mailRequest<T>(options: VeloraSdkOptions | undefined, path: strin
   if (!options?.apiBaseUrl) {
     return unavailable("Host API Velora non configurato.");
   }
+  if (!session.token) {
+    return unavailable("Token sessione Velora non disponibile.");
+  }
   const response = await fetch(`${options.apiBaseUrl}${path}`, {
     ...init,
     headers: {
       "content-type": "application/json",
-      "x-user-id": session.userId,
+      authorization: `Bearer ${session.token}`,
       ...(init?.headers ?? {})
     }
   });

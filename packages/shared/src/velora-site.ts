@@ -128,8 +128,8 @@ export type PublisherContentObject = z.infer<typeof publisherContentObjectSchema
 
 export interface VeloraSiteApi {
   validateRelease(input: { sitePath: string }): Promise<VeloraValidationResult>;
-  packageRelease(input: { sitePath: string; publisherPublicKey: string; userId: string }): Promise<PublisherPackageResponse>;
-  registerRelease(input: PublisherPackageResponse & { userId: string }): Promise<PublisherReleaseMutation>;
+  packageRelease(input: { sitePath: string; publisherPublicKey: string; userId?: string; token?: string }): Promise<PublisherPackageResponse>;
+  registerRelease(input: PublisherPackageResponse & { userId?: string; token?: string }): Promise<PublisherReleaseMutation>;
   listReleases(address: string): Promise<{ releases: PublisherReleaseRecord[] }>;
   getRelease(address: string, releaseId: string): Promise<PublisherReleaseRecord>;
   completeRelease(input: { address: string; releaseId: string }): Promise<PublisherReleaseMutation>;
@@ -163,14 +163,14 @@ export function createVeloraSiteApi(baseUrl: string, fetchImpl: typeof fetch = e
         veloraValidationResultSchema
       );
     },
-    packageRelease(input: { sitePath: string; publisherPublicKey: string; userId: string }) {
+    packageRelease(input: { sitePath: string; publisherPublicKey: string; userId?: string; token?: string }) {
       return requestJson(
         "/api/v1/sites/package-release",
         {
           method: "POST",
           headers: {
             "content-type": "application/json",
-            "x-user-id": input.userId
+            ...authHeaders(input)
           },
           body: JSON.stringify({
             sitePath: input.sitePath,
@@ -180,16 +180,16 @@ export function createVeloraSiteApi(baseUrl: string, fetchImpl: typeof fetch = e
         publisherPackageResponseSchema
       );
     },
-    registerRelease(input: PublisherPackageResponse & { userId: string }) {
+    registerRelease(input: PublisherPackageResponse & { userId?: string; token?: string }) {
       return requestJson(
         "/api/v1/sites/register-release",
         {
           method: "POST",
           headers: {
             "content-type": "application/json",
-            "x-user-id": input.userId
+            ...authHeaders(input)
           },
-          body: JSON.stringify(stripUserId(input))
+          body: JSON.stringify(stripAuth(input))
         },
         publisherReleaseMutationSchema
       );
@@ -303,7 +303,14 @@ function extractApiError(payload: unknown, status: number) {
   return `HTTP_${status}`;
 }
 
-function stripUserId<T extends { userId: string }>(value: T): Omit<T, "userId"> {
-  const { userId: _userId, ...rest } = value;
+function stripAuth<T extends { userId?: string; token?: string }>(value: T): Omit<T, "userId" | "token"> {
+  const { userId: _userId, token: _token, ...rest } = value;
   return rest;
+}
+
+function authHeaders(input: { token?: string; userId?: string }): Record<string, string> {
+  if (input.token) {
+    return { authorization: `Bearer ${input.token}` };
+  }
+  return {};
 }
