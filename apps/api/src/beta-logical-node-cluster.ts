@@ -120,6 +120,7 @@ export class BetaLogicalNodeCluster {
   private supervisorTimer?: NodeJS.Timeout;
   private heartbeatTimer?: NodeJS.Timeout;
   private repairTimer?: NodeJS.Timeout;
+  private leaseRetryTimer?: NodeJS.Timeout;
   private active = false;
 
   constructor(private readonly logger?: FastifyBaseLogger) {}
@@ -133,19 +134,15 @@ export class BetaLogicalNodeCluster {
     const ownsLease = await this.acquireLease();
     if (!ownsLease) {
       await this.recordEvent(null, "COORDINATOR_PASSIVE", "INFO", {});
+      this.leaseRetryTimer = setInterval(() => void this.safeRun("lease-retry", () => this.promoteIfLeaseAvailable()), Math.max(5000, config.betaNodeHeartbeatSeconds * 1000));
       return;
     }
-    this.active = true;
-    await this.reconcile();
-    await this.tickHeartbeat();
-    this.heartbeatTimer = setInterval(() => void this.safeRun("heartbeat", () => this.tickHeartbeat()), config.betaNodeHeartbeatSeconds * 1000);
-    this.supervisorTimer = setInterval(() => void this.safeRun("supervisor", () => this.supervise()), Math.max(5000, Math.floor(config.betaNodeHeartbeatSeconds * 1000)));
-    this.repairTimer = setInterval(() => void this.safeRun("repair", () => this.repairPending()), config.betaNodeRepairIntervalSeconds * 1000);
+    await this.startCoordinatorTasks();
   }
 
   async stop() {
     this.active = false;
-    for (const timer of [this.heartbeatTimer, this.supervisorTimer, this.repairTimer]) {
+    for (const timer of [this.heartbeatTimer, this.supervisorTimer, this.repairTimer, this.leaseRetryTimer]) {
       if (timer) {
         clearInterval(timer);
       }
@@ -160,7 +157,8 @@ export class BetaLogicalNodeCluster {
               monotonic_counter, started_at, last_heartbeat_at, last_error_code, restart_count, created_at, updated_at
        FROM beta_logical_nodes ORDER BY name`
     );
-    const onlineCount = nodes.rows.filter((node) => ["ONLINE", "DEGRADED", "RECOVERING"].includes(node.status)).length;
+    const now = Date.now();
+    const onlineCount = nodes.rows.filter((node) => isNodeFresh(node.status, node.last_heartbeat_at, now)).length;
     const queue = await this.pool.query("SELECT COUNT(*)::int AS count FROM beta_replication_jobs WHERE status IN ('PENDING','RETRYING','REPAIRING')");
     const leader = await this.pool.query("SELECT owner_id, expires_at FROM beta_cluster_leases WHERE lease_key = 'beta-logical-node-cluster' AND expires_at > NOW()");
     const clusterStatus = deriveClusterStatus(onlineCount);
@@ -180,6 +178,7 @@ export class BetaLogicalNodeCluster {
         role: node.role,
         publicKey: node.public_key,
         status: node.status,
+        effectiveOnline: isNodeFresh(node.status, node.last_heartbeat_at, now),
         protocolVersion: node.protocol_version,
         capabilities: node.capabilities,
         inventoryDigest: node.inventory_digest,
@@ -284,6 +283,26 @@ export class BetaLogicalNodeCluster {
       [this.ownerId, config.betaNodeLeaseSeconds]
     );
     return result.rows[0]?.owner_id === this.ownerId;
+  }
+
+  private async promoteIfLeaseAvailable() {
+    if (this.active || !(await this.acquireLease())) {
+      return;
+    }
+    if (this.leaseRetryTimer) {
+      clearInterval(this.leaseRetryTimer);
+      this.leaseRetryTimer = undefined;
+    }
+    await this.startCoordinatorTasks();
+  }
+
+  private async startCoordinatorTasks() {
+    this.active = true;
+    await this.reconcile();
+    await this.tickHeartbeat();
+    this.heartbeatTimer = setInterval(() => void this.safeRun("heartbeat", () => this.tickHeartbeat()), config.betaNodeHeartbeatSeconds * 1000);
+    this.supervisorTimer = setInterval(() => void this.safeRun("supervisor", () => this.supervise()), Math.max(5000, Math.floor(config.betaNodeHeartbeatSeconds * 1000)));
+    this.repairTimer = setInterval(() => void this.safeRun("repair", () => this.repairPending()), config.betaNodeRepairIntervalSeconds * 1000);
   }
 
   private async renewLease() {
@@ -408,6 +427,14 @@ function deriveClusterStatus(onlineCount: number): Exclude<BetaClusterStatus, "S
   if (onlineCount === 2) return "OPERATIONAL_DEGRADED";
   if (onlineCount === 1) return "CRITICAL";
   return "UNAVAILABLE";
+}
+
+function isNodeFresh(status: string, lastHeartbeatAt: string | Date | null | undefined, now: number) {
+  if (!["ONLINE", "DEGRADED", "RECOVERING"].includes(status) || !lastHeartbeatAt) {
+    return false;
+  }
+  const heartbeatTime = new Date(lastHeartbeatAt).getTime();
+  return Number.isFinite(heartbeatTime) && now - heartbeatTime <= config.betaNodeOfflineThresholdSeconds * 1000;
 }
 
 function sha256(value: string) {
