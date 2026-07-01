@@ -1,5 +1,6 @@
 use base64::Engine;
 use rand::RngCore;
+use rfd::FileDialog;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -190,6 +191,11 @@ struct LocalPackageResponse {
     chunks: Vec<LocalReleaseChunk>,
     #[serde(rename = "packagePath")]
     package_path: String,
+}
+
+#[derive(Serialize)]
+struct FolderSelection {
+    path: Option<String>,
 }
 
 #[tauri::command]
@@ -449,6 +455,16 @@ fn package_local_release(input: LocalReleaseRequest) -> Result<LocalPackageRespo
 }
 
 #[tauri::command]
+fn choose_site_folder() -> FolderSelection {
+    FolderSelection {
+        path: FileDialog::new()
+            .set_title("Seleziona la cartella del sito Velora")
+            .pick_folder()
+            .map(|path| path.display().to_string()),
+    }
+}
+
+#[tauri::command]
 fn load_site_document(app: AppHandle, input: LoadSiteRequest) -> Result<LoadedSiteDocument, VeloraError> {
     let address = input.address.trim().to_lowercase();
     let site_root = resolve_site_root(&app, &address, input.site_path.as_deref())?;
@@ -644,6 +660,7 @@ pub fn run() {
             init_local_store,
             get_or_create_node_identity,
             enroll_device,
+            choose_site_folder,
             validate_local_release,
             package_local_release,
             cache_packaged_release,

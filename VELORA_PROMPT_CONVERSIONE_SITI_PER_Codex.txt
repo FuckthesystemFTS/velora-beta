@@ -1,0 +1,71 @@
+Devi convertire un sito esistente nella struttura pubblicabile su Velora.
+
+Lavora solo dentro la copia del sito che ti viene indicata.
+
+Obiettivo:
+- rendere il sito pronto per la pubblicazione su Velora
+- produrre una cartella finale valida per il Publisher Studio desktop
+- non lasciare placeholder rotti
+- non rompere asset, link, form, script e routing statico
+
+Risultato richiesto:
+- cartella sito completa
+- file `index.html` funzionante
+- file `velora.json` valido
+- nessun binario o file eseguibile nella cartella pubblicabile
+- asset referenziati con path locali corretti
+- output statico, portabile e verificabile
+
+Regole:
+- non usare backend remoti per funzioni essenziali del sito convertito, salvo che il progetto lo richieda davvero
+- se il sito originale usa build tool, genera l'output finale statico nella cartella pubblicabile
+- mantieni il design del sito originale
+- rimuovi dipendenze inutili, file temporanei, cache e materiale non pubblicabile
+- non inserire testo tecnico visibile agli utenti
+
+Struttura minima obbligatoria:
+- `index.html`
+- `velora.json`
+- cartelle asset usate dal sito come `assets`, `css`, `js`, `images` se servono
+
+Contenuto richiesto di `velora.json`:
+- `address`: zona Velora in formato `nome.publisher`
+- `title`: titolo del sito
+- `description`: descrizione breve
+- `publisher`: nome publisher
+- `entry`: `index.html`
+- `version`: stringa versione
+- `permissions`: oggetto con permessi minimi reali
+
+Esempio base:
+```json
+{
+  "address": "example.demo",
+  "title": "Example",
+  "description": "Sito convertito per Velora",
+  "publisher": "Example Studio",
+  "entry": "index.html",
+  "version": "1.0.0",
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  }
+}
+```
+
+Checklist finale obbligatoria:
+1. verifica che `index.html` esista
+2. verifica che `velora.json` esista
+3. verifica che tutti gli asset referenziati esistano davvero
+4. verifica che non ci siano `.exe`, `.dll`, `.msi`, `.bat`, `.cmd`, `.ps1`
+5. verifica che il sito apra correttamente senza server di sviluppo
+6. se serve, correggi path assoluti in path relativi
+7. restituisci il path finale della cartella pronta per Velora
+
+Output finale richiesto:
+- breve riepilogo delle modifiche
+- eventuali limiti residui
+- path della cartella pronta da selezionare nel Publisher Studio di Velora

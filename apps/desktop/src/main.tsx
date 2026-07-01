@@ -14,6 +14,7 @@ import "./styles.css";
 type Workspace = "home" | "explore" | "mail" | "favorites" | "activity" | "identity" | "notifications" | "dev" | "settings" | "control";
 type ViewerState = "idle" | "loading" | "verifying" | "ready" | "not-found" | "blocked" | "unavailable" | "error";
 type NetworkState = "ready" | "syncing" | "limited" | "offline";
+type PublishStage = "idle" | "selecting" | "validating" | "packaging" | "publishing" | "success" | "error";
 
 type LoadedSiteDocument = {
   address: string;
@@ -137,6 +138,8 @@ function App() {
   const [validation, setValidation] = React.useState<VeloraValidationResult | null>(null);
   const [packaged, setPackaged] = React.useState<PublisherPackageResponse | null>(null);
   const [releases, setReleases] = React.useState<PublisherReleaseRecord[]>([]);
+  const [publishStage, setPublishStage] = React.useState<PublishStage>("idle");
+  const [publishMessage, setPublishMessage] = React.useState("Seleziona una cartella del sito e avvia il controllo");
   const [session, setSession] = React.useState<AccountSession | null>(() => loadStoredSession());
   const [authMode, setAuthMode] = React.useState<AuthMode>("register");
   const [authForm, setAuthForm] = React.useState({ username: "", password: "" });
@@ -319,43 +322,92 @@ function App() {
   }
 
   async function validateRelease() {
-    const result = await invoke<VeloraValidationResult>("validate_local_release", {
-      input: { sitePath: publisherSitePath }
-    });
-    setValidation(result);
+    setPublishStage("validating");
+    setPublishMessage("Controllo dei contenuti in corso");
+    try {
+      const result = await invoke<VeloraValidationResult>("validate_local_release", {
+        input: { sitePath: publisherSitePath }
+      });
+      setValidation(result);
+      setPackaged(null);
+      setPublishStage(result.valid ? "idle" : "error");
+      setPublishMessage(result.valid ? "Controllo completato, il sito puo essere preparato" : "Controllo completato, correggi gli errori prima di pubblicare");
+    } catch (error) {
+      setPublishStage("error");
+      setPublishMessage(error instanceof Error ? error.message : "Controllo non riuscito");
+    }
   }
 
   async function packageRelease() {
-    await requireSessionUserId();
-    const identity = await invoke<{ peer_id: string; public_key: string }>("get_or_create_node_identity");
-    const result = await invoke<PublisherPackageResponse>("package_local_release", {
-      input: { sitePath: publisherSitePath, publisherPublicKey: identity.public_key }
-    });
-    setPackaged(result);
-    await invoke("cache_packaged_release", {
-      input: {
-        ...result,
-        releaseId: null,
-        status: "PACKAGED_LOCAL"
+    setPublishStage("packaging");
+    setPublishMessage("Preparazione del pacchetto locale");
+    try {
+      await requireSessionUserId();
+      const identity = await invoke<{ peer_id: string; public_key: string }>("get_or_create_node_identity");
+      const result = await invoke<PublisherPackageResponse>("package_local_release", {
+        input: { sitePath: publisherSitePath, publisherPublicKey: identity.public_key }
+      });
+      setPackaged(result);
+      await invoke("cache_packaged_release", {
+        input: {
+          ...result,
+          releaseId: null,
+          status: "PACKAGED_LOCAL"
+        }
+      });
+      setPublishStage("idle");
+      setPublishMessage("Pacchetto pronto, puoi inviare la pubblicazione");
+    } catch (error) {
+      setPublishStage("error");
+      setPublishMessage(error instanceof Error ? error.message : "Preparazione non riuscita");
+    }
+  }
+
+  async function choosePublisherFolder() {
+    setPublishStage("selecting");
+    setPublishMessage("Apertura selettore cartella");
+    try {
+      const result = await invoke<{ path: string | null }>("choose_site_folder");
+      if (result.path) {
+        setPublisherSitePath(result.path);
+        setValidation(null);
+        setPackaged(null);
+        setPublishStage("idle");
+        setPublishMessage("Cartella selezionata, avvia il controllo");
+        return;
       }
-    });
+      setPublishStage("idle");
+      setPublishMessage("Selezione annullata");
+    } catch (error) {
+      setPublishStage("error");
+      setPublishMessage(error instanceof Error ? error.message : "Selezione cartella non riuscita");
+    }
   }
 
   async function registerRelease() {
     if (!packaged) {
       return;
     }
-    const userId = await requireSessionUserId();
-    const result = await siteApi.registerRelease({ ...packaged, token: session?.token, userId });
-    await invoke("cache_packaged_release", {
-      input: {
-        ...packaged,
-        releaseId: result.releaseId ?? null,
-        status: result.status
-      }
-    });
-    setNodeMessage(result.status === "ACTIVE" ? "Sito pubblicato su Velora" : "Pubblicazione inviata");
-    await loadReleases();
+    setPublishStage("publishing");
+    setPublishMessage("Invio della pubblicazione a Velora");
+    try {
+      const userId = await requireSessionUserId();
+      const result = await siteApi.registerRelease({ ...packaged, token: session?.token, userId });
+      await invoke("cache_packaged_release", {
+        input: {
+          ...packaged,
+          releaseId: result.releaseId ?? null,
+          status: result.status
+        }
+      });
+      setNodeMessage(result.status === "ACTIVE" ? "Sito pubblicato su Velora" : "Pubblicazione inviata");
+      setPublishStage("success");
+      setPublishMessage(result.status === "ACTIVE" ? "Pubblicazione completata e release attiva" : "Pubblicazione inviata, attendi la review della rete");
+      await loadReleases();
+    } catch (error) {
+      setPublishStage("error");
+      setPublishMessage(error instanceof Error ? error.message : "Pubblicazione non riuscita");
+    }
   }
 
   async function loadReleases() {
@@ -521,7 +573,10 @@ function App() {
             validation={validation}
             packaged={packaged}
             releases={releases}
+            publishStage={publishStage}
+            publishMessage={publishMessage}
             session={session}
+            onChooseFolder={choosePublisherFolder}
             onValidate={validateRelease}
             onPackage={packageRelease}
             onRegister={registerRelease}
@@ -911,7 +966,10 @@ function VeloraDev(props: {
   validation: VeloraValidationResult | null;
   packaged: PublisherPackageResponse | null;
   releases: PublisherReleaseRecord[];
+  publishStage: PublishStage;
+  publishMessage: string;
   session: AccountSession | null;
+  onChooseFolder: () => void;
   onValidate: () => void;
   onPackage: () => void;
   onRegister: () => void;
@@ -931,15 +989,18 @@ function VeloraDev(props: {
             {["Scegli la zona", "Seleziona la cartella del sito", "Controlla i contenuti", "Conferma identita", "Pubblica"].map((step) => <li key={step}>{step}</li>)}
           </ol>
           <label>Zona<input value={props.address} onChange={(event) => props.setAddress(event.target.value)} /></label>
-          <label>Cartella progetto<input value={props.sitePath} onChange={(event) => props.setSitePath(event.target.value)} /></label>
+          <label>Cartella progetto<input value={props.sitePath} onChange={(event) => props.setSitePath(event.target.value)} placeholder="Seleziona la cartella del sito" /></label>
           <div className="button-row">
+            <button onClick={props.onChooseFolder}>Sfoglia</button>
             <button onClick={props.onValidate}>Controlla</button>
             <button onClick={props.onPackage} disabled={!props.session}>Prepara</button>
             <button onClick={props.onRegister} disabled={!props.packaged || !props.session}>Pubblica</button>
             <button onClick={props.onRefresh}>Release</button>
           </div>
+          <p className="safe-detail">Stato pubblicazione: {renderPublishStage(props.publishStage)}</p>
+          <p className="safe-detail">{props.publishMessage}</p>
           {props.validation ? <ReviewBox validation={props.validation} /> : null}
-          {props.packaged ? <p className="safe-detail">Sito pronto per la pubblicazione.</p> : null}
+          {props.packaged ? <p className="safe-detail">Pacchetto pronto con CID e manifest locale</p> : null}
           {!props.session ? <p>Accedi per inviare una pubblicazione.</p> : null}
         </article>
         <article className="page-card">
@@ -969,6 +1030,25 @@ function ReviewBox({ validation }: { validation: VeloraValidationResult }) {
       <p>{validation.warnings.length ? validation.warnings.join(" | ") : "Nessun avviso."}</p>
     </div>
   );
+}
+
+function renderPublishStage(stage: PublishStage) {
+  switch (stage) {
+    case "selecting":
+      return "Selezione cartella";
+    case "validating":
+      return "Controllo contenuti";
+    case "packaging":
+      return "Preparazione release";
+    case "publishing":
+      return "Invio a Velora";
+    case "success":
+      return "Completato";
+    case "error":
+      return "Errore";
+    default:
+      return "In attesa";
+  }
 }
 
 function ControlCenter() {
