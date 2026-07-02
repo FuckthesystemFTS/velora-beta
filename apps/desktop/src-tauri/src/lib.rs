@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use tauri::{AppHandle, Manager};
 
 #[derive(Debug, thiserror::Error)]
@@ -465,6 +466,21 @@ fn choose_site_folder() -> FolderSelection {
 }
 
 #[tauri::command]
+fn open_site_folder(path: String) -> Result<(), VeloraError> {
+    let folder = PathBuf::from(path);
+    if !folder.is_dir() {
+        return Err(VeloraError::SiteNotFound(folder.display().to_string()));
+    }
+    #[cfg(target_os = "windows")]
+    Command::new("explorer").arg(folder).spawn()?;
+    #[cfg(target_os = "macos")]
+    Command::new("open").arg(folder).spawn()?;
+    #[cfg(target_os = "linux")]
+    Command::new("xdg-open").arg(folder).spawn()?;
+    Ok(())
+}
+
+#[tauri::command]
 fn load_site_document(app: AppHandle, input: LoadSiteRequest) -> Result<LoadedSiteDocument, VeloraError> {
     let address = input.address.trim().to_lowercase();
     let site_root = resolve_site_root(&app, &address, input.site_path.as_deref())?;
@@ -661,6 +677,7 @@ pub fn run() {
             get_or_create_node_identity,
             enroll_device,
             choose_site_folder,
+            open_site_folder,
             validate_local_release,
             package_local_release,
             cache_packaged_release,

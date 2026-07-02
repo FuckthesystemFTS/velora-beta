@@ -11,7 +11,7 @@ import {
 import { desktopBranding } from "./config/branding";
 import "./styles.css";
 
-type Workspace = "home" | "explore" | "mail" | "favorites" | "activity" | "identity" | "notifications" | "dev" | "settings" | "control";
+type Workspace = "home" | "explore" | "mail" | "forum" | "favorites" | "activity" | "identity" | "notifications" | "dev" | "settings" | "control";
 type ViewerState = "idle" | "loading" | "verifying" | "ready" | "not-found" | "blocked" | "unavailable" | "error";
 type NetworkState = "ready" | "syncing" | "limited" | "offline";
 type PublishStage = "idle" | "selecting" | "validating" | "packaging" | "publishing" | "success" | "error";
@@ -45,6 +45,23 @@ type MailMessage = {
   deliveryStatus: string;
   isRead: boolean;
   isStarred: boolean;
+  createdAt: string;
+};
+
+type ForumSection = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  onlineCount: number;
+  lastActivityAt: string | null;
+};
+
+type ForumMessage = {
+  id: string;
+  body: string;
+  bodyLength: number;
+  author: string;
   createdAt: string;
 };
 
@@ -150,6 +167,10 @@ function App() {
   const [mailFolder, setMailFolder] = React.useState("INBOX");
   const [mailStatus, setMailStatus] = React.useState("Sincronizzazione VeloMail in attesa");
   const [mailDraft, setMailDraft] = React.useState({ to: "beta@velora", subject: "", body: "" });
+  const [forumSections, setForumSections] = React.useState<ForumSection[]>([]);
+  const [forumMessages, setForumMessages] = React.useState<ForumMessage[]>([]);
+  const [forumDraft, setForumDraft] = React.useState("");
+  const [forumStatus, setForumStatus] = React.useState("Forum in attesa");
   const siteApi = createVeloraSiteApi(apiBaseUrl);
 
   React.useEffect(() => {
@@ -163,7 +184,17 @@ function App() {
     const slug = normalizeAccountSlug(session.user.username);
     setPublisherAddress(`shop.${slug}`);
     setMailDraft((current) => current.to === "beta@velora" || current.to === "alias@velora" ? { ...current, to: session.mail.address } : current);
+    void loadForum(session);
   }, [session]);
+
+  React.useEffect(() => {
+    if (!session || workspace !== "forum") {
+      return;
+    }
+    void loadForum(session);
+    const timer = window.setInterval(() => void loadForum(session), 5000);
+    return () => window.clearInterval(timer);
+  }, [workspace, session?.token]);
 
   async function prepareVelora() {
     try {
@@ -202,6 +233,7 @@ function App() {
       setNetworkState("ready");
       await enrollActiveDevice(nextSession);
       await loadMail("INBOX", nextSession);
+      await loadForum(nextSession);
     } catch (error) {
       setAuthMessage(error instanceof Error ? error.message : "Accesso non riuscito");
     }
@@ -213,6 +245,8 @@ function App() {
     setMailUserId("");
     setMailAddress("alias@velora");
     setMailMessages([]);
+    setForumMessages([]);
+    setForumSections([]);
     setNodeMessage("Accedi o crea il tuo account Velora");
   }
 
@@ -372,8 +406,14 @@ function App() {
         setPublisherSitePath(result.path);
         setValidation(null);
         setPackaged(null);
-        setPublishStage("idle");
-        setPublishMessage("Cartella selezionata, avvia il controllo");
+        setPublishStage("validating");
+        setPublishMessage("Cartella selezionata, controllo automatico in corso");
+        const validationResult = await invoke<VeloraValidationResult>("validate_local_release", {
+          input: { sitePath: result.path }
+        });
+        setValidation(validationResult);
+        setPublishStage(validationResult.valid ? "idle" : "error");
+        setPublishMessage(validationResult.valid ? "Controllo completato, il sito puo essere preparato" : "Controllo completato, correggi gli errori prima di pubblicare");
         return;
       }
       setPublishStage("idle");
@@ -381,6 +421,18 @@ function App() {
     } catch (error) {
       setPublishStage("error");
       setPublishMessage(error instanceof Error ? error.message : "Selezione cartella non riuscita");
+    }
+  }
+
+  async function openPublisherFolder() {
+    if (!publisherSitePath) {
+      return;
+    }
+    try {
+      await invoke("open_site_folder", { path: publisherSitePath });
+    } catch (error) {
+      setPublishStage("error");
+      setPublishMessage(error instanceof Error ? error.message : "Impossibile aprire la cartella");
     }
   }
 
@@ -474,6 +526,60 @@ function App() {
     }
   }
 
+  async function loadForum(activeSession = session) {
+    if (!activeSession) {
+      setForumStatus("Accedi per usare il Forum");
+      return;
+    }
+    try {
+      const sectionsResponse = await fetch(`${apiBaseUrl}/api/v1/forum/sections`, { headers: authHeaders(activeSession) });
+      if (!sectionsResponse.ok) {
+        throw new Error("FORUM_UNAVAILABLE");
+      }
+      const sectionsPayload = await sectionsResponse.json() as { sections: ForumSection[] };
+      setForumSections(sectionsPayload.sections ?? []);
+      const messagesResponse = await fetch(`${apiBaseUrl}/api/v1/forum/sections/global-chat/messages`, { headers: authHeaders(activeSession) });
+      if (!messagesResponse.ok) {
+        throw new Error("FORUM_MESSAGES_UNAVAILABLE");
+      }
+      const messagesPayload = await messagesResponse.json() as { messages: ForumMessage[] };
+      setForumMessages(messagesPayload.messages ?? []);
+      setForumStatus("Connesso");
+    } catch {
+      setForumStatus("Riconnessione");
+    }
+  }
+
+  async function sendForumMessage() {
+    if (!session) {
+      setForumStatus("Accedi per inviare messaggi");
+      return;
+    }
+    const body = forumDraft.trim();
+    if (!body || body.length > 200) {
+      return;
+    }
+    const previousDraft = forumDraft;
+    setForumStatus("Invio");
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/forum/sections/global-chat/messages`, {
+        method: "POST",
+        headers: { "content-type": "application/json", ...authHeaders(session) },
+        body: JSON.stringify({ body })
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({})) as { code?: string };
+        throw new Error(payload.code ?? "FORUM_SEND_FAILED");
+      }
+      setForumDraft("");
+      setForumStatus("Connesso");
+      await loadForum(session);
+    } catch (error) {
+      setForumDraft(previousDraft);
+      setForumStatus(error instanceof Error ? error.message : "Non inviato");
+    }
+  }
+
   async function requireSessionUserId() {
     if (mailUserId) {
       return mailUserId;
@@ -559,6 +665,18 @@ function App() {
             onSend={() => void sendMail()}
           />
         ) : null}
+        {workspace === "forum" ? (
+          <Forum
+            sections={forumSections}
+            messages={forumMessages}
+            draft={forumDraft}
+            setDraft={setForumDraft}
+            status={forumStatus}
+            session={session}
+            onSend={() => void sendForumMessage()}
+            onRefresh={() => void loadForum()}
+          />
+        ) : null}
         {workspace === "favorites" ? <SimpleCollection title="Preferiti" items={favorites} onOpen={openZone} /> : null}
         {workspace === "activity" ? <Activity /> : null}
         {workspace === "identity" ? <Identity session={session} onVerify={() => void verifyIdentity()} /> : null}
@@ -577,6 +695,7 @@ function App() {
             publishMessage={publishMessage}
             session={session}
             onChooseFolder={choosePublisherFolder}
+            onOpenFolder={openPublisherFolder}
             onValidate={validateRelease}
             onPackage={packageRelease}
             onRegister={registerRelease}
@@ -594,6 +713,7 @@ function Sidebar({ workspace, setWorkspace, networkState }: { workspace: Workspa
     ["home", "Home"],
     ["explore", "Esplora"],
     ["mail", "VeloMail"],
+    ["forum", "Forum"],
     ["favorites", "Preferiti"],
     ["activity", "Attivita"],
     ["identity", "Identita"],
@@ -918,6 +1038,61 @@ function Milestones() {
   );
 }
 
+function Forum(props: {
+  sections: ForumSection[];
+  messages: ForumMessage[];
+  draft: string;
+  setDraft: (value: string) => void;
+  status: string;
+  session: AccountSession | null;
+  onSend: () => void;
+  onRefresh: () => void;
+}) {
+  const global = props.sections.find((section) => section.slug === "global-chat");
+  const trimmed = props.draft.trim();
+  const blockedReason = !props.session ? "Accedi per partecipare" : !trimmed ? "Scrivi un messaggio" : props.draft.length > 200 ? "Limite 200 caratteri" : "";
+  return (
+    <section className="forum-workspace">
+      <header className="workspace-heading">
+        <span className="eyebrow">FORUM</span>
+        <h1>Chat Globale</h1>
+        <p>{global?.description ?? "La prima chat pubblica della Beta Velora"}</p>
+      </header>
+      <div className="dev-layout">
+        <article className="page-card">
+          <div className="button-row">
+            <span className="safe-detail">Stato: {props.status}</span>
+            <span className="safe-detail">Online: {global?.onlineCount ?? 0}</span>
+            <button onClick={props.onRefresh}>Aggiorna</button>
+          </div>
+          <div className="chat-log" aria-live="polite">
+            {props.messages.length ? props.messages.map((message) => (
+              <article key={message.id} className="chat-message">
+                <strong>{message.author}</strong>
+                <time>{formatDateTime(message.createdAt)}</time>
+                <p>{message.body}</p>
+              </article>
+            )) : <p>Nessun messaggio nella Chat Globale.</p>}
+          </div>
+          <label>Messaggio
+            <textarea
+              value={props.draft}
+              maxLength={200}
+              onChange={(event) => props.setDraft(event.target.value)}
+              placeholder="Scrivi nella Chat Globale"
+            />
+          </label>
+          <div className="button-row">
+            <span className={props.draft.length > 200 ? "safe-detail danger" : "safe-detail"}>{props.draft.length} / 200</span>
+            <button onClick={props.onSend} disabled={Boolean(blockedReason)}>Invia</button>
+          </div>
+          {blockedReason ? <p className="safe-detail">{blockedReason}</p> : null}
+        </article>
+      </div>
+    </section>
+  );
+}
+
 function SimpleCollection({ title, items, onOpen }: { title: string; items: string[]; onOpen: (zone: string) => void }) {
   return (
     <section className="page-card">
@@ -970,6 +1145,7 @@ function VeloraDev(props: {
   publishMessage: string;
   session: AccountSession | null;
   onChooseFolder: () => void;
+  onOpenFolder: () => void;
   onValidate: () => void;
   onPackage: () => void;
   onRegister: () => void;
@@ -989,9 +1165,10 @@ function VeloraDev(props: {
             {["Scegli la zona", "Seleziona la cartella del sito", "Controlla i contenuti", "Conferma identita", "Pubblica"].map((step) => <li key={step}>{step}</li>)}
           </ol>
           <label>Zona<input value={props.address} onChange={(event) => props.setAddress(event.target.value)} /></label>
-          <label>Cartella progetto<input value={props.sitePath} onChange={(event) => props.setSitePath(event.target.value)} placeholder="Seleziona la cartella del sito" /></label>
+          <label>Cartella progetto<input value={props.sitePath} readOnly placeholder="Seleziona la cartella del sito" /></label>
           <div className="button-row">
-            <button onClick={props.onChooseFolder}>Sfoglia</button>
+            <button onClick={props.onChooseFolder}>{props.sitePath ? "Cambia cartella" : "Seleziona cartella"}</button>
+            <button onClick={props.onOpenFolder} disabled={!props.sitePath}>Apri cartella</button>
             <button onClick={props.onValidate}>Controlla</button>
             <button onClick={props.onPackage} disabled={!props.session}>Prepara</button>
             <button onClick={props.onRegister} disabled={!props.packaged || !props.session}>Pubblica</button>
@@ -1049,6 +1226,14 @@ function renderPublishStage(stage: PublishStage) {
     default:
       return "In attesa";
   }
+}
+
+function formatDateTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  return date.toLocaleString("it-IT", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" });
 }
 
 function ControlCenter() {

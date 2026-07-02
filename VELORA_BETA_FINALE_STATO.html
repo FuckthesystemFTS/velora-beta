@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Velora Beta Finale - Stato</title>
+  <style>
+    body{margin:0;background:#07111f;color:#f7fbff;font-family:Arial,sans-serif;line-height:1.55}
+    main{max-width:1040px;margin:auto;padding:40px 20px}
+    h1,h2{color:#f1d68b}
+    section{border:1px solid rgba(150,202,255,.22);background:rgba(10,30,50,.72);border-radius:16px;padding:20px;margin:16px 0}
+    .ok{color:#9cf0bd}.warn{color:#ffd37a}.block{color:#ffb4a8}
+    code{background:#020a12;padding:2px 6px;border-radius:6px}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Velora Beta Finale - Stato lavori</h1>
+  <section><h2>Publishing Studio</h2><p class="ok">Selettore cartella nativo, validazione automatica e stato guidato implementati nel desktop.</p></section>
+  <section><h2>Forum</h2><p class="ok">Forum con sezione <code>Chat Globale</code>, limite 200 e persistenza PostgreSQL implementati.</p></section>
+  <section><h2>Admin</h2><p class="block">Primo accesso admin e cambio password non ancora completati.</p></section>
+  <section><h2>Homepage e deploy</h2><p class="warn">Portale gia distribuito in precedenza. Serve deploy finale dopo test di questa patch.</p></section>
+  <section><h2>Build finali</h2><p class="block">MSI e DMG finali devono essere rigenerati una sola volta dopo i test.</p></section>
+  <section><h2>Stato</h2><p><code>VELORA_PUBLIC_BETA_BLOCKED</code> fino a completamento admin bootstrap e build finali.</p></section>
+</main>
+</body>
+</html>

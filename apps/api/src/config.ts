@@ -21,5 +21,12 @@ export const config = {
   betaNodeMasterKey: process.env.VELORA_BETA_NODE_MASTER_KEY ?? "",
   betaNodeLeaseSeconds: Number(process.env.VELORA_BETA_NODE_LEASE_SECONDS ?? 45),
   betaNodeRepairIntervalSeconds: Number(process.env.VELORA_BETA_NODE_REPAIR_INTERVAL_SECONDS ?? 60),
-  betaNodeHerokuPlan: process.env.HEROKU_DYNO_PLAN ?? process.env.VELORA_HEROKU_DYNO_PLAN ?? "unknown"
+  betaNodeHerokuPlan: process.env.HEROKU_DYNO_PLAN ?? process.env.VELORA_HEROKU_DYNO_PLAN ?? "unknown",
+  guidedPublishingEnabled: process.env.VELORA_GUIDED_PUBLISHING_ENABLED !== "false",
+  forumEnabled: process.env.VELORA_FORUM_ENABLED !== "false",
+  globalChatEnabled: process.env.VELORA_GLOBAL_CHAT_ENABLED !== "false",
+  adminBootstrapEnabled: process.env.VELORA_ADMIN_BOOTSTRAP_ENABLED === "true",
+  forumMessageMaxChars: Number(process.env.VELORA_FORUM_MESSAGE_MAX_CHARS ?? 200),
+  forumMessageMinSeconds: Number(process.env.VELORA_FORUM_MESSAGE_MIN_SECONDS ?? 2),
+  forumPresenceSeconds: Number(process.env.VELORA_FORUM_PRESENCE_SECONDS ?? 75)
 };

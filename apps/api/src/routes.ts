@@ -1,4 +1,5 @@
 import { createReadStream } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import sensible from "@fastify/sensible";
@@ -8,7 +9,8 @@ import { navigationCategories, signedAdminCommandSchema, zoneCheckSchema, zoneRe
 import { validateVeloraSite } from "@velora/shared/velora-site-node";
 import { config } from "./config.js";
 import { buildLocalRelease, persistReleaseEvent, persistReleaseSnapshot } from "./content-store.js";
-import { hashPassword, verifySignedCommand } from "./crypto.js";
+import { hashPassword, hashValue, verifySignedCommand } from "./crypto.js";
+import { requirePool } from "./db.js";
 import { repository } from "./repository.js";
 import { betaLogicalNodeCluster } from "./beta-logical-node-cluster.js";
 
@@ -643,6 +645,124 @@ export async function registerRoutes(app: FastifyInstance) {
   });
   app.get("/api/v1/releases/latest", async () => ({ version: "0.1.0-beta", channel: "beta" }));
 
+  app.get("/api/v1/forum/sections", async (_request, reply) => {
+    if (!config.forumEnabled) {
+      return reply.notFound("forum disabled");
+    }
+    const pool = requirePool();
+    const sections = await pool.query(
+      `SELECT fs.id, fs.slug, fs.title, fs.description,
+              COUNT(fp.user_id)::int AS online_count,
+              MAX(fm.created_at) AS last_activity_at
+       FROM forum_sections fs
+       LEFT JOIN forum_presence fp ON fp.section_id = fs.id AND fp.last_seen_at > NOW() - ($1 || ' seconds')::interval
+       LEFT JOIN forum_messages fm ON fm.section_id = fs.id AND fm.status = 'VISIBLE'
+       WHERE fs.is_active = TRUE
+       GROUP BY fs.id
+       ORDER BY fs.sort_order ASC, fs.title ASC`,
+      [config.forumPresenceSeconds]
+    );
+    return { sections: sections.rows.map(mapForumSection) };
+  });
+
+  app.get("/api/v1/forum/sections/:slug/messages", async (request, reply) => {
+    if (!config.forumEnabled || !config.globalChatEnabled) {
+      return reply.notFound("forum disabled");
+    }
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const slug = routeParam(request.params, "slug");
+    const section = await findForumSection(slug);
+    if (!section) {
+      return reply.notFound("forum section not found");
+    }
+    await touchForumPresence(userId, section.id, readBearerToken(request) ?? "");
+    const before = String((request.query as { before?: string } | undefined)?.before ?? "");
+    const params: unknown[] = [section.id];
+    let beforeSql = "";
+    if (before) {
+      params.push(before);
+      beforeSql = `AND fm.created_at < $${params.length}`;
+    }
+    const pool = requirePool();
+    const messages = await pool.query(
+      `SELECT fm.id, fm.body, fm.body_length, fm.created_at, u.username
+       FROM forum_messages fm
+       JOIN users u ON u.id = fm.user_id
+       WHERE fm.section_id = $1 AND fm.status = 'VISIBLE' ${beforeSql}
+       ORDER BY fm.created_at DESC
+       LIMIT 50`,
+      params
+    );
+    return { section: mapForumSection(section), messages: messages.rows.reverse().map(mapForumMessage) };
+  });
+
+  app.post("/api/v1/forum/sections/:slug/presence", async (request, reply) => {
+    if (!config.forumEnabled || !config.globalChatEnabled) {
+      return reply.notFound("forum disabled");
+    }
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const section = await findForumSection(routeParam(request.params, "slug"));
+    if (!section) {
+      return reply.notFound("forum section not found");
+    }
+    await touchForumPresence(userId, section.id, readBearerToken(request) ?? "");
+    return { ok: true };
+  });
+
+  app.post("/api/v1/forum/sections/:slug/messages", async (request, reply) => {
+    if (!config.forumEnabled || !config.globalChatEnabled) {
+      return reply.notFound("forum disabled");
+    }
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const section = await findForumSection(routeParam(request.params, "slug"));
+    if (!section) {
+      return reply.notFound("forum section not found");
+    }
+    const body = String((request.body as { body?: string } | undefined)?.body ?? "").trim();
+    if (!body) {
+      return reply.badRequest("message body is required");
+    }
+    if (body.length > config.forumMessageMaxChars) {
+      return reply.code(413).send({ code: "FORUM_MESSAGE_TOO_LONG", maxChars: config.forumMessageMaxChars });
+    }
+    const pool = requirePool();
+    const recent = await pool.query(
+      `SELECT body, created_at FROM forum_messages
+       WHERE user_id = $1 AND section_id = $2 AND created_at > NOW() - ($3 || ' seconds')::interval
+       ORDER BY created_at DESC LIMIT 1`,
+      [userId, section.id, config.forumMessageMinSeconds]
+    );
+    if (recent.rows[0]) {
+      return reply.code(429).send({ code: "FORUM_RATE_LIMIT", retryAfterSeconds: config.forumMessageMinSeconds });
+    }
+    const duplicate = await pool.query(
+      `SELECT 1 FROM forum_messages
+       WHERE user_id = $1 AND section_id = $2 AND body = $3 AND created_at > NOW() - INTERVAL '30 seconds'
+       LIMIT 1`,
+      [userId, section.id, body]
+    );
+    if (duplicate.rows[0]) {
+      return reply.code(429).send({ code: "FORUM_DUPLICATE_MESSAGE" });
+    }
+    await touchForumPresence(userId, section.id, readBearerToken(request) ?? "");
+    const result = await pool.query(
+      `INSERT INTO forum_messages (id, section_id, user_id, body, body_length)
+       VALUES ($1,$2,$3,$4,$5)
+       RETURNING id, body, body_length, created_at`,
+      [randomUUID(), section.id, userId, body, body.length]
+    );
+    return { message: { ...mapForumMessage({ ...result.rows[0], username: (await repository.findUserById(userId))?.username ?? "utente" }) } };
+  });
+
   app.post("/api/v1/control/session/challenge", async (request, reply) => {
     const body = request.body as { adminId?: string; deviceId?: string };
     if (!body.adminId || !body.deviceId) {
@@ -1006,4 +1126,43 @@ async function requireAdminSession(request: { headers: Record<string, string | s
     return undefined;
   }
   return admin;
+}
+
+async function findForumSection(slug: string) {
+  const pool = requirePool();
+  const result = await pool.query("SELECT id, slug, title, description FROM forum_sections WHERE slug = $1 AND is_active = TRUE", [slug]);
+  return result.rows[0] as { id: string; slug: string; title: string; description: string } | undefined;
+}
+
+async function touchForumPresence(userId: string, sectionId: string, token: string) {
+  const pool = requirePool();
+  const sessionHash = hashValue(token || `${userId}:forum`);
+  await pool.query(
+    `INSERT INTO forum_presence (user_id, section_id, session_id_hash, last_seen_at, updated_at)
+     VALUES ($1,$2,$3,NOW(),NOW())
+     ON CONFLICT (user_id, section_id, session_id_hash)
+     DO UPDATE SET last_seen_at = NOW(), updated_at = NOW()`,
+    [userId, sectionId, sessionHash]
+  );
+}
+
+function mapForumSection(row: any) {
+  return {
+    id: String(row.id),
+    slug: String(row.slug),
+    title: String(row.title),
+    description: String(row.description ?? ""),
+    onlineCount: Number(row.online_count ?? 0),
+    lastActivityAt: row.last_activity_at ?? null
+  };
+}
+
+function mapForumMessage(row: any) {
+  return {
+    id: String(row.id),
+    body: String(row.body),
+    bodyLength: Number(row.body_length ?? String(row.body).length),
+    author: String(row.username ?? "utente"),
+    createdAt: row.created_at
+  };
 }
