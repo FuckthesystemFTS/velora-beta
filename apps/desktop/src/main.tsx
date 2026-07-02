@@ -250,16 +250,46 @@ function App() {
     setNodeMessage("Accedi o crea il tuo account Velora");
   }
 
+  async function ensureFreshSession() {
+    if (!session) {
+      throw new Error("SESSION_REQUIRED");
+    }
+    const expiresAt = session.expiresAt ? Date.parse(session.expiresAt) : 0;
+    if (!session.refreshToken || !expiresAt || expiresAt - Date.now() > 60_000) {
+      return session;
+    }
+    const response = await fetch(`${apiBaseUrl}/api/v1/auth/refresh`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ refreshToken: session.refreshToken })
+    });
+    if (!response.ok) {
+      logout();
+      throw new Error("Sessione scaduta. Accedi di nuovo e riprova.");
+    }
+    const refreshed = await response.json() as Pick<AccountSession, "token" | "refreshToken" | "expiresAt">;
+    const nextSession: AccountSession = {
+      ...session,
+      token: refreshed.token,
+      refreshToken: refreshed.refreshToken,
+      expiresAt: refreshed.expiresAt
+    };
+    saveStoredSession(nextSession);
+    setSession(nextSession);
+    return nextSession;
+  }
+
   function applySession(nextSession: AccountSession) {
     setMailUserId(nextSession.user.id);
     setMailAddress(nextSession.mail.address);
   }
 
   async function enrollActiveDevice(activeSession: AccountSession) {
+    const freshSession = activeSession === session ? await ensureFreshSession() : activeSession;
     const identity = await invoke<{ peer_id: string; public_key: string }>("get_or_create_node_identity");
     const response = await fetch(`${apiBaseUrl}/api/v1/devices/enroll`, {
       method: "POST",
-      headers: { "content-type": "application/json", ...authHeaders(activeSession) },
+      headers: { "content-type": "application/json", ...authHeaders(freshSession) },
       body: JSON.stringify({ peerId: identity.peer_id, publicKey: identity.public_key, deviceName: "Velora Desktop" })
     });
     if (response.status === 409) {
@@ -376,7 +406,7 @@ function App() {
     setPublishStage("packaging");
     setPublishMessage("Preparazione del pacchetto locale");
     try {
-      await requireSessionUserId();
+      await ensureFreshSession();
       const identity = await invoke<{ peer_id: string; public_key: string }>("get_or_create_node_identity");
       const result = await invoke<PublisherPackageResponse>("package_local_release", {
         input: { sitePath: publisherSitePath, publisherPublicKey: identity.public_key }
@@ -443,8 +473,9 @@ function App() {
     setPublishStage("publishing");
     setPublishMessage("Invio della pubblicazione a Velora");
     try {
-      const userId = await requireSessionUserId();
-      const result = await siteApi.registerRelease({ ...packaged, token: session?.token, userId });
+      const freshSession = await ensureFreshSession();
+      const userId = freshSession.user.id;
+      const result = await siteApi.registerRelease({ ...packaged, token: freshSession.token, userId });
       await invoke("cache_packaged_release", {
         input: {
           ...packaged,
@@ -476,16 +507,17 @@ function App() {
     setMailFolder(folder);
     setMailStatus("Sincronizzazione in corso");
     try {
-      if (!activeSession) {
+      const freshSession = activeSession === session ? await ensureFreshSession() : activeSession;
+      if (!freshSession) {
         throw new Error("SESSION_REQUIRED");
       }
-      const accountResponse = await fetch(`${apiBaseUrl}/api/v1/mail/account`, { headers: authHeaders(activeSession) });
+      const accountResponse = await fetch(`${apiBaseUrl}/api/v1/mail/account`, { headers: authHeaders(freshSession) });
       if (accountResponse.ok) {
         const account = await accountResponse.json() as { address: string };
         setMailAddress(account.address);
       }
       const endpoint = folder === "INBOX" ? "/api/v1/mail/inbox" : `/api/v1/mail/folders/${encodeURIComponent(folder)}`;
-      const response = await fetch(`${apiBaseUrl}${endpoint}`, { headers: authHeaders(activeSession) });
+      const response = await fetch(`${apiBaseUrl}${endpoint}`, { headers: authHeaders(freshSession) });
       if (!response.ok) {
         throw new Error("MAIL_SYNC_FAILED");
       }
@@ -493,21 +525,18 @@ function App() {
       setMailMessages(result.messages ?? []);
       setMailStatus("Sincronizzato");
     } catch (error) {
-      setMailStatus("VeloMail non disponibile in questo momento");
+      setMailStatus(error instanceof Error && error.message === "SESSION_REQUIRED" ? "Accedi per usare VeloMail" : "VeloMail non disponibile in questo momento");
     }
   }
 
   async function sendMail() {
     setMailStatus("Invio in corso");
     try {
-      await requireSessionUserId();
-      if (!session) {
-        throw new Error("SESSION_REQUIRED");
-      }
+      const freshSession = await ensureFreshSession();
       const sealed = await sealVeloMailDraft(mailDraft.subject, mailDraft.body);
       const response = await fetch(`${apiBaseUrl}/api/v1/mail/send`, {
         method: "POST",
-        headers: { "content-type": "application/json", ...authHeaders(session) },
+        headers: { "content-type": "application/json", ...authHeaders(freshSession) },
         body: JSON.stringify({
           to: mailDraft.to.split(",").map((item: string) => item.trim()).filter(Boolean),
           subject: mailDraft.subject,
@@ -517,12 +546,13 @@ function App() {
         })
       });
       if (!response.ok) {
-        throw new Error("MAIL_SEND_FAILED");
+        const payload = await response.json().catch(() => ({})) as { code?: string; message?: string; error?: string };
+        throw new Error(payload.code ?? payload.message ?? payload.error ?? "MAIL_SEND_FAILED");
       }
       setMailDraft({ to: mailDraft.to, subject: "", body: "" });
       await loadMail("SENT");
     } catch (error) {
-      setMailStatus("Invio non riuscito");
+      setMailStatus(error instanceof Error && error.message === "SESSION_REQUIRED" ? "Accedi per inviare mail" : `Invio non riuscito: ${error instanceof Error ? error.message : "errore"}`);
     }
   }
 
@@ -532,29 +562,29 @@ function App() {
       return;
     }
     try {
-      const sectionsResponse = await fetch(`${apiBaseUrl}/api/v1/forum/sections`, { headers: authHeaders(activeSession) });
+      const freshSession = activeSession === session ? await ensureFreshSession() : activeSession;
+      if (!freshSession) {
+        throw new Error("SESSION_REQUIRED");
+      }
+      const sectionsResponse = await fetch(`${apiBaseUrl}/api/v1/forum/sections`, { headers: authHeaders(freshSession) });
       if (!sectionsResponse.ok) {
         throw new Error("FORUM_UNAVAILABLE");
       }
       const sectionsPayload = await sectionsResponse.json() as { sections: ForumSection[] };
       setForumSections(sectionsPayload.sections ?? []);
-      const messagesResponse = await fetch(`${apiBaseUrl}/api/v1/forum/sections/global-chat/messages`, { headers: authHeaders(activeSession) });
+      const messagesResponse = await fetch(`${apiBaseUrl}/api/v1/forum/sections/global-chat/messages`, { headers: authHeaders(freshSession) });
       if (!messagesResponse.ok) {
         throw new Error("FORUM_MESSAGES_UNAVAILABLE");
       }
       const messagesPayload = await messagesResponse.json() as { messages: ForumMessage[] };
       setForumMessages(messagesPayload.messages ?? []);
       setForumStatus("Connesso");
-    } catch {
-      setForumStatus("Riconnessione");
+    } catch (error) {
+      setForumStatus(error instanceof Error && error.message === "SESSION_REQUIRED" ? "Accedi per usare il Forum" : "Riconnessione");
     }
   }
 
   async function sendForumMessage() {
-    if (!session) {
-      setForumStatus("Accedi per inviare messaggi");
-      return;
-    }
     const body = forumDraft.trim();
     if (!body || body.length > 200) {
       return;
@@ -562,9 +592,10 @@ function App() {
     const previousDraft = forumDraft;
     setForumStatus("Invio");
     try {
+      const freshSession = await ensureFreshSession();
       const response = await fetch(`${apiBaseUrl}/api/v1/forum/sections/global-chat/messages`, {
         method: "POST",
-        headers: { "content-type": "application/json", ...authHeaders(session) },
+        headers: { "content-type": "application/json", ...authHeaders(freshSession) },
         body: JSON.stringify({ body })
       });
       if (!response.ok) {
@@ -573,10 +604,10 @@ function App() {
       }
       setForumDraft("");
       setForumStatus("Connesso");
-      await loadForum(session);
+      await loadForum(freshSession);
     } catch (error) {
       setForumDraft(previousDraft);
-      setForumStatus(error instanceof Error ? error.message : "Non inviato");
+      setForumStatus(error instanceof Error && error.message === "SESSION_REQUIRED" ? "Accedi per inviare messaggi" : error instanceof Error ? error.message : "Non inviato");
     }
   }
 
