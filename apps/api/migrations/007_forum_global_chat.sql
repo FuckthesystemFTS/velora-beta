@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS forum_sections (
 CREATE TABLE IF NOT EXISTS forum_messages (
   id UUID PRIMARY KEY,
   section_id UUID NOT NULL REFERENCES forum_sections(id) ON DELETE CASCADE,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   body TEXT NOT NULL,
   body_length INTEGER NOT NULL,
   status TEXT NOT NULL DEFAULT 'VISIBLE',
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS forum_messages (
 );
 
 CREATE TABLE IF NOT EXISTS forum_presence (
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   section_id UUID NOT NULL REFERENCES forum_sections(id) ON DELETE CASCADE,
   session_id_hash TEXT NOT NULL,
   last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -33,8 +33,8 @@ CREATE TABLE IF NOT EXISTS forum_presence (
 
 CREATE TABLE IF NOT EXISTS forum_moderation_actions (
   id UUID PRIMARY KEY,
-  moderator_user_id TEXT,
-  target_user_id TEXT,
+  moderator_user_id UUID,
+  target_user_id UUID,
   message_id UUID REFERENCES forum_messages(id) ON DELETE SET NULL,
   action TEXT NOT NULL,
   reason TEXT,
