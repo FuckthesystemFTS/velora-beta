@@ -125,6 +125,8 @@ const featuredSites: SearchCard[] = [
   }
 ];
 
+const defaultFeaturedSites = featuredSites.filter((site) => site.zone === "shop.demo" || site.verified);
+
 const identityLevels = [
   ["Livello 0", "Account creato", "Accesso, navigazione, VeloMail e pubblicazione beta."],
   ["Livello 1", "Dispositivo verificato", "Account collegato al dispositivo attivo e pronto per pubblicare."],
@@ -149,7 +151,7 @@ function App() {
   const [viewerState, setViewerState] = React.useState<ViewerState>("idle");
   const [viewerMessage, setViewerMessage] = React.useState("Cerca o apri una zona dell'Upper Web.");
   const [favorites, setFavorites] = React.useState<string[]>(["shop.demo"]);
-  const [searchResults, setSearchResults] = React.useState<SearchCard[]>(featuredSites);
+  const [searchResults, setSearchResults] = React.useState<SearchCard[]>([]);
   const [publisherSitePath, setPublisherSitePath] = React.useState(demoSitePath);
   const [publisherAddress, setPublisherAddress] = React.useState("shop.demo");
   const [validation, setValidation] = React.useState<VeloraValidationResult | null>(null);
@@ -195,6 +197,17 @@ function App() {
     const timer = window.setInterval(() => void loadForum(session), 5000);
     return () => window.clearInterval(timer);
   }, [workspace, session?.token]);
+
+  React.useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type !== "VELORA_AUTH_REQUEST") {
+        return;
+      }
+      handleSiteAuthRequest(event);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [session]);
 
   async function prepareVelora() {
     try {
@@ -331,8 +344,7 @@ function App() {
       setViewerMessage("Download contenuto");
       const result = await invoke<LoadedSiteDocument>("load_site_document", {
         input: {
-          address: normalized,
-          sitePath: demoSitePath
+          address: normalized
         }
       });
       setViewerMessage("Verifica firma");
@@ -360,7 +372,7 @@ function App() {
     }
 
     setWorkspace("explore");
-    const localResults = featuredSites.filter((site) => {
+    const localResults = normalized ? [] : defaultFeaturedSites.filter((site) => {
       const haystack = `${site.title} ${site.zone} ${site.description} ${site.category} ${site.publisher}`.toLowerCase();
       return !normalized || haystack.includes(normalized);
     });
@@ -379,7 +391,7 @@ function App() {
         availability: item.availability > 0 ? "Disponibile" : "Indicizzato",
         updatedAt: item.release_version ? `Release ${item.release_version}` : "Recente"
       }));
-      setSearchResults([...remoteResults, ...localResults].slice(0, 12));
+      setSearchResults(mergeSearchResults(remoteResults, localResults).slice(0, 12));
     } catch {
       setSearchResults(localResults);
     }
@@ -609,6 +621,22 @@ function App() {
       setForumDraft(previousDraft);
       setForumStatus(error instanceof Error && error.message === "SESSION_REQUIRED" ? "Accedi per inviare messaggi" : error instanceof Error ? error.message : "Non inviato");
     }
+  }
+
+  function handleSiteAuthRequest(event?: MessageEvent) {
+    if (session) {
+      setNodeMessage(`Account Velora attivo: ${session.mail.address}`);
+      event?.source?.postMessage({
+        type: "VELORA_AUTH_STATE",
+        loggedIn: true,
+        mail: session.mail.address,
+        username: session.user.username
+      }, { targetOrigin: "*" });
+      return;
+    }
+    setWorkspace("home");
+    setAuthMode("register");
+    setAuthMessage("Crea o accedi al tuo account Velora per continuare nel sito.");
   }
 
   async function requireSessionUserId() {
@@ -1286,6 +1314,19 @@ function networkLabel(state: NetworkState) {
     limited: "Connessione limitata",
     offline: "Offline"
   }[state];
+}
+
+function mergeSearchResults(primary: SearchCard[], secondary: SearchCard[]) {
+  const seen = new Set<string>();
+  const merged: SearchCard[] = [];
+  for (const item of [...primary, ...secondary]) {
+    if (seen.has(item.zone)) {
+      continue;
+    }
+    seen.add(item.zone);
+    merged.push(item);
+  }
+  return merged;
 }
 
 function authHeaders(session: AccountSession) {

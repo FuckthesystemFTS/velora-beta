@@ -488,6 +488,7 @@ fn load_site_document(app: AppHandle, input: LoadSiteRequest) -> Result<LoadedSi
     let mut html = fs::read_to_string(&index_path)?;
     html = inline_demo_asset(&html, &site_root, "style.css", "style")?;
     html = inline_demo_asset(&html, &site_root, "app.js", "script")?;
+    html = inject_velora_site_bridge(&html);
     let title = extract_title(&html).unwrap_or_else(|| address.clone());
 
     cache_history_visit(&app, &address, &title)?;
@@ -527,6 +528,10 @@ fn resolve_site_root(app: &AppHandle, address: &str, requested_path: Option<&str
         }
     }
 
+    if let Some(root) = find_published_site_root(address) {
+        return Ok(root);
+    }
+
     if address == "shop.demo" {
         let workspace_demo = Path::new(env!("CARGO_MANIFEST_DIR"))
             .ancestors()
@@ -541,6 +546,67 @@ fn resolve_site_root(app: &AppHandle, address: &str, requested_path: Option<&str
     }
 
     Err(VeloraError::SiteNotFound(address.to_string()))
+}
+
+fn find_published_site_root(address: &str) -> Option<PathBuf> {
+    let workspace = Path::new(env!("CARGO_MANIFEST_DIR")).ancestors().nth(3)?;
+    let published_root = workspace.join("published-sites");
+    let entries = fs::read_dir(published_root).ok()?;
+    for entry in entries.flatten() {
+        let root = entry.path();
+        if !root.join("index.html").is_file() {
+            continue;
+        }
+        let manifest_path = root.join("velora.json");
+        let manifest = fs::read_to_string(manifest_path).ok()?;
+        let json: serde_json::Value = serde_json::from_str(&manifest).ok()?;
+        if json["address"].as_str() == Some(address) {
+            return Some(root);
+        }
+    }
+    None
+}
+
+fn inject_velora_site_bridge(html: &str) -> String {
+    let bridge = r#"
+<script>
+(() => {
+  const showVeloraAuth = (message) => {
+    let box = document.querySelector("[data-velora-auth-state]");
+    if (!box) {
+      box = document.createElement("div");
+      box.setAttribute("data-velora-auth-state", "true");
+      box.style.cssText = "position:fixed;left:16px;right:16px;bottom:16px;z-index:99999;padding:14px 16px;border-radius:18px;background:rgba(8,12,22,.92);color:#fff;font:600 14px sans-serif;box-shadow:0 18px 60px rgba(0,0,0,.28)";
+      document.body.appendChild(box);
+    }
+    box.textContent = message;
+  };
+  const requestAuth = (event) => {
+    event.preventDefault();
+    window.parent.postMessage({ type: "VELORA_AUTH_REQUEST" }, "*");
+  };
+  window.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "VELORA_AUTH_STATE" && event.data.loggedIn) {
+      showVeloraAuth(`Account Velora collegato: ${event.data.mail || event.data.username || "utente verificato"}`);
+    }
+  });
+  document.addEventListener("click", (event) => {
+    const target = event.target && event.target.closest ? event.target.closest("[data-velora-auth], a[href^='velora://auth']") : null;
+    if (target) {
+      requestAuth(event);
+    }
+  });
+})();
+</script>
+"#;
+    if let Some(index) = html.rfind("</body>") {
+        let mut output = String::with_capacity(html.len() + bridge.len());
+        output.push_str(&html[..index]);
+        output.push_str(bridge);
+        output.push_str(&html[index..]);
+        return output;
+    }
+    format!("{html}{bridge}")
 }
 
 fn inline_demo_asset(html: &str, site_root: &Path, file_name: &str, kind: &str) -> Result<String, VeloraError> {
