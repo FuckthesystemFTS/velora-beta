@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 use tauri::{AppHandle, Manager};
 
 #[derive(Debug, thiserror::Error)]
@@ -199,6 +199,26 @@ struct FolderSelection {
     path: Option<String>,
 }
 
+#[derive(Deserialize)]
+struct StartMiningRequest {
+    #[serde(rename = "poolUrl")]
+    pool_url: String,
+    username: String,
+    password: String,
+    threads: Option<u8>,
+}
+
+#[derive(Serialize)]
+struct MiningLocalStatus {
+    ready: bool,
+    running: bool,
+    #[serde(rename = "minerPath")]
+    miner_path: String,
+    #[serde(rename = "pidPath")]
+    pid_path: String,
+    message: String,
+}
+
 #[tauri::command]
 fn init_local_store(app: AppHandle) -> Result<String, VeloraError> {
     let db_path = local_db_path(&app)?;
@@ -240,6 +260,84 @@ fn get_or_create_node_identity(app: AppHandle) -> Result<NodeIdentity, VeloraErr
     )?;
 
     Ok(NodeIdentity { peer_id, public_key })
+}
+
+#[tauri::command]
+fn mining_status(app: AppHandle) -> Result<MiningLocalStatus, VeloraError> {
+    let dir = mining_dir(&app)?;
+    let miner_path = mining_executable_path(&app)?;
+    let pid_path = dir.join("xmrig.pid");
+    let ready = miner_path.exists();
+    let running = read_running_pid(&pid_path).is_some();
+    Ok(MiningLocalStatus {
+        ready,
+        running,
+        miner_path: miner_path.to_string_lossy().to_string(),
+        pid_path: pid_path.to_string_lossy().to_string(),
+        message: if ready {
+            "Miner locale pronto".to_string()
+        } else {
+            "Inserisci xmrig.exe nella cartella miner indicata".to_string()
+        },
+    })
+}
+
+#[tauri::command]
+fn start_mining(app: AppHandle, input: StartMiningRequest) -> Result<MiningLocalStatus, VeloraError> {
+    let dir = mining_dir(&app)?;
+    let miner_path = mining_executable_path(&app)?;
+    if !miner_path.exists() {
+        return Ok(MiningLocalStatus {
+            ready: false,
+            running: false,
+            miner_path: miner_path.to_string_lossy().to_string(),
+            pid_path: dir.join("xmrig.pid").to_string_lossy().to_string(),
+            message: "xmrig.exe non trovato. Scarica XMRig ufficiale e metti xmrig.exe nella cartella indicata.".to_string(),
+        });
+    }
+    let pid_path = dir.join("xmrig.pid");
+    if read_running_pid(&pid_path).is_some() {
+        return mining_status(app);
+    }
+    let mut args = vec![
+        "-o".to_string(),
+        input.pool_url,
+        "-u".to_string(),
+        input.username,
+        "-p".to_string(),
+        input.password,
+        "--donate-level".to_string(),
+        "0".to_string(),
+        "--cpu-priority".to_string(),
+        "1".to_string(),
+    ];
+    if let Some(threads) = input.threads {
+        args.push("-t".to_string());
+        args.push(threads.clamp(1, 8).to_string());
+    }
+    let child = Command::new(&miner_path)
+        .args(args)
+        .current_dir(&dir)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()?;
+    fs::write(&pid_path, child.id().to_string())?;
+    mining_status(app)
+}
+
+#[tauri::command]
+fn stop_mining(app: AppHandle) -> Result<MiningLocalStatus, VeloraError> {
+    let dir = mining_dir(&app)?;
+    let pid_path = dir.join("xmrig.pid");
+    if let Some(pid) = read_running_pid(&pid_path) {
+        #[cfg(target_os = "windows")]
+        let _ = Command::new("taskkill").args(["/PID", &pid.to_string(), "/T", "/F"]).status();
+        #[cfg(not(target_os = "windows"))]
+        let _ = Command::new("kill").arg(pid.to_string()).status();
+    }
+    let _ = fs::remove_file(&pid_path);
+    mining_status(app)
 }
 
 #[tauri::command]
@@ -736,6 +834,38 @@ fn local_db_path(app: &AppHandle) -> Result<PathBuf, VeloraError> {
     Ok(dir.join("velora.local.sqlite"))
 }
 
+fn mining_dir(app: &AppHandle) -> Result<PathBuf, VeloraError> {
+    let dir = app.path().app_data_dir().map_err(|_| VeloraError::AppDataUnavailable)?.join("miner");
+    fs::create_dir_all(&dir)?;
+    Ok(dir)
+}
+
+fn mining_executable_path(app: &AppHandle) -> Result<PathBuf, VeloraError> {
+    let dir = mining_dir(app)?;
+    #[cfg(target_os = "windows")]
+    {
+        Ok(dir.join("xmrig.exe"))
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Ok(dir.join("xmrig"))
+    }
+}
+
+fn read_running_pid(pid_path: &Path) -> Option<u32> {
+    let pid = fs::read_to_string(pid_path).ok()?.trim().parse::<u32>().ok()?;
+    #[cfg(target_os = "windows")]
+    {
+        let output = Command::new("tasklist").args(["/FI", &format!("PID eq {}", pid)]).output().ok()?;
+        let text = String::from_utf8_lossy(&output.stdout);
+        text.contains(&pid.to_string()).then_some(pid)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Command::new("kill").args(["-0", &pid.to_string()]).status().ok()?.success().then_some(pid)
+    }
+}
+
 pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
@@ -748,7 +878,10 @@ pub fn run() {
             package_local_release,
             cache_packaged_release,
             cache_search_results,
-            load_site_document
+            load_site_document,
+            mining_status,
+            start_mining,
+            stop_mining
         ])
         .run(tauri::generate_context!())
         .expect("error while running Velora");

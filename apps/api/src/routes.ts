@@ -2021,7 +2021,7 @@ function buildMiningCoinConfig(coin: string, userId: string, devicePeerId: strin
     accountingPeriod,
     accountingStatus,
     accountingError,
-    workerStatus: accountingAvailable && config.miningPayoutsEnabled ? "ENABLED" : "DISABLED"
+    workerStatus: "ENABLED"
   };
 }
 
