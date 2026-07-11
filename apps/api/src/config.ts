@@ -28,5 +28,9 @@ export const config = {
   adminBootstrapEnabled: process.env.VELORA_ADMIN_BOOTSTRAP_ENABLED === "true",
   forumMessageMaxChars: Number(process.env.VELORA_FORUM_MESSAGE_MAX_CHARS ?? 200),
   forumMessageMinSeconds: Number(process.env.VELORA_FORUM_MESSAGE_MIN_SECONDS ?? 2),
-  forumPresenceSeconds: Number(process.env.VELORA_FORUM_PRESENCE_SECONDS ?? 75)
+  forumPresenceSeconds: Number(process.env.VELORA_FORUM_PRESENCE_SECONDS ?? 75),
+  veloraMoneroWallet: process.env.VELORA_MINING_MONERO_WALLET ?? "",
+  veloraZephyrWallet: process.env.VELORA_MINING_ZEPHYR_WALLET ?? "",
+  miningPoolXmrUrl: process.env.VELORA_MINING_XMR_POOL_URL ?? "",
+  miningPoolZephUrl: process.env.VELORA_MINING_ZEPH_POOL_URL ?? ""
 };

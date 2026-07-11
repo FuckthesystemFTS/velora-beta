@@ -810,6 +810,237 @@ export async function registerRoutes(app: FastifyInstance) {
     return repository.listZoneRequests();
   });
 
+  app.get("/api/v1/contribution/profile", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    return getContributionProfile(userId);
+  });
+
+  app.post("/api/v1/contribution/profile", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const body = request.body as { mode?: string; resourceProfile?: string; veloraNodeEnabled?: boolean; hostingNodeEnabled?: boolean; miningPartnerEnabled?: boolean };
+    const mode = normalizeChoice(body.mode, ["VELORA_ONLY", "VELORA_NODE", "HOSTING_NODE", "FULL_NODE"], "VELORA_ONLY");
+    const resourceProfile = normalizeChoice(body.resourceProfile, ["MINIMUM", "STANDARD", "ADVANCED"], "MINIMUM");
+    const pool = requirePool();
+    const result = await pool.query(
+      `INSERT INTO contribution_profiles (id, user_id, mode, velora_node_enabled, hosting_node_enabled, mining_partner_enabled, resource_profile)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       ON CONFLICT (user_id) DO UPDATE SET
+        mode = EXCLUDED.mode,
+        velora_node_enabled = EXCLUDED.velora_node_enabled,
+        hosting_node_enabled = EXCLUDED.hosting_node_enabled,
+        mining_partner_enabled = EXCLUDED.mining_partner_enabled,
+        resource_profile = EXCLUDED.resource_profile,
+        updated_at = NOW()
+       RETURNING *`,
+      [randomUUID(), userId, mode, body.veloraNodeEnabled === true, body.hostingNodeEnabled === true, body.miningPartnerEnabled === true, resourceProfile]
+    );
+    return mapContributionProfile(result.rows[0]);
+  });
+
+  app.post("/api/v1/contribution/consents", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const body = request.body as { module?: string; enabled?: boolean; devicePeerId?: string; resourceProfile?: string; disclosure?: Record<string, unknown> };
+    const module = normalizeChoice(body.module, ["VELORA_NODE", "HOSTING_NODE", "XMR_MINING", "ZEPH_MINING", "MINER_AUTOSTART", "MINER_UPDATES", "DIAGNOSTICS"], "");
+    if (!module) {
+      return reply.badRequest("valid module is required");
+    }
+    const disclosure = body.disclosure && typeof body.disclosure === "object" ? body.disclosure : {};
+    const pool = requirePool();
+    const result = await pool.query(
+      `INSERT INTO node_module_consents (id, user_id, device_peer_id, module, consent_version, enabled, resource_profile, disclosure_json, revoked_at)
+       VALUES ($1,$2,$3,$4,'velora-consent-v1',$5,$6,$7,$8)
+       RETURNING *`,
+      [
+        randomUUID(),
+        userId,
+        body.devicePeerId ?? null,
+        module,
+        body.enabled === true,
+        normalizeChoice(body.resourceProfile, ["MINIMUM", "STANDARD", "ADVANCED", "ECO"], "MINIMUM"),
+        JSON.stringify(disclosure),
+        body.enabled === true ? null : new Date().toISOString()
+      ]
+    );
+    return { consent: result.rows[0] };
+  });
+
+  app.post("/api/v1/contribution/nodes/enroll", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const body = request.body as { module?: string; devicePeerId?: string; publicKey?: string; resourceProfile?: string };
+    const module = normalizeChoice(body.module, ["VELORA_NODE", "HOSTING_NODE"], "");
+    if (!module || !body.devicePeerId || !body.publicKey) {
+      return reply.badRequest("module, devicePeerId and publicKey are required");
+    }
+    const certificate = {
+      version: "velora-contributor-node-v1",
+      userId,
+      module,
+      devicePeerId: body.devicePeerId,
+      issuedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
+    };
+    const pool = requirePool();
+    const result = await pool.query(
+      `INSERT INTO contributor_nodes (id, user_id, device_peer_id, module, public_key, status, resource_profile, certificate_json)
+       VALUES ($1,$2,$3,$4,$5,'ACTIVE',$6,$7)
+       ON CONFLICT (device_peer_id, module) DO UPDATE SET
+        public_key = EXCLUDED.public_key,
+        status = 'ACTIVE',
+        resource_profile = EXCLUDED.resource_profile,
+        certificate_json = EXCLUDED.certificate_json,
+        updated_at = NOW()
+       RETURNING *`,
+      [randomUUID(), userId, body.devicePeerId, module, body.publicKey, normalizeChoice(body.resourceProfile, ["MINIMUM", "STANDARD", "ADVANCED"], "MINIMUM"), JSON.stringify(certificate)]
+    );
+    return { node: mapContributorNode(result.rows[0]) };
+  });
+
+  app.post("/api/v1/contribution/nodes/:id/heartbeat", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const body = request.body as { nonce?: string; uptimeSeconds?: number; resources?: Record<string, unknown>; health?: Record<string, unknown>; signature?: string };
+    if (!body.nonce) {
+      return reply.badRequest("nonce is required");
+    }
+    const pool = requirePool();
+    const node = await pool.query("SELECT id FROM contributor_nodes WHERE id = $1 AND user_id = $2 AND status <> 'REVOKED'", [routeParam(request.params, "id"), userId]);
+    if (!node.rows[0]) {
+      return reply.notFound("node not found");
+    }
+    await pool.query(
+      `INSERT INTO contributor_node_heartbeats (id, node_id, nonce, uptime_seconds, resources_json, health_json, signature)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       ON CONFLICT (node_id, nonce) DO NOTHING`,
+      [randomUUID(), node.rows[0].id, body.nonce, Math.max(0, Number(body.uptimeSeconds ?? 0)), JSON.stringify(body.resources ?? {}), JSON.stringify(body.health ?? {}), body.signature ?? null]
+    );
+    await pool.query("UPDATE contributor_nodes SET last_heartbeat_at = NOW(), updated_at = NOW() WHERE id = $1", [node.rows[0].id]);
+    return { ok: true };
+  });
+
+  app.get("/api/v1/credits", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const pool = requirePool();
+    const [ledger, requests] = await Promise.all([
+      pool.query("SELECT * FROM hosting_credit_ledger WHERE user_id = $1 ORDER BY created_at DESC LIMIT 100", [userId]),
+      pool.query("SELECT * FROM credit_requests WHERE user_id = $1 ORDER BY created_at DESC LIMIT 100", [userId])
+    ]);
+    return { ledger: ledger.rows, requests: requests.rows };
+  });
+
+  app.post("/api/v1/credits/requests", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const body = request.body as { amountCents?: number; requestedUse?: string };
+    const amountCents = Math.max(0, Math.min(50000, Number(body.amountCents ?? 0)));
+    if (!amountCents || !body.requestedUse) {
+      return reply.badRequest("amountCents and requestedUse are required");
+    }
+    const result = await requirePool().query(
+      `INSERT INTO credit_requests (id, user_id, amount_cents, requested_use)
+       VALUES ($1,$2,$3,$4)
+       RETURNING *`,
+      [randomUUID(), userId, amountCents, String(body.requestedUse).slice(0, 500)]
+    );
+    return { request: result.rows[0] };
+  });
+
+  app.get("/api/v1/mining/status", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const pool = requirePool();
+    const result = await pool.query(
+      `SELECT mw.*, md.device_peer_id
+       FROM mining_workers mw
+       JOIN mining_devices md ON md.id = mw.mining_device_id
+       WHERE md.user_id = $1
+       ORDER BY mw.created_at DESC`,
+      [userId]
+    );
+    return {
+      enabled: result.rows.some((row) => row.status === "ENABLED"),
+      veloraWalletsConfigured: Boolean(config.veloraMoneroWallet && config.veloraZephyrWallet),
+      workers: result.rows.map(mapMiningWorker)
+    };
+  });
+
+  app.post("/api/v1/mining/workers", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const body = request.body as { coin?: string; devicePeerId?: string; publicKey?: string; userWallet?: string; enabled?: boolean };
+    const coin = normalizeChoice(body.coin, ["XMR", "ZEPH"], "");
+    if (!coin || !body.devicePeerId || !body.publicKey || !body.userWallet) {
+      return reply.badRequest("coin, devicePeerId, publicKey and userWallet are required");
+    }
+    const veloraWallet = coin === "XMR" ? config.veloraMoneroWallet : config.veloraZephyrWallet;
+    if (!veloraWallet) {
+      return reply.failedDependency(`${coin} Velora payout wallet is not configured`);
+    }
+    if (!isLikelyCryptoAddress(body.userWallet)) {
+      return reply.badRequest("userWallet is not valid enough for beta registration");
+    }
+    const pool = requirePool();
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const device = await client.query(
+        `INSERT INTO mining_devices (id, user_id, device_peer_id, public_key, status)
+         VALUES ($1,$2,$3,$4,'ACTIVE')
+         ON CONFLICT (device_peer_id) DO UPDATE SET public_key = EXCLUDED.public_key, status = 'ACTIVE', updated_at = NOW()
+         RETURNING id`,
+        [randomUUID(), userId, body.devicePeerId, body.publicKey]
+      );
+      const consent = await client.query(
+        `INSERT INTO node_module_consents (id, user_id, device_peer_id, module, consent_version, enabled, resource_profile, disclosure_json)
+         VALUES ($1,$2,$3,$4,'velora-mining-partner-v1',$5,'ECO',$6)
+         RETURNING id`,
+        [randomUUID(), userId, body.devicePeerId, coin === "XMR" ? "XMR_MINING" : "ZEPH_MINING", body.enabled === true, JSON.stringify(defaultMiningDisclosure(coin))]
+      );
+      const worker = await client.query(
+        `INSERT INTO mining_workers (id, mining_device_id, coin, user_wallet, velora_wallet, pool_url, status, consent_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+         ON CONFLICT (mining_device_id, coin) DO UPDATE SET
+          user_wallet = EXCLUDED.user_wallet,
+          velora_wallet = EXCLUDED.velora_wallet,
+          pool_url = EXCLUDED.pool_url,
+          status = EXCLUDED.status,
+          consent_id = EXCLUDED.consent_id,
+          updated_at = NOW()
+         RETURNING *`,
+        [randomUUID(), device.rows[0].id, coin, body.userWallet, veloraWallet, coin === "XMR" ? config.miningPoolXmrUrl || null : config.miningPoolZephUrl || null, body.enabled === true ? "ENABLED" : "DISABLED", consent.rows[0].id]
+      );
+      await client.query("COMMIT");
+      return { worker: mapMiningWorker(worker.rows[0]), split: { userPercent: 50, veloraPercent: 50 } };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  });
+
   app.post("/api/v1/control/zone-requests/:id/approve", async (request, reply) => {
     if (!(await requireAdminSession(request, reply))) {
       return;
@@ -859,6 +1090,127 @@ export async function registerRoutes(app: FastifyInstance) {
       return reply.notFound("request not found");
     }
     return rejected;
+  });
+
+  app.get("/api/admin/contribution/overview", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const pool = requirePool();
+    const [profiles, nodes, credits, mining] = await Promise.all([
+      pool.query("SELECT mode, status, COUNT(*)::int AS count FROM contribution_profiles GROUP BY mode, status ORDER BY mode, status"),
+      pool.query("SELECT module, status, COUNT(*)::int AS count FROM contributor_nodes GROUP BY module, status ORDER BY module, status"),
+      pool.query("SELECT status, COALESCE(SUM(amount_cents),0)::int AS amount_cents, COUNT(*)::int AS count FROM hosting_credit_ledger GROUP BY status ORDER BY status"),
+      pool.query("SELECT coin, status, COUNT(*)::int AS count FROM mining_workers GROUP BY coin, status ORDER BY coin, status")
+    ]);
+    return { profiles: profiles.rows, nodes: nodes.rows, credits: credits.rows, mining: mining.rows };
+  });
+
+  app.get("/api/admin/contribution/nodes", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const result = await requirePool().query(
+      `SELECT cn.*, u.username
+       FROM contributor_nodes cn
+       JOIN users u ON u.id = cn.user_id
+       ORDER BY cn.updated_at DESC
+       LIMIT 250`
+    );
+    return { nodes: result.rows.map(mapContributorNode) };
+  });
+
+  app.post("/api/admin/contribution/nodes/:id/status", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) {
+      return;
+    }
+    const body = request.body as { status?: string; reason?: string };
+    const status = normalizeChoice(body.status, ["ACTIVE", "SUSPENDED", "REVOKED", "QUARANTINED"], "");
+    if (!status || !body.reason) {
+      return reply.badRequest("status and reason are required");
+    }
+    const pool = requirePool();
+    const result = await pool.query("UPDATE contributor_nodes SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING id", [status, routeParam(request.params, "id")]);
+    if (!result.rows[0]) {
+      return reply.notFound("node not found");
+    }
+    await appendOperationalAudit(admin.adminId, `NODE_${status}`, "CONTRIBUTOR_NODE", result.rows[0].id, body.reason);
+    return { ok: true, id: result.rows[0].id, status };
+  });
+
+  app.get("/api/admin/credits/requests", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const result = await requirePool().query(
+      `SELECT cr.*, u.username
+       FROM credit_requests cr
+       JOIN users u ON u.id = cr.user_id
+       ORDER BY cr.created_at DESC
+       LIMIT 250`
+    );
+    return { requests: result.rows };
+  });
+
+  app.post("/api/admin/credits/requests/:id/decision", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) {
+      return;
+    }
+    const body = request.body as { status?: string; reason?: string };
+    const status = normalizeChoice(body.status, ["APPROVED", "REJECTED", "HOLD"], "");
+    if (!status || !body.reason) {
+      return reply.badRequest("status and reason are required");
+    }
+    const pool = requirePool();
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const requestRow = await client.query(
+        `UPDATE credit_requests SET status = $1, decision_reason = $2, decided_by = $3, decided_at = NOW(), updated_at = NOW()
+         WHERE id = $4
+         RETURNING *`,
+        [status, body.reason, admin.adminId, routeParam(request.params, "id")]
+      );
+      if (!requestRow.rows[0]) {
+        await client.query("ROLLBACK");
+        return reply.notFound("credit request not found");
+      }
+      if (status === "APPROVED") {
+        await client.query(
+          `INSERT INTO hosting_credit_ledger (id, user_id, amount_cents, kind, status, period_month, reason, metadata_json)
+           VALUES ($1,$2,$3,'MANUAL_BETA_REQUEST','AVAILABLE',TO_CHAR(NOW(),'YYYY-MM'),$4,$5)`,
+          [randomUUID(), requestRow.rows[0].user_id, requestRow.rows[0].amount_cents, body.reason, JSON.stringify({ creditRequestId: requestRow.rows[0].id })]
+        );
+      }
+      await client.query("COMMIT");
+      await appendOperationalAudit(admin.adminId, `CREDIT_REQUEST_${status}`, "CREDIT_REQUEST", requestRow.rows[0].id, body.reason);
+      return { request: requestRow.rows[0] };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  });
+
+  app.post("/api/admin/mining/workers/:id/status", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) {
+      return;
+    }
+    const body = request.body as { status?: string; reason?: string };
+    const status = normalizeChoice(body.status, ["ENABLED", "DISABLED", "SUSPENDED", "REVOKED", "PAYOUT_HOLD"], "");
+    if (!status || !body.reason) {
+      return reply.badRequest("status and reason are required");
+    }
+    const result = await requirePool().query("UPDATE mining_workers SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING id", [status, routeParam(request.params, "id")]);
+    if (!result.rows[0]) {
+      return reply.notFound("worker not found");
+    }
+    await appendOperationalAudit(admin.adminId, `MINING_WORKER_${status}`, "MINING_WORKER", result.rows[0].id, body.reason);
+    return { ok: true, id: result.rows[0].id, status };
   });
 
   app.get("/api/admin/beta-nodes", async (request, reply) => {
@@ -1091,6 +1443,108 @@ function publicPage(page: string) {
 
 function routeParam(params: unknown, key: string) {
   return String((params as Record<string, string>)[key]);
+}
+
+async function getContributionProfile(userId: string) {
+  const pool = requirePool();
+  const [profile, consents, nodes, credits, mining] = await Promise.all([
+    pool.query("SELECT * FROM contribution_profiles WHERE user_id = $1", [userId]),
+    pool.query("SELECT module, enabled, resource_profile, revoked_at, created_at FROM node_module_consents WHERE user_id = $1 ORDER BY created_at DESC LIMIT 30", [userId]),
+    pool.query("SELECT * FROM contributor_nodes WHERE user_id = $1 ORDER BY updated_at DESC", [userId]),
+    pool.query("SELECT status, COALESCE(SUM(amount_cents),0)::int AS amount_cents FROM hosting_credit_ledger WHERE user_id = $1 GROUP BY status", [userId]),
+    pool.query(
+      `SELECT mw.*, md.device_peer_id
+       FROM mining_workers mw
+       JOIN mining_devices md ON md.id = mw.mining_device_id
+       WHERE md.user_id = $1
+       ORDER BY mw.updated_at DESC`,
+      [userId]
+    )
+  ]);
+  return {
+    profile: profile.rows[0] ? mapContributionProfile(profile.rows[0]) : mapContributionProfile({ mode: "VELORA_ONLY", status: "ACTIVE", resource_profile: "MINIMUM", velora_node_enabled: false, hosting_node_enabled: false, mining_partner_enabled: false }),
+    consents: consents.rows,
+    nodes: nodes.rows.map(mapContributorNode),
+    credits: credits.rows,
+    mining: mining.rows.map(mapMiningWorker)
+  };
+}
+
+function normalizeChoice(value: unknown, allowed: string[], fallback: string) {
+  const normalized = String(value ?? "").trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_");
+  return allowed.includes(normalized) ? normalized : fallback;
+}
+
+function mapContributionProfile(row: any) {
+  return {
+    mode: String(row.mode),
+    status: String(row.status),
+    resourceProfile: String(row.resource_profile),
+    veloraNodeEnabled: row.velora_node_enabled === true,
+    hostingNodeEnabled: row.hosting_node_enabled === true,
+    miningPartnerEnabled: row.mining_partner_enabled === true,
+    updatedAt: row.updated_at ?? null
+  };
+}
+
+function mapContributorNode(row: any) {
+  return {
+    id: String(row.id),
+    username: row.username ? String(row.username) : undefined,
+    module: String(row.module),
+    status: String(row.status),
+    devicePeerId: String(row.device_peer_id),
+    resourceProfile: String(row.resource_profile),
+    certificate: row.certificate_json ?? {},
+    lastHeartbeatAt: row.last_heartbeat_at ?? null,
+    updatedAt: row.updated_at ?? null
+  };
+}
+
+function mapMiningWorker(row: any) {
+  return {
+    id: String(row.id),
+    devicePeerId: String(row.device_peer_id ?? ""),
+    coin: String(row.coin),
+    status: String(row.status),
+    userWallet: String(row.user_wallet),
+    veloraWallet: String(row.velora_wallet),
+    poolUrl: row.pool_url ?? null,
+    split: {
+      userPercent: Number(row.payout_split_user_bps ?? 5000) / 100,
+      veloraPercent: Number(row.payout_split_velora_bps ?? 5000) / 100
+    },
+    updatedAt: row.updated_at ?? null
+  };
+}
+
+function defaultMiningDisclosure(coin: string) {
+  return {
+    coin,
+    randomX: true,
+    optInOnly: true,
+    hiddenMining: false,
+    userSharePercent: 50,
+    veloraSharePercent: 50,
+    warning: "Il costo elettrico puo superare il ricavo. Nessun guadagno e garantito.",
+    stopAvailable: true
+  };
+}
+
+function isLikelyCryptoAddress(value: string) {
+  return /^[A-Za-z0-9]{50,140}$/.test(value.trim());
+}
+
+async function appendOperationalAudit(adminId: string, action: string, targetType: string, targetId: string, reason: string) {
+  const pool = requirePool();
+  const previous = await pool.query("SELECT entry_hash FROM audit_logs ORDER BY created_at DESC LIMIT 1");
+  const previousHash = previous.rows[0]?.entry_hash ?? "GENESIS";
+  const payload = { adminId, action, targetType, targetId, reason, previousHash, createdAt: new Date().toISOString() };
+  const entryHash = hashValue(JSON.stringify(payload));
+  await pool.query(
+    "INSERT INTO audit_logs (id, admin_id, action, target_type, target_id, reason, previous_hash, entry_hash, payload) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+    [randomUUID(), adminId, action, targetType, targetId, reason, previousHash, entryHash, payload]
+  );
 }
 
 function readBearerToken(request: { headers: Record<string, string | string[] | undefined> }) {
