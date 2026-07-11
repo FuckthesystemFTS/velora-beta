@@ -1083,6 +1083,199 @@ export async function registerRoutes(app: FastifyInstance) {
     }
   });
 
+  app.get("/api/mining/network/stats", async (request, reply) => {
+    const userId = config.miningCollectiveStatsPublic ? undefined : await requireSessionUserId(request, reply);
+    if (!config.miningCollectiveStatsPublic && !userId) {
+      return;
+    }
+    return buildMiningNetworkStats(userId);
+  });
+
+  app.get("/api/mining/profitability", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    return {
+      enabled: config.miningAutoSwitchEnabled,
+      note: "Stime non garantite. Nessuno switch viene fatto senza regole attive e dati sufficienti.",
+      xmr: { available: Boolean(config.veloraMoneroWallet && config.miningPoolXmrUrl), scoreBps: 0, dataQuality: "insufficient_pool_accounting" },
+      zeph: { available: Boolean(config.veloraZephyrWallet && config.miningPoolZephUrl), scoreBps: 0, dataQuality: "insufficient_pool_accounting" }
+    };
+  });
+
+  app.get("/api/mining/optimizer/status", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const result = await requirePool().query(
+      `SELECT mop.*
+       FROM mining_optimizer_profiles mop
+       JOIN mining_devices md ON md.id = mop.mining_device_id
+       WHERE md.user_id = $1
+       ORDER BY mop.updated_at DESC
+       LIMIT 20`,
+      [userId]
+    );
+    return { enabled: config.miningOptimizerEnabled, profiles: result.rows };
+  });
+
+  app.post("/api/mining/optimizer/benchmark", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const body = request.body as { devicePeerId?: string; consentId?: string; profile?: string; result?: Record<string, unknown>; recommendedConfig?: Record<string, unknown>; minerVersion?: string };
+    if (!config.miningOptimizerEnabled) {
+      return reply.failedDependency("mining optimizer disabled");
+    }
+    if (!body.devicePeerId || !body.consentId || !body.result) {
+      return reply.badRequest("devicePeerId, consentId and result are required");
+    }
+    const device = await requirePool().query("SELECT id FROM mining_devices WHERE user_id = $1 AND device_peer_id = $2", [userId, body.devicePeerId]);
+    if (!device.rows[0]) {
+      return reply.notFound("mining device not found");
+    }
+    const saved = await requirePool().query(
+      `INSERT INTO mining_benchmarks (id, mining_device_id, consent_id, benchmark_version, miner_version, profile, result_json, recommended_config_json)
+       VALUES ($1,$2,$3,'velora-optimizer-v1',$4,$5,$6,$7)
+       RETURNING *`,
+      [randomUUID(), device.rows[0].id, body.consentId, body.minerVersion ?? "unknown", normalizeChoice(body.profile, ["ECO", "BILANCIATO", "POTENZA", "PERSONALIZZATO"], "ECO"), JSON.stringify(body.result), JSON.stringify(body.recommendedConfig ?? {})]
+    );
+    return { benchmark: saved.rows[0], warning: "Temperature, watt and profitability must be treated as unavailable when sensors are missing." };
+  });
+
+  app.post("/api/mining/optimizer/apply", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const body = request.body as { devicePeerId?: string; profile?: string; config?: Record<string, unknown>; reason?: string };
+    if (!body.devicePeerId || !body.config || !body.reason) {
+      return reply.badRequest("devicePeerId, config and reason are required");
+    }
+    const device = await requirePool().query("SELECT id FROM mining_devices WHERE user_id = $1 AND device_peer_id = $2", [userId, body.devicePeerId]);
+    if (!device.rows[0]) {
+      return reply.notFound("mining device not found");
+    }
+    const selected = normalizeChoice(body.profile, ["ECO", "BILANCIATO", "POTENZA", "PERSONALIZZATO"], "ECO");
+    const saved = await requirePool().query(
+      `INSERT INTO mining_optimizer_profiles (id, mining_device_id, selected_profile, config_json, reason)
+       VALUES ($1,$2,$3,$4,$5)
+       RETURNING *`,
+      [randomUUID(), device.rows[0].id, selected, JSON.stringify(body.config), body.reason]
+    );
+    return { profile: saved.rows[0] };
+  });
+
+  app.get("/api/mining/auto-switch/status", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    return getAutoSwitchStatus(userId);
+  });
+
+  app.put("/api/mining/auto-switch/config", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const body = request.body as { mode?: string; minProfitDifferencePercent?: number; minActiveMinutes?: number; cooldownMinutes?: number; maxSwitchesPerDay?: number; evaluationIntervalSeconds?: number };
+    const result = await requirePool().query(
+      `INSERT INTO mining_auto_switch_rules (id, user_id, mode, min_profit_difference_percent, min_active_minutes, cooldown_minutes, max_switches_per_day, evaluation_interval_seconds)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       ON CONFLICT (user_id) DO UPDATE SET
+        mode = EXCLUDED.mode,
+        min_profit_difference_percent = EXCLUDED.min_profit_difference_percent,
+        min_active_minutes = EXCLUDED.min_active_minutes,
+        cooldown_minutes = EXCLUDED.cooldown_minutes,
+        max_switches_per_day = EXCLUDED.max_switches_per_day,
+        evaluation_interval_seconds = EXCLUDED.evaluation_interval_seconds,
+        updated_at = NOW()
+       RETURNING *`,
+      [
+        randomUUID(),
+        userId,
+        normalizeChoice(body.mode, ["AUTOMATIC", "XMR_ONLY", "ZEPH_ONLY"], "AUTOMATIC"),
+        clampInteger(body.minProfitDifferencePercent, 1, 100, config.miningAutoSwitchMinProfitDifferencePercent),
+        clampInteger(body.minActiveMinutes, 5, 1440, config.miningAutoSwitchMinActiveMinutes),
+        clampInteger(body.cooldownMinutes, 5, 1440, config.miningAutoSwitchCooldownMinutes),
+        clampInteger(body.maxSwitchesPerDay, 0, 24, config.miningAutoSwitchMaxSwitchesPerDay),
+        clampInteger(body.evaluationIntervalSeconds, 60, 86400, config.miningAutoSwitchEvaluationIntervalSeconds)
+      ]
+    );
+    return { rules: result.rows[0] };
+  });
+
+  app.post("/api/mining/auto-switch/evaluate", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const status = await getAutoSwitchStatus(userId);
+    return { ...status, decision: "NO_SWITCH", reason: "Pool accounting/profitability data insufficient; flapping protection active." };
+  });
+
+  app.get("/api/mining/devices", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const result = await requirePool().query("SELECT id, device_peer_id, status, created_at, updated_at FROM mining_devices WHERE user_id = $1 ORDER BY updated_at DESC", [userId]);
+    return { devices: result.rows };
+  });
+
+  app.get("/api/mining/devices/:id", async (request, reply) => getMiningDeviceForUser(request, reply));
+  app.get("/api/mining/devices/:id/stats", async (request, reply) => {
+    const device = await getMiningDeviceForUser(request, reply);
+    if (!device) {
+      return;
+    }
+    const metrics = await requirePool().query("SELECT * FROM mining_device_metrics WHERE mining_device_id = $1 ORDER BY created_at DESC LIMIT 100", [device.device.id]);
+    return { device: device.device, metrics: metrics.rows };
+  });
+  app.post("/api/mining/devices/:id/pause", async (request, reply) => setMiningDeviceStatus(request, reply, "PAUSED"));
+  app.post("/api/mining/devices/:id/resume", async (request, reply) => setMiningDeviceStatus(request, reply, "ACTIVE"));
+  app.post("/api/mining/devices/:id/revoke", async (request, reply) => setMiningDeviceStatus(request, reply, "REVOKED"));
+
+  app.post("/api/boost-box/enroll", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    if (!config.miningBoostBoxEnabled) {
+      return reply.failedDependency("boost box enrollment disabled in beta");
+    }
+    const token = `vbb_${randomUUID()}_${randomUUID()}`;
+    const expiresAt = new Date(Date.now() + config.miningBoostBoxEnrollmentTokenTtlMinutes * 60 * 1000).toISOString();
+    await requirePool().query("INSERT INTO boost_box_enrollments (id, user_id, token_hash, expires_at) VALUES ($1,$2,$3,$4)", [randomUUID(), userId, hashValue(token), expiresAt]);
+    return { enrollmentToken: token, expiresAt };
+  });
+
+  app.post("/api/boost-box/heartbeat", async (request, reply) => {
+    const body = request.body as { certificateId?: string; metrics?: Record<string, unknown> };
+    if (!body.certificateId || !body.metrics) {
+      return reply.badRequest("certificateId and metrics are required");
+    }
+    const result = await requirePool().query("SELECT id, status FROM boost_box_certificates WHERE id = $1 AND status = 'ACTIVE'", [body.certificateId]);
+    if (!result.rows[0]) {
+      return reply.forbidden("invalid or revoked boost box certificate");
+    }
+    await requirePool().query("INSERT INTO boost_box_metrics (id, certificate_id, metrics_json) VALUES ($1,$2,$3)", [randomUUID(), body.certificateId, JSON.stringify(body.metrics)]);
+    return { ok: true };
+  });
+
+  app.get("/api/boost-box/status", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const result = await requirePool().query("SELECT id, status, expires_at, created_at FROM boost_box_certificates WHERE user_id = $1 ORDER BY created_at DESC", [userId]);
+    return { enabled: config.miningBoostBoxEnabled, boxes: result.rows };
+  });
+
   app.post("/api/v1/control/zone-requests/:id/approve", async (request, reply) => {
     if (!(await requireAdminSession(request, reply))) {
       return;
@@ -1260,6 +1453,53 @@ export async function registerRoutes(app: FastifyInstance) {
       return;
     }
     return buildMiningConfigSummary();
+  });
+
+  app.get("/api/admin/mining/network", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    return buildMiningNetworkStats();
+  });
+
+  app.get("/api/admin/mining/optimizer", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const result = await requirePool().query("SELECT * FROM mining_optimizer_profiles ORDER BY updated_at DESC LIMIT 100");
+    return { enabled: config.miningOptimizerEnabled, profiles: result.rows };
+  });
+
+  app.get("/api/admin/mining/auto-switch", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const result = await requirePool().query("SELECT * FROM mining_auto_switch_rules ORDER BY updated_at DESC LIMIT 100");
+    return { enabled: config.miningAutoSwitchEnabled, rules: result.rows };
+  });
+
+  app.get("/api/admin/mining/boost-boxes", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const result = await requirePool().query("SELECT id, user_id, status, expires_at, created_at FROM boost_box_certificates ORDER BY created_at DESC LIMIT 100");
+    return { enabled: config.miningBoostBoxEnabled, boxes: result.rows };
+  });
+
+  app.post("/api/admin/mining/boost-boxes/:id/revoke", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) {
+      return;
+    }
+    const body = request.body as { reason?: string };
+    const reason = body.reason ?? "Admin revocation";
+    const result = await requirePool().query("UPDATE boost_box_certificates SET status = 'REVOKED' WHERE id = $1 RETURNING id", [routeParam(request.params, "id")]);
+    if (!result.rows[0]) {
+      return reply.notFound("boost box not found");
+    }
+    await requirePool().query("INSERT INTO boost_box_revocations (id, certificate_id, reason) VALUES ($1,$2,$3)", [randomUUID(), result.rows[0].id, reason]);
+    await appendOperationalAudit(admin.adminId, "BOOST_BOX_REVOKED", "BOOST_BOX", result.rows[0].id, reason);
+    return { ok: true };
   });
 
   app.get("/api/admin/beta-nodes", async (request, reply) => {
@@ -1681,6 +1921,102 @@ function sanitizeMinerConnection(row: any) {
     workerPassword: coin === "XMR" ? workerId : "x",
     note: coin === "ZEPH" ? "2Miners ZEPH usa WALLET.RIG_ID in -u." : "MoneroOcean usa wallet come login e worker nel campo password/pass."
   };
+}
+
+async function buildMiningNetworkStats(userId?: string) {
+  const pool = requirePool();
+  const params = userId ? [userId] : [];
+  const where = userId ? "WHERE md.user_id = $1" : "";
+  const metrics = await pool.query(
+    `SELECT
+      COALESCE(SUM(mdm.observed_hashrate_hs),0)::int AS total_hashrate_hs,
+      COALESCE(SUM(CASE WHEN mdm.coin = 'XMR' THEN mdm.observed_hashrate_hs ELSE 0 END),0)::int AS xmr_hashrate_hs,
+      COALESCE(SUM(CASE WHEN mdm.coin = 'ZEPH' THEN mdm.observed_hashrate_hs ELSE 0 END),0)::int AS zeph_hashrate_hs,
+      COALESCE(SUM(mdm.accepted_shares),0)::int AS accepted_shares,
+      COALESCE(SUM(mdm.rejected_shares),0)::int AS rejected_shares,
+      COALESCE(SUM(mdm.stale_shares),0)::int AS stale_shares,
+      COUNT(DISTINCT mw.id)::int AS active_workers,
+      COUNT(DISTINCT md.id)::int AS active_devices,
+      COUNT(DISTINCT CASE WHEN mdm.device_type = 'BOOST_BOX' THEN md.id END)::int AS active_boost_boxes
+     FROM mining_device_metrics mdm
+     JOIN mining_devices md ON md.id = mdm.mining_device_id
+     LEFT JOIN mining_workers mw ON mw.id = mdm.worker_id
+     ${where}`,
+    params
+  );
+  const ledger = await pool.query(
+    `SELECT
+      COALESCE(SUM(user_atomic_amount),0)::text AS users_share_atomic,
+      COALESCE(SUM(velora_atomic_amount),0)::text AS velora_share_atomic,
+      COALESCE(SUM(gross_atomic_amount),0)::text AS reward_confirmed_atomic
+     FROM mining_ledger ml
+     JOIN mining_workers mw ON mw.id = ml.worker_id
+     JOIN mining_devices md ON md.id = mw.mining_device_id
+     ${where}`,
+    params
+  );
+  return {
+    source: "server_side_pool_shares_only",
+    payoutStatus: config.miningPayoutsEnabled ? "ENABLED" : "PAYOUT_NON_ANCORA_ATTIVO",
+    network: metrics.rows[0],
+    rewards: ledger.rows[0],
+    contributionModel: "USER_VALIDATED_WORK / TOTAL_VALIDATED_WORK",
+    warning: "Client-reported hashrate is diagnostic only and is not used for payouts."
+  };
+}
+
+async function getAutoSwitchStatus(userId: string) {
+  const result = await requirePool().query("SELECT * FROM mining_auto_switch_rules WHERE user_id = $1", [userId]);
+  const rules = result.rows[0] ?? {
+    mode: "AUTOMATIC",
+    min_profit_difference_percent: config.miningAutoSwitchMinProfitDifferencePercent,
+    min_active_minutes: config.miningAutoSwitchMinActiveMinutes,
+    cooldown_minutes: config.miningAutoSwitchCooldownMinutes,
+    max_switches_per_day: config.miningAutoSwitchMaxSwitchesPerDay,
+    evaluation_interval_seconds: config.miningAutoSwitchEvaluationIntervalSeconds
+  };
+  return {
+    enabled: config.miningAutoSwitchEnabled,
+    rules,
+    currentCoin: null,
+    alternativeCoin: null,
+    cooldown: "not_applicable",
+    nextCheckSeconds: rules.evaluation_interval_seconds,
+    warning: "Auto-Switch does not promise higher earnings and needs verified pool/profitability data."
+  };
+}
+
+async function getMiningDeviceForUser(request: { headers: Record<string, string | string[] | undefined>; params: unknown }, reply: FastifyReply) {
+  const userId = await requireSessionUserId(request, reply);
+  if (!userId) {
+    return undefined;
+  }
+  const result = await requirePool().query("SELECT id, device_peer_id, status, created_at, updated_at FROM mining_devices WHERE user_id = $1 AND id = $2", [userId, routeParam(request.params, "id")]);
+  if (!result.rows[0]) {
+    reply.notFound("mining device not found");
+    return undefined;
+  }
+  return { userId, device: result.rows[0] };
+}
+
+async function setMiningDeviceStatus(request: { headers: Record<string, string | string[] | undefined>; params: unknown }, reply: FastifyReply, status: string) {
+  const userId = await requireSessionUserId(request, reply);
+  if (!userId) {
+    return;
+  }
+  const result = await requirePool().query("UPDATE mining_devices SET status = $1, updated_at = NOW() WHERE user_id = $2 AND id = $3 RETURNING id, status", [status, userId, routeParam(request.params, "id")]);
+  if (!result.rows[0]) {
+    return reply.notFound("mining device not found");
+  }
+  return { device: result.rows[0] };
+}
+
+function clampInteger(value: unknown, min: number, max: number, fallback: number) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed)) {
+    return fallback;
+  }
+  return Math.max(min, Math.min(max, parsed));
 }
 
 function defaultMiningDisclosure(coin: string) {
