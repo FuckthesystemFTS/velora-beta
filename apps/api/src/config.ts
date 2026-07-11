@@ -31,6 +31,15 @@ export const config = {
   forumPresenceSeconds: Number(process.env.VELORA_FORUM_PRESENCE_SECONDS ?? 75),
   veloraMoneroWallet: process.env.VELORA_MINING_MONERO_WALLET ?? "",
   veloraZephyrWallet: process.env.VELORA_MINING_ZEPHYR_WALLET ?? "",
-  miningPoolXmrUrl: process.env.VELORA_MINING_XMR_POOL_URL ?? "",
-  miningPoolZephUrl: process.env.VELORA_MINING_ZEPH_POOL_URL ?? ""
+  miningPoolXmrUrl: process.env.VELORA_MINING_XMR_POOL_URL ?? "stratum+ssl://gulf.moneroocean.stream:20128",
+  miningPoolZephUrl: process.env.VELORA_MINING_ZEPH_POOL_URL ?? "stratum+tcp://zeph.2miners.com:2222",
+  miningUserShareBps: Number(process.env.VELORA_MINING_USER_SHARE_BPS ?? 5000),
+  miningVeloraShareBps: Number(process.env.VELORA_MINING_VELORA_SHARE_BPS ?? 5000),
+  miningPayoutsEnabled: process.env.VELORA_MINING_PAYOUTS_ENABLED === "true",
+  miningXmrWalletRpcUrl: process.env.VELORA_MINING_XMR_WALLET_RPC_URL ?? "",
+  miningXmrWalletRpcUser: process.env.VELORA_MINING_XMR_WALLET_RPC_USER ?? "",
+  miningXmrWalletRpcPassword: process.env.VELORA_MINING_XMR_WALLET_RPC_PASSWORD ?? "",
+  miningZephWalletRpcUrl: process.env.VELORA_MINING_ZEPH_WALLET_RPC_URL ?? "",
+  miningZephWalletRpcUser: process.env.VELORA_MINING_ZEPH_WALLET_RPC_USER ?? "",
+  miningZephWalletRpcPassword: process.env.VELORA_MINING_ZEPH_WALLET_RPC_PASSWORD ?? ""
 };

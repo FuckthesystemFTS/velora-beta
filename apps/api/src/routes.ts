@@ -968,6 +968,7 @@ export async function registerRoutes(app: FastifyInstance) {
     if (!userId) {
       return;
     }
+    const miningConfig = buildMiningConfigSummary();
     const pool = requirePool();
     const result = await pool.query(
       `SELECT mw.*, md.device_peer_id
@@ -979,7 +980,9 @@ export async function registerRoutes(app: FastifyInstance) {
     );
     return {
       enabled: result.rows.some((row) => row.status === "ENABLED"),
-      veloraWalletsConfigured: Boolean(config.veloraMoneroWallet && config.veloraZephyrWallet),
+      payoutsEnabled: miningConfig.payoutsEnabled,
+      warning: miningConfig.payoutsEnabled ? undefined : "PAYOUT NON ANCORA ATTIVO",
+      configuration: miningConfig.public,
       workers: result.rows.map(mapMiningWorker)
     };
   });
@@ -989,17 +992,18 @@ export async function registerRoutes(app: FastifyInstance) {
     if (!userId) {
       return;
     }
-    const body = request.body as { coin?: string; devicePeerId?: string; publicKey?: string; userWallet?: string; enabled?: boolean };
+    const body = request.body as { coin?: string; devicePeerId?: string; publicKey?: string; userWallet?: string; payoutWallet?: string; enabled?: boolean };
     const coin = normalizeChoice(body.coin, ["XMR", "ZEPH"], "");
-    if (!coin || !body.devicePeerId || !body.publicKey || !body.userWallet) {
-      return reply.badRequest("coin, devicePeerId, publicKey and userWallet are required");
+    const payoutWallet = String(body.payoutWallet ?? body.userWallet ?? "").trim();
+    if (!coin || !body.devicePeerId || !body.publicKey || !payoutWallet) {
+      return reply.badRequest("coin, devicePeerId, publicKey and payoutWallet are required");
     }
-    const veloraWallet = coin === "XMR" ? config.veloraMoneroWallet : config.veloraZephyrWallet;
-    if (!veloraWallet) {
-      return reply.failedDependency(`${coin} Velora payout wallet is not configured`);
+    const miningConfig = buildMiningCoinConfig(coin, userId, body.devicePeerId, payoutWallet);
+    if (!miningConfig.valid) {
+      return reply.failedDependency(miningConfig.error);
     }
-    if (!isLikelyCryptoAddress(body.userWallet)) {
-      return reply.badRequest("userWallet is not valid enough for beta registration");
+    if (!isLikelyCoinAddress(coin, payoutWallet)) {
+      return reply.badRequest("payoutWallet is not valid enough for beta registration");
     }
     const pool = requirePool();
     const client = await pool.connect();
@@ -1019,20 +1023,58 @@ export async function registerRoutes(app: FastifyInstance) {
         [randomUUID(), userId, body.devicePeerId, coin === "XMR" ? "XMR_MINING" : "ZEPH_MINING", body.enabled === true, JSON.stringify(defaultMiningDisclosure(coin))]
       );
       const worker = await client.query(
-        `INSERT INTO mining_workers (id, mining_device_id, coin, user_wallet, velora_wallet, pool_url, status, consent_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        `INSERT INTO mining_workers (
+          id, mining_device_id, coin, user_wallet, velora_wallet, pool_url, status, consent_id,
+          worker_id, pool_username, pool_worker_format, pool_worker_password, payout_wallet,
+          payout_split_user_bps, payout_split_velora_bps, accounting_status, accounting_period, last_accounting_error
+        )
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
          ON CONFLICT (mining_device_id, coin) DO UPDATE SET
           user_wallet = EXCLUDED.user_wallet,
           velora_wallet = EXCLUDED.velora_wallet,
           pool_url = EXCLUDED.pool_url,
           status = EXCLUDED.status,
           consent_id = EXCLUDED.consent_id,
+          worker_id = EXCLUDED.worker_id,
+          pool_username = EXCLUDED.pool_username,
+          pool_worker_format = EXCLUDED.pool_worker_format,
+          pool_worker_password = EXCLUDED.pool_worker_password,
+          payout_wallet = EXCLUDED.payout_wallet,
+          payout_split_user_bps = EXCLUDED.payout_split_user_bps,
+          payout_split_velora_bps = EXCLUDED.payout_split_velora_bps,
+          accounting_status = EXCLUDED.accounting_status,
+          accounting_period = EXCLUDED.accounting_period,
+          last_accounting_error = EXCLUDED.last_accounting_error,
           updated_at = NOW()
          RETURNING *`,
-        [randomUUID(), device.rows[0].id, coin, body.userWallet, veloraWallet, coin === "XMR" ? config.miningPoolXmrUrl || null : config.miningPoolZephUrl || null, body.enabled === true ? "ENABLED" : "DISABLED", consent.rows[0].id]
+        [
+          randomUUID(),
+          device.rows[0].id,
+          coin,
+          payoutWallet,
+          miningConfig.poolUsername,
+          miningConfig.poolUrl,
+          miningConfig.workerStatus,
+          consent.rows[0].id,
+          miningConfig.workerId,
+          miningConfig.poolUsername,
+          miningConfig.workerFormat,
+          miningConfig.workerPassword,
+          payoutWallet,
+          config.miningUserShareBps,
+          config.miningVeloraShareBps,
+          miningConfig.accountingStatus,
+          miningConfig.accountingPeriod,
+          miningConfig.accountingError
+        ]
       );
       await client.query("COMMIT");
-      return { worker: mapMiningWorker(worker.rows[0]), split: { userPercent: 50, veloraPercent: 50 } };
+      return {
+        worker: mapMiningWorker(worker.rows[0]),
+        minerConnection: sanitizeMinerConnection(worker.rows[0]),
+        payoutsEnabled: config.miningPayoutsEnabled,
+        warning: config.miningPayoutsEnabled ? undefined : "PAYOUT NON ANCORA ATTIVO"
+      };
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
@@ -1213,6 +1255,13 @@ export async function registerRoutes(app: FastifyInstance) {
     return { ok: true, id: result.rows[0].id, status };
   });
 
+  app.get("/api/admin/mining/diagnostics", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    return buildMiningConfigSummary();
+  });
+
   app.get("/api/admin/beta-nodes", async (request, reply) => {
     if (!(await requireAdminSession(request, reply))) {
       return;
@@ -1350,6 +1399,8 @@ function publicPage(page: string) {
   const checksumUrl = "/downloads/windows/Velora_0.1.0_x64_en-US.msi.sha256.txt";
   const macosDownloadUrl = "/downloads/macos/Velora_0.1.0_aarch64.dmg";
   const macosChecksumUrl = "/downloads/macos/Velora_0.1.0_aarch64.dmg.sha256.txt";
+  const moneroWalletUrl = "https://www.getmonero.org/downloads/";
+  const zephyrWalletUrl = "https://zephyrprotocol.com/";
   const body = page === "download" ? `
     <section class="panel">
       <h1>Scarica Velora Beta</h1>
@@ -1373,6 +1424,13 @@ function publicPage(page: string) {
         <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - 6290708890DB7D30DEF8EFD68D600347647E1C1DA87E3BFA18F1E14E0E3D9000</dd>
         <dt>macOS</dt><dd>Velora_0.1.0_aarch64.dmg - 449EBBFE2AE73430EA26971964A02A99CD8F9346D725E4D5C2B76B7B822BD6D5</dd>
       </dl>
+    </section>
+    <section class="panel">
+      <h2>Wallet per payout futuri Mining Partner</h2>
+      <p>Usa soltanto wallet ufficiali e custodisci tu seed phrase e chiavi private<br>Velora non chiede mai seed, private key, password o file wallet</p>
+      <a class="ghost" href="${moneroWalletUrl}" rel="noopener noreferrer">Wallet Monero ufficiale</a>
+      <a class="ghost" href="${zephyrWalletUrl}" rel="noopener noreferrer">Wallet Zephyr ufficiale</a>
+      <p>Mining Partner beta: payout non ancora attivo finche accounting pool, wallet RPC e verifica on-chain non sono completati</p>
     </section>` : page === "publishers" ? `
     <section class="panel">
       <h1>Pubblica nell'Upper Web</h1>
@@ -1507,14 +1565,121 @@ function mapMiningWorker(row: any) {
     devicePeerId: String(row.device_peer_id ?? ""),
     coin: String(row.coin),
     status: String(row.status),
-    userWallet: String(row.user_wallet),
-    veloraWallet: String(row.velora_wallet),
+    payoutWallet: maskWallet(String(row.payout_wallet ?? row.user_wallet)),
+    poolWalletPresent: Boolean(row.velora_wallet),
+    poolWalletMasked: maskWallet(String(row.velora_wallet ?? "")),
     poolUrl: row.pool_url ?? null,
+    workerId: String(row.worker_id ?? ""),
+    workerFormat: String(row.pool_worker_format ?? ""),
+    accountingStatus: String(row.accounting_status ?? "CONFIGURATION_INCOMPLETE"),
+    accountingPeriod: String(row.accounting_period ?? ""),
+    lastAccountingError: row.last_accounting_error ? sanitizeError(String(row.last_accounting_error)) : null,
     split: {
-      userPercent: Number(row.payout_split_user_bps ?? 5000) / 100,
-      veloraPercent: Number(row.payout_split_velora_bps ?? 5000) / 100
+      userBps: Number(row.payout_split_user_bps ?? 5000),
+      veloraBps: Number(row.payout_split_velora_bps ?? 5000)
     },
     updatedAt: row.updated_at ?? null
+  };
+}
+
+function buildMiningCoinConfig(coin: string, userId: string, devicePeerId: string, payoutWallet: string) {
+  const shares = validateMiningShares();
+  if (!shares.valid) {
+    return { valid: false, error: shares.error };
+  }
+  const poolUrl = coin === "XMR" ? config.miningPoolXmrUrl : config.miningPoolZephUrl;
+  const poolUsername = coin === "XMR" ? config.veloraMoneroWallet : config.veloraZephyrWallet;
+  if (!isAllowedStratumUrl(poolUrl)) {
+    return { valid: false, error: `${coin} pool URL missing or unsupported` };
+  }
+  if (!poolUsername || !isLikelyCoinAddress(coin, poolUsername)) {
+    return { valid: false, error: `${coin} operational Velora wallet is missing or invalid` };
+  }
+  if (!isLikelyCoinAddress(coin, payoutWallet)) {
+    return { valid: false, error: `${coin} payout wallet is invalid` };
+  }
+  const accountingPeriod = new Date().toISOString().slice(0, 7);
+  const workerId = buildWorkerId(userId, devicePeerId, coin);
+  const workerFormat = coin === "ZEPH" ? "USERNAME_DOT_RIG_ID" : "PASSWORD_WORKER_ID";
+  const workerPassword = coin === "XMR" ? workerId : "x";
+  const accountingAvailable = false;
+  const accountingStatus = accountingAvailable ? "READY" : "CONFIGURATION_INCOMPLETE";
+  const accountingError = accountingAvailable ? null : "Pool share/payment accounting not verified yet; user payout remains disabled.";
+  return {
+    valid: true,
+    poolUrl,
+    poolUsername,
+    workerId,
+    workerFormat,
+    workerPassword,
+    accountingPeriod,
+    accountingStatus,
+    accountingError,
+    workerStatus: accountingAvailable && config.miningPayoutsEnabled ? "ENABLED" : "DISABLED"
+  };
+}
+
+function buildMiningConfigSummary() {
+  const shares = validateMiningShares();
+  const xmr = summarizeMiningCoin("XMR", config.miningPoolXmrUrl, config.veloraMoneroWallet, config.miningXmrWalletRpcUrl);
+  const zeph = summarizeMiningCoin("ZEPH", config.miningPoolZephUrl, config.veloraZephyrWallet, config.miningZephWalletRpcUrl);
+  return {
+    public: { xmr, zeph },
+    shareBps: {
+      user: config.miningUserShareBps,
+      velora: config.miningVeloraShareBps,
+      valid: shares.valid,
+      error: shares.valid ? undefined : shares.error
+    },
+    payoutsEnabled: config.miningPayoutsEnabled,
+    accountingAvailable: false,
+    lastError: shares.valid ? "Pool accounting and wallet RPC payout worker are not verified yet." : shares.error
+  };
+}
+
+function summarizeMiningCoin(coin: string, poolUrl: string, wallet: string, rpcUrl: string) {
+  const parsed = parsePoolUrl(poolUrl);
+  return {
+    coin,
+    configured: Boolean(wallet && parsed),
+    poolHost: parsed?.host ?? null,
+    protocol: parsed?.protocol ?? null,
+    operationalWalletPresent: Boolean(wallet),
+    operationalWalletMasked: maskWallet(wallet),
+    poolUrlValid: Boolean(parsed),
+    workerFormat: coin === "ZEPH" ? "wallet.worker via -u for 2Miners" : "wallet login and worker in password/pass for MoneroOcean",
+    rpcReachable: Boolean(rpcUrl) ? "not_checked_from_api" : false,
+    accountingAvailable: false,
+    status: wallet && parsed ? "CONFIGURATION_INCOMPLETE" : "MISSING_CONFIGURATION"
+  };
+}
+
+function validateMiningShares() {
+  const user = Number(config.miningUserShareBps);
+  const velora = Number(config.miningVeloraShareBps);
+  if (!Number.isInteger(user) || !Number.isInteger(velora) || user < 0 || velora < 0 || user + velora !== 10000) {
+    return { valid: false, error: "VELORA_MINING_USER_SHARE_BPS + VELORA_MINING_VELORA_SHARE_BPS must equal 10000" };
+  }
+  return { valid: true };
+}
+
+function buildWorkerId(userId: string, devicePeerId: string, coin: string) {
+  const userPublicId = hashValue(`velora-user:${userId}`).slice(0, 16);
+  const devicePublicId = hashValue(`velora-device:${devicePeerId}:${coin}`).slice(0, 16);
+  return `velora_${userPublicId}_${devicePublicId}`;
+}
+
+function sanitizeMinerConnection(row: any) {
+  const coin = String(row.coin);
+  const workerId = String(row.worker_id ?? "");
+  const poolUsername = String(row.pool_username ?? row.velora_wallet ?? "");
+  return {
+    coin,
+    poolUrl: String(row.pool_url ?? ""),
+    poolUsername: coin === "ZEPH" ? `${poolUsername}.${workerId}` : maskWallet(poolUsername),
+    workerId,
+    workerPassword: coin === "XMR" ? workerId : "x",
+    note: coin === "ZEPH" ? "2Miners ZEPH usa WALLET.RIG_ID in -u." : "MoneroOcean usa wallet come login e worker nel campo password/pass."
   };
 }
 
@@ -1531,8 +1696,49 @@ function defaultMiningDisclosure(coin: string) {
   };
 }
 
-function isLikelyCryptoAddress(value: string) {
-  return /^[A-Za-z0-9]{50,140}$/.test(value.trim());
+function isLikelyCoinAddress(coin: string, value: string) {
+  const trimmed = value.trim();
+  if (coin === "XMR") {
+    return /^[48][1-9A-HJ-NP-Za-km-z]{94,105}$/.test(trimmed);
+  }
+  if (coin === "ZEPH") {
+    return /^ZEPH[A-Za-z0-9]{60,120}$/.test(trimmed) || /^[1-9A-HJ-NP-Za-km-z]{90,120}$/.test(trimmed);
+  }
+  return false;
+}
+
+function isAllowedStratumUrl(value: string) {
+  return Boolean(parsePoolUrl(value));
+}
+
+function parsePoolUrl(value: string) {
+  try {
+    const parsed = new URL(value);
+    if (!["stratum+tcp:", "stratum+ssl:"].includes(parsed.protocol)) {
+      return undefined;
+    }
+    if (!parsed.hostname || !parsed.port) {
+      return undefined;
+    }
+    return { protocol: parsed.protocol.replace(":", ""), host: parsed.hostname, port: parsed.port };
+  } catch {
+    return undefined;
+  }
+}
+
+function maskWallet(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+  if (trimmed.length <= 16) {
+    return `${trimmed.slice(0, 4)}...`;
+  }
+  return `${trimmed.slice(0, 8)}...${trimmed.slice(-8)}`;
+}
+
+function sanitizeError(value: string) {
+  return value.replace(/[A-Za-z0-9]{24,}/g, (match) => `${match.slice(0, 6)}...${match.slice(-4)}`).slice(0, 240);
 }
 
 async function appendOperationalAudit(adminId: string, action: string, targetType: string, targetId: string, reason: string) {

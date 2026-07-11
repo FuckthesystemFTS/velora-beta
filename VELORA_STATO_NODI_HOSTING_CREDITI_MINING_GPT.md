@@ -9,7 +9,9 @@ Questo file e pensato per essere letto da un altro modello o agente.
 - API utente per attivare modalita contributore, registrare consenso, iscrivere nodo, inviare heartbeat, richiedere crediti, registrare worker mining opt-in.
 - API admin per overview, sospensione/revoca nodi, approvazione/hold/rifiuto crediti e sospensione/revoca/hold worker mining.
 - Mining separato da Velora node e hosting node.
-- Split mining registrato 50% utente e 50% Velora.
+- Split mining custodial registrato in basis points, default 5000 utente e 5000 Velora.
+- Pool mining usa solo wallet operativo Velora; wallet utente e solo payout finale.
+- Payout automatico resta disattivato con `VELORA_MINING_PAYOUTS_ENABLED=false`.
 - Wallet Velora configurabili solo via ambiente: `VELORA_MINING_MONERO_WALLET`, `VELORA_MINING_ZEPHYR_WALLET`.
 
 ## Basi presenti ma da completare per distribuzione globale
@@ -21,6 +23,7 @@ Questo file e pensato per essere letto da un altro modello o agente.
 - NAS Synology fallback agent con enrollment, health e revoca.
 - Verifica crittografica completa heartbeat con challenge-response e anti-replay forte.
 - Payout on-chain automatici e riconciliazione tx hash.
+- Lettura share/pagamenti affidabile da MoneroOcean e 2Miners non ancora verificata in produzione.
 
 ## Sicurezza richiesta prima di globale
 
