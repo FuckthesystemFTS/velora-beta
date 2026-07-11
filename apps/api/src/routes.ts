@@ -1227,6 +1227,37 @@ export async function registerRoutes(app: FastifyInstance) {
     return { devices: result.rows };
   });
 
+  app.get("/api/mining/workers/:id/config", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const result = await requirePool().query(
+      `SELECT mw.*, md.user_id, md.device_peer_id
+       FROM mining_workers mw
+       JOIN mining_devices md ON md.id = mw.mining_device_id
+       WHERE mw.id = $1 AND md.user_id = $2`,
+      [routeParam(request.params, "id"), userId]
+    );
+    const worker = result.rows[0];
+    if (!worker) {
+      return reply.notFound("worker not found");
+    }
+    if (worker.status !== "ENABLED") {
+      return reply.failedDependency("worker is not enabled; complete accounting and consent first");
+    }
+    return {
+      workerId: worker.worker_id,
+      coin: worker.coin,
+      poolUrl: worker.pool_url,
+      poolUsername: worker.coin === "ZEPH" ? `${worker.pool_username}.${worker.worker_id}` : worker.pool_username,
+      poolPassword: worker.coin === "XMR" ? worker.worker_id : "x",
+      payoutWallet: maskWallet(String(worker.payout_wallet ?? "")),
+      custodial: true,
+      warning: config.miningPayoutsEnabled ? undefined : "PAYOUT NON ANCORA ATTIVO"
+    };
+  });
+
   app.get("/api/mining/devices/:id", async (request, reply) => getMiningDeviceForUser(request, reply));
   app.get("/api/mining/devices/:id/stats", async (request, reply) => {
     const device = await getMiningDeviceForUser(request, reply);
@@ -1453,6 +1484,141 @@ export async function registerRoutes(app: FastifyInstance) {
       return;
     }
     return buildMiningConfigSummary();
+  });
+
+  app.post("/api/admin/mining/shares/import", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) {
+      return;
+    }
+    const body = request.body as {
+      workerId?: string;
+      coin?: string;
+      poolShareId?: string;
+      status?: string;
+      difficultyAtomic?: string | number;
+      submittedAt?: string;
+      idempotencyKey?: string;
+    };
+    if (!body.workerId || !body.coin || !body.poolShareId || !body.status) {
+      return reply.badRequest("workerId, coin, poolShareId and status are required");
+    }
+    const worker = await requirePool().query("SELECT id, pool_url FROM mining_workers WHERE worker_id = $1 AND coin = $2", [body.workerId, body.coin]);
+    if (!worker.rows[0]) {
+      return reply.notFound("worker not found");
+    }
+    const status = normalizeChoice(body.status, ["ACCEPTED", "REJECTED", "STALE"], "REJECTED");
+    await requirePool().query(
+      `INSERT INTO mining_pool_shares (id, worker_id, coin, pool_url, pool_share_id, accounting_period, status, difficulty_atomic, submitted_at)
+       VALUES ($1,$2,$3,$4,$5,TO_CHAR(NOW(),'YYYY-MM'),$6,$7,$8)
+       ON CONFLICT (worker_id, pool_share_id) DO NOTHING`,
+      [randomUUID(), worker.rows[0].id, body.coin, worker.rows[0].pool_url, body.poolShareId, status, toAtomicText(body.difficultyAtomic ?? 0), body.submittedAt ?? new Date().toISOString()]
+    );
+    await appendOperationalAudit(admin.adminId, "MINING_SHARE_IMPORTED", "MINING_WORKER", worker.rows[0].id, body.idempotencyKey ?? body.poolShareId);
+    return { ok: true };
+  });
+
+  app.post("/api/admin/mining/payments/reconcile", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) {
+      return;
+    }
+    const body = request.body as {
+      coin?: string;
+      poolUrl?: string;
+      accountingPeriod?: string;
+      confirmedMinedAtomicAmount?: string | number;
+      unavoidableNetworkFeeAtomicAmount?: string | number;
+      txHash?: string;
+      confirmations?: number;
+      idempotencyKey?: string;
+    };
+    if (!body.coin || !body.poolUrl || !body.accountingPeriod || !body.confirmedMinedAtomicAmount || !body.txHash || !body.idempotencyKey) {
+      return reply.badRequest("coin, poolUrl, accountingPeriod, confirmedMinedAtomicAmount, txHash and idempotencyKey are required");
+    }
+    const shares = await requirePool().query(
+      `SELECT mw.id AS worker_id, mw.payout_wallet, COALESCE(SUM(mps.difficulty_atomic),0)::text AS work_atomic
+       FROM mining_workers mw
+       JOIN mining_pool_shares mps ON mps.worker_id = mw.id
+       WHERE mw.coin = $1 AND mw.pool_url = $2 AND mps.accounting_period = $3 AND mps.status = 'ACCEPTED'
+       GROUP BY mw.id, mw.payout_wallet`,
+      [body.coin, body.poolUrl, body.accountingPeriod]
+    );
+    const totalWork = shares.rows.reduce((sum, row) => sum + BigInt(row.work_atomic), 0n);
+    if (totalWork <= 0n) {
+      return reply.failedDependency("no accepted pool shares for this accounting period");
+    }
+    const confirmed = BigInt(toAtomicText(body.confirmedMinedAtomicAmount));
+    const fee = BigInt(toAtomicText(body.unavoidableNetworkFeeAtomicAmount ?? 0));
+    const distributable = confirmed - fee;
+    if (distributable <= 0n) {
+      return reply.badRequest("distributable amount must be positive");
+    }
+    const client = await requirePool().connect();
+    try {
+      await client.query("BEGIN");
+      const payment = await client.query(
+        `INSERT INTO mining_pool_payments (
+          id, coin, pool_url, accounting_period, confirmed_mined_atomic_amount,
+          unavoidable_network_fee_atomic_amount, tx_hash, confirmations, status, idempotency_key
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        ON CONFLICT (idempotency_key) DO UPDATE SET updated_at = NOW()
+        RETURNING id`,
+        [
+          randomUUID(),
+          body.coin,
+          body.poolUrl,
+          body.accountingPeriod,
+          confirmed.toString(),
+          fee.toString(),
+          body.txHash,
+          Math.max(0, Number(body.confirmations ?? 0)),
+          Number(body.confirmations ?? 0) > 0 ? "CONFIRMED" : "PENDING_CONFIRMATION",
+          body.idempotencyKey
+        ]
+      );
+      for (const row of shares.rows) {
+        const workerWork = BigInt(row.work_atomic);
+        const gross = distributable * workerWork / totalWork;
+        const userAmount = gross * BigInt(config.miningUserShareBps) / 10000n;
+        const veloraAmount = gross - userAmount;
+        await client.query(
+          `INSERT INTO mining_ledger (
+            id, worker_id, coin, gross_atomic_amount, user_atomic_amount, velora_atomic_amount,
+            status, tx_hash, metadata_json, accounting_period, pool_payment_id,
+            network_fee_atomic_amount, confirmations, payout_wallet, idempotency_key
+          )
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+          ON CONFLICT (idempotency_key) DO NOTHING`,
+          [
+            randomUUID(),
+            row.worker_id,
+            body.coin,
+            gross.toString(),
+            userAmount.toString(),
+            veloraAmount.toString(),
+            config.miningPayoutsEnabled ? "PENDING_PAYOUT" : "PENDING_PAYOUT_DISABLED",
+            body.txHash,
+            JSON.stringify({ totalWork: totalWork.toString(), workerWork: workerWork.toString(), formula: "floor(distributable * workerWork / totalWork) then 50/50 bps" }),
+            body.accountingPeriod,
+            payment.rows[0].id,
+            fee.toString(),
+            Math.max(0, Number(body.confirmations ?? 0)),
+            row.payout_wallet,
+            `${body.idempotencyKey}:${row.worker_id}`
+          ]
+        );
+      }
+      await client.query("COMMIT");
+      await appendOperationalAudit(admin.adminId, "MINING_PAYMENT_RECONCILED", "MINING_POOL_PAYMENT", payment.rows[0].id, body.idempotencyKey);
+      return { ok: true, paymentId: payment.rows[0].id, ledgerRows: shares.rows.length, payoutsEnabled: config.miningPayoutsEnabled };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   });
 
   app.get("/api/admin/mining/network", async (request, reply) => {
@@ -2017,6 +2183,14 @@ function clampInteger(value: unknown, min: number, max: number, fallback: number
     return fallback;
   }
   return Math.max(min, Math.min(max, parsed));
+}
+
+function toAtomicText(value: string | number) {
+  const text = String(value).trim();
+  if (!/^\d+$/.test(text)) {
+    throw new Error("atomic amount must be a non-negative integer string");
+  }
+  return text;
 }
 
 function defaultMiningDisclosure(coin: string) {
