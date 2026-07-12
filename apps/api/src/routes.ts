@@ -1961,7 +1961,11 @@ function adminPage() {
       const token = localStorage.getItem(tokenKey) || tokenInput.value.trim();
       return token ? { Authorization: 'Bearer ' + token } : {};
     }
-    async function getJson(path) {
+    async function postJson(path, body) {
+      const response = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json', ...authHeaders() }, body: JSON.stringify(body || {}) });
+      if (!response.ok) throw new Error(path + ' -> ' + response.status);
+      return response.json();
+    }    async function getJson(path) {
       const response = await fetch(path, { headers: authHeaders() });
       if (!response.ok) throw new Error(path + ' -> ' + response.status);
       return response.json();
@@ -1991,7 +1995,7 @@ function adminPage() {
       }
       authState.textContent = 'Caricamento dati admin';
       try {
-        const session = await getJson('/api/v1/control/session/refresh');
+        const session = await postJson('/api/v1/control/session/refresh');
         authState.innerHTML = '<span class="ok">Accesso admin attivo</span> ' + escapeHtml(session.adminId || '');
       } catch (error) {
         authState.innerHTML = '<span class="bad">Token non valido o scaduto</span>';
@@ -2615,3 +2619,4 @@ function mapForumMessage(row: any) {
     createdAt: row.created_at
   };
 }
+
