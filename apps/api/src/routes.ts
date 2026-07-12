@@ -1098,6 +1098,39 @@ export async function registerRoutes(app: FastifyInstance) {
     }
   });
 
+  app.post("/api/v1/mining/payout-requests", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const body = request.body as { coin?: string; devicePeerId?: string; payoutWallet?: string; note?: string };
+    const coin = normalizeChoice(body.coin, ["XMR", "ZEPH"], "");
+    const payoutWallet = String(body.payoutWallet ?? "").trim();
+    if (!coin || !body.devicePeerId || !payoutWallet) {
+      return reply.badRequest("coin, devicePeerId and payoutWallet are required");
+    }
+    if (!isLikelyCoinAddress(coin, payoutWallet)) {
+      return reply.badRequest("payoutWallet is not valid enough");
+    }
+    const pool = requirePool();
+    const worker = await pool.query(
+      `SELECT mw.id
+       FROM mining_workers mw
+       JOIN mining_devices md ON md.id = mw.mining_device_id
+       WHERE md.user_id = $1 AND md.device_peer_id = $2 AND mw.coin = $3
+       ORDER BY mw.updated_at DESC
+       LIMIT 1`,
+      [userId, body.devicePeerId, coin]
+    );
+    const result = await pool.query(
+      `INSERT INTO mining_payout_requests (id, user_id, worker_id, coin, payout_wallet, note)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       RETURNING id, coin, payout_wallet, status, requested_at`,
+      [randomUUID(), userId, worker.rows[0]?.id ?? null, coin, payoutWallet, String(body.note ?? "").slice(0, 500)]
+    );
+    return { request: result.rows[0], message: "Richiesta payout ricevuta. Verifica manuale in pannello admin." };
+  });
+
   app.get("/api/mining/network/stats", async (request, reply) => {
     const userId = config.miningCollectiveStatsPublic ? undefined : await requireSessionUserId(request, reply);
     if (!config.miningCollectiveStatsPublic && !userId) {
@@ -1501,6 +1534,22 @@ export async function registerRoutes(app: FastifyInstance) {
     return buildMiningConfigSummary();
   });
 
+  app.get("/api/admin/mining/payout-requests", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const result = await requirePool().query(
+      `SELECT mpr.id, mpr.coin, mpr.payout_wallet, mpr.status, mpr.note, mpr.admin_note, mpr.requested_at, mpr.reviewed_at,
+              u.username, mw.worker_id
+       FROM mining_payout_requests mpr
+       JOIN users u ON u.id = mpr.user_id
+       LEFT JOIN mining_workers mw ON mw.id = mpr.worker_id
+       ORDER BY mpr.requested_at DESC
+       LIMIT 200`
+    );
+    return { requests: result.rows.map((row) => ({ ...row, payout_wallet: maskWallet(String(row.payout_wallet ?? "")) })) };
+  });
+
   app.post("/api/admin/mining/shares/import", async (request, reply) => {
     const admin = await requireAdminSession(request, reply);
     if (!admin) {
@@ -1874,7 +1923,7 @@ function publicPage(page: string) {
       </section>
       <dl>
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
-        <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - 6C684E60215151BD8989F1A6EEF64022131D78E0B99E7D03E649DDD4F8E81ED6</dd>
+        <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - F24790B23E9B86C53E8FD535FF773630B75F2B75EAAD95627258850E38B3C1D3</dd>
         <dt>macOS</dt><dd>Velora_0.1.0_aarch64.dmg - 95B03EF998E9E97AC9A6F1D9930CF7665AC39839C243E105E27073FC7BF15ECF</dd>
       </dl>
     </section>

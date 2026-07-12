@@ -761,6 +761,38 @@ function App() {
     setMiningMessage("Mining fermato");
   }
 
+  async function requestManualMiningPayout() {
+    if (!session) {
+      setMiningMessage("Accedi per richiedere payout");
+      return;
+    }
+    if (!miningForm.payoutWallet.trim()) {
+      setMiningMessage("Inserisci wallet pubblico payout");
+      return;
+    }
+    try {
+      const freshSession = await ensureFreshSession();
+      const identity = await invoke<{ peer_id: string; public_key: string }>("get_or_create_node_identity");
+      const response = await fetch(`${apiBaseUrl}/api/v1/mining/payout-requests`, {
+        method: "POST",
+        headers: { "content-type": "application/json", ...authHeaders(freshSession) },
+        body: JSON.stringify({
+          coin: miningForm.coin,
+          devicePeerId: identity.peer_id,
+          payoutWallet: miningForm.payoutWallet,
+          note: "Richiesta payout manuale da desktop beta"
+        })
+      });
+      if (!response.ok) {
+        setMiningMessage(await response.text());
+        return;
+      }
+      setMiningMessage("Richiesta payout inviata. Verifica manuale in pannello admin.");
+    } catch (error) {
+      setMiningMessage(error instanceof Error ? error.message : "Richiesta payout non riuscita");
+    }
+  }
+
   function handleSiteAuthRequest(event?: MessageEvent) {
     if (session) {
       setNodeMessage(`Account Velora attivo: ${session.mail.address}`);
@@ -884,6 +916,7 @@ function App() {
             onRefresh={() => void refreshMiningStatus()}
             onStart={() => void startMiningPartner()}
             onStop={() => void stopMiningPartner()}
+            onPayoutRequest={() => void requestManualMiningPayout()}
           />
         ) : null}
         {workspace === "nodes" ? <UserNodes identity={nodeIdentity} message={nodeEnrollMessage} onRefresh={() => void loadNodeIdentity()} onActivate={() => void activateUserNode()} /> : null}
@@ -1314,6 +1347,7 @@ function MiningPartner(props: {
   onRefresh: () => void;
   onStart: () => void;
   onStop: () => void;
+  onPayoutRequest: () => void;
 }) {
   const runtime = formatDuration(props.stats.elapsedSeconds);
   return (
@@ -1358,7 +1392,7 @@ function MiningPartner(props: {
           <p>Cartella miner:</p>
           <code>{props.status?.minerPath ?? "Premi Controlla per vedere il percorso"}</code>
           <p>Divisione: 50% utente, 50% Velora. Il payout viene richiesto e autorizzato manualmente dal pannello admin.</p>
-          <button type="button" disabled={!props.form.payoutWallet || !props.status?.running}>Richiedi payout manuale</button>
+          <button type="button" onClick={props.onPayoutRequest} disabled={!props.form.payoutWallet}>Richiedi payout manuale</button>
           <p className="safe-detail">La richiesta payout usa il wallet salvato e viene verificata prima dell'invio.</p>
         </article>
       </div>
