@@ -95,6 +95,26 @@ type MiningUiStats = {
   elapsedSeconds: number;
 };
 
+type MiningProgressWorker = {
+  coin: string;
+  worker_id: string;
+  accepted_pool_shares: number;
+  rejected_pool_shares: number;
+  stale_pool_shares: number;
+  pending_label: string;
+  paid_label: string;
+  payout_threshold_label: string;
+  payout_progress_percent: number;
+  payout_ready: boolean;
+  accounting_note: string;
+};
+
+type MiningProgress = {
+  threshold: { xmrLabel: string; note: string };
+  workers: MiningProgressWorker[];
+  note: string;
+};
+
 const apiBaseUrl = "https://velora-beta-20260629-9a9196313b42.herokuapp.com";
 const demoSitePath = "examples/velora-demo-site";
 const isAdminSessionEnabled = false;
@@ -190,6 +210,7 @@ function App() {
   const [miningMessage, setMiningMessage] = React.useState("Mining Partner non avviato");
   const [miningForm, setMiningFormState] = React.useState(() => loadStoredMiningForm());
   const [miningStats, setMiningStats] = React.useState<MiningUiStats>({ startedAt: null, elapsedSeconds: 0 });
+  const [miningProgress, setMiningProgress] = React.useState<MiningProgress | null>(null);
   const [nodeIdentity, setNodeIdentity] = React.useState<{ peer_id: string; public_key: string } | null>(null);
   const [nodeEnrollMessage, setNodeEnrollMessage] = React.useState("Nodo utente non ancora attivato");
   const siteApi = createVeloraSiteApi(apiBaseUrl);
@@ -665,6 +686,25 @@ function App() {
     const status = await invoke<MiningLocalStatus>("mining_status");
     setMiningStatus(status);
     setMiningMessage(status.message);
+    await loadMiningProgress();
+  }
+
+  async function loadMiningProgress(activeSession?: AccountSession) {
+    const currentSession = activeSession ?? session;
+    if (!currentSession) {
+      setMiningProgress(null);
+      return;
+    }
+    try {
+      const freshSession = activeSession ?? await ensureFreshSession();
+      const response = await fetch(`${apiBaseUrl}/api/v1/mining/progress`, { headers: authHeaders(freshSession) });
+      if (!response.ok) {
+        return;
+      }
+      setMiningProgress(await response.json() as MiningProgress);
+    } catch {
+      setMiningProgress(null);
+    }
   }
 
   async function loadNodeIdentity() {
@@ -749,6 +789,7 @@ function App() {
       setMiningStatus(status);
       setMiningStats({ startedAt: status.running ? Date.now() : null, elapsedSeconds: 0 });
       setMiningMessage(status.running ? "Mining avviato. Velora sta usando XMRig locale con il tuo worker." : status.message);
+      await loadMiningProgress(freshSession);
     } catch (error) {
       setMiningMessage(error instanceof Error ? error.message : "Avvio mining non riuscito");
     }
@@ -788,6 +829,7 @@ function App() {
         return;
       }
       setMiningMessage("Richiesta payout inviata. Verifica manuale in pannello admin.");
+      await loadMiningProgress(freshSession);
     } catch (error) {
       setMiningMessage(error instanceof Error ? error.message : "Richiesta payout non riuscita");
     }
@@ -913,6 +955,7 @@ function App() {
             form={miningForm}
             setForm={setMiningForm}
             stats={miningStats}
+            progress={miningProgress}
             onRefresh={() => void refreshMiningStatus()}
             onStart={() => void startMiningPartner()}
             onStop={() => void stopMiningPartner()}
@@ -1344,12 +1387,15 @@ function MiningPartner(props: {
   form: { coin: string; payoutWallet: string; threads: string };
   setForm: (form: { coin: string; payoutWallet: string; threads: string }) => void;
   stats: MiningUiStats;
+  progress: MiningProgress | null;
   onRefresh: () => void;
   onStart: () => void;
   onStop: () => void;
   onPayoutRequest: () => void;
 }) {
   const runtime = formatDuration(props.stats.elapsedSeconds);
+  const currentProgress = props.progress?.workers.find((worker) => worker.coin === props.form.coin) ?? props.progress?.workers[0];
+  const progressPercent = currentProgress ? Math.max(0, Math.min(100, Number(currentProgress.payout_progress_percent ?? 0))) : 0;
   return (
     <section className="dev-workspace">
       <header className="workspace-heading">
@@ -1389,6 +1435,17 @@ function MiningPartner(props: {
           <p>Coin selezionata: {props.form.coin}</p>
           <p>Thread CPU: {props.form.threads || "2"}</p>
           <p>Wallet salvato: {props.form.payoutWallet ? maskLocalWallet(props.form.payoutWallet) : "non inserito"}</p>
+          <h3>Progresso payout</h3>
+          <p>Soglia: {currentProgress?.payout_threshold_label ?? props.progress?.threshold.xmrLabel ?? "0.05 XMR"}</p>
+          <p>Da pagare: {currentProgress?.pending_label ?? "0 XMR"}</p>
+          <p>Pagato: {currentProgress?.paid_label ?? "0 XMR"}</p>
+          <div className="mining-live">
+            <strong>{progressPercent.toFixed(2)}% della soglia</strong>
+            <span>{currentProgress?.payout_ready ? "Soglia raggiunta: puoi richiedere payout" : "Soglia non ancora raggiunta"}</span>
+            <progress value={progressPercent} max={100} />
+          </div>
+          <p>Share verificate: {currentProgress?.accepted_pool_shares ?? 0} ok, {currentProgress?.rejected_pool_shares ?? 0} ko, {currentProgress?.stale_pool_shares ?? 0} stale</p>
+          <p className="safe-detail">{currentProgress?.accounting_note ?? props.progress?.note ?? "Accedi e premi Controlla per vedere il progresso."}</p>
           <p>Cartella miner:</p>
           <code>{props.status?.minerPath ?? "Premi Controlla per vedere il percorso"}</code>
           <p>Divisione: 50% utente, 50% Velora. Il payout viene richiesto e autorizzato manualmente dal pannello admin.</p>

@@ -39,6 +39,10 @@ const betaChecksumName = `${betaInstallerName}.sha256.txt`;
 const macosAarch64Name = "Velora_0.1.0_aarch64.dmg";
 const macosAarch64ChecksumName = `${macosAarch64Name}.sha256.txt`;
 const nasFallbackName = "velora-nas-fallback-agent-0.1.0-beta.zip";
+const miningPayoutThresholdAtomicByCoin: Record<string, bigint> = {
+  XMR: 50_000_000_000n,
+  ZEPH: 50_000_000_000n
+};
 
 export async function registerRoutes(app: FastifyInstance) {
   await app.register(cors, { origin: true, credentials: true });
@@ -1686,6 +1690,85 @@ export async function registerRoutes(app: FastifyInstance) {
     }
   });
 
+  app.get("/api/admin/mining/accounting", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const pool = requirePool();
+    const summary = await buildMiningNetworkStats();
+    const workers = await pool.query(
+      `SELECT
+        mw.id,
+        mw.worker_id,
+        mw.coin,
+        mw.status,
+        mw.accounting_period,
+        mw.payout_wallet,
+        u.username,
+        COALESCE(SUM(CASE WHEN mps.status = 'ACCEPTED' THEN 1 ELSE 0 END),0)::int AS accepted_pool_shares,
+        COALESCE(SUM(CASE WHEN mps.status = 'REJECTED' THEN 1 ELSE 0 END),0)::int AS rejected_pool_shares,
+        COALESCE(SUM(CASE WHEN mps.status = 'STALE' THEN 1 ELSE 0 END),0)::int AS stale_pool_shares,
+        COALESCE(SUM(CASE WHEN mps.status = 'ACCEPTED' THEN mps.difficulty_atomic ELSE 0 END),0)::text AS accepted_difficulty_atomic,
+        COALESCE(SUM(ml.user_atomic_amount),0)::text AS user_atomic_total,
+        COALESCE(SUM(CASE WHEN ml.status IN ('PENDING','PENDING_PAYOUT','PENDING_PAYOUT_DISABLED') THEN ml.user_atomic_amount ELSE 0 END),0)::text AS user_atomic_pending,
+        COALESCE(SUM(CASE WHEN ml.status = 'PAID' THEN ml.user_atomic_amount ELSE 0 END),0)::text AS user_atomic_paid,
+        MAX(mps.submitted_at) AS last_pool_share_at,
+        MAX(ml.created_at) AS last_ledger_at
+       FROM mining_workers mw
+       JOIN mining_devices md ON md.id = mw.mining_device_id
+       JOIN users u ON u.id = md.user_id
+       LEFT JOIN mining_pool_shares mps ON mps.worker_id = mw.id
+       LEFT JOIN mining_ledger ml ON ml.worker_id = mw.id
+       GROUP BY mw.id, mw.worker_id, mw.coin, mw.status, mw.accounting_period, mw.payout_wallet, u.username
+       ORDER BY MAX(COALESCE(mps.submitted_at, ml.created_at, mw.updated_at)) DESC NULLS LAST
+       LIMIT 250`
+    );
+    return {
+      summary,
+      threshold: miningThresholdPayload(),
+      workers: workers.rows.map(mapMiningProgressRow),
+      note: "Le ricompense reali compaiono solo dopo import share pool e riconciliazione pagamento pool. Hashrate client non genera accrediti."
+    };
+  });
+
+  app.get("/api/v1/mining/progress", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const pool = requirePool();
+    const result = await pool.query(
+      `SELECT
+        mw.id,
+        mw.worker_id,
+        mw.coin,
+        mw.status,
+        mw.payout_wallet,
+        COALESCE(SUM(CASE WHEN mps.status = 'ACCEPTED' THEN 1 ELSE 0 END),0)::int AS accepted_pool_shares,
+        COALESCE(SUM(CASE WHEN mps.status = 'REJECTED' THEN 1 ELSE 0 END),0)::int AS rejected_pool_shares,
+        COALESCE(SUM(CASE WHEN mps.status = 'STALE' THEN 1 ELSE 0 END),0)::int AS stale_pool_shares,
+        COALESCE(SUM(CASE WHEN mps.status = 'ACCEPTED' THEN mps.difficulty_atomic ELSE 0 END),0)::text AS accepted_difficulty_atomic,
+        COALESCE(SUM(ml.user_atomic_amount),0)::text AS user_atomic_total,
+        COALESCE(SUM(CASE WHEN ml.status IN ('PENDING','PENDING_PAYOUT','PENDING_PAYOUT_DISABLED') THEN ml.user_atomic_amount ELSE 0 END),0)::text AS user_atomic_pending,
+        COALESCE(SUM(CASE WHEN ml.status = 'PAID' THEN ml.user_atomic_amount ELSE 0 END),0)::text AS user_atomic_paid,
+        MAX(mps.submitted_at) AS last_pool_share_at,
+        MAX(ml.created_at) AS last_ledger_at
+       FROM mining_workers mw
+       JOIN mining_devices md ON md.id = mw.mining_device_id
+       LEFT JOIN mining_pool_shares mps ON mps.worker_id = mw.id
+       LEFT JOIN mining_ledger ml ON ml.worker_id = mw.id
+       WHERE md.user_id = $1
+       GROUP BY mw.id, mw.worker_id, mw.coin, mw.status, mw.payout_wallet
+       ORDER BY mw.updated_at DESC`,
+      [userId]
+    );
+    return {
+      threshold: miningThresholdPayload(),
+      workers: result.rows.map(mapMiningProgressRow),
+      note: "Il progresso payout aumenta solo dopo share pool importate e pagamento pool riconciliato. Hashrate locale e tempo attivo sono diagnostici."
+    };
+  });
+
   app.get("/api/admin/mining/network", async (request, reply) => {
     if (!(await requireAdminSession(request, reply))) {
       return;
@@ -2031,7 +2114,12 @@ function adminPage() {
       try {
         const diagnostics = await getJson('/api/admin/mining/diagnostics');
         const network = await getJson('/api/admin/mining/network');
-        document.getElementById('mining').innerHTML = '<h3>Diagnostica</h3><pre>' + escapeHtml(JSON.stringify(diagnostics, null, 2)) + '</pre><h3>Network</h3><pre>' + escapeHtml(JSON.stringify(network, null, 2)) + '</pre>';
+        const accounting = await getJson('/api/admin/mining/accounting');
+        document.getElementById('mining').innerHTML =
+          '<h3>Quanto hanno minato</h3>' +
+          '<p class="status">Soglia payout: ' + escapeHtml(accounting.threshold.xmrLabel) + '</p>' +
+          table(accounting.workers || [], [['username','Utente'],['coin','Coin'],['worker_id','Worker'],['accepted_pool_shares','Share ok'],['rejected_pool_shares','Share ko'],['stale_pool_shares','Stale'],['pending_label','Da pagare'],['paid_label','Pagato'],['payout_threshold_label','Soglia'],['payout_progress_percent','% soglia'],['payout_ready','Pronto'],['accounting_note','Nota']]) +
+          '<h3>Diagnostica</h3><pre>' + escapeHtml(JSON.stringify(diagnostics, null, 2)) + '</pre><h3>Network</h3><pre>' + escapeHtml(JSON.stringify(network, null, 2)) + '</pre>';
       } catch (error) { showError('mining', error); }
     }
     async function loadBetaNodes() {
@@ -2528,6 +2616,50 @@ function maskWallet(value: string) {
     return `${trimmed.slice(0, 4)}...`;
   }
   return `${trimmed.slice(0, 8)}...${trimmed.slice(-8)}`;
+}
+
+function miningThresholdPayload() {
+  return {
+    xmrAtomic: miningPayoutThresholdAtomicByCoin.XMR.toString(),
+    xmrLabel: formatAtomicAmount(miningPayoutThresholdAtomicByCoin.XMR.toString(), "XMR"),
+    note: "Soglia beta payout manuale: equivalente iniziale 0.05 XMR."
+  };
+}
+
+function mapMiningProgressRow(row: any) {
+  const coin = String(row.coin ?? "XMR");
+  const pending = BigInt(String(row.user_atomic_pending ?? "0"));
+  const total = BigInt(String(row.user_atomic_total ?? "0"));
+  const threshold = miningPayoutThresholdAtomicByCoin[coin] ?? miningPayoutThresholdAtomicByCoin.XMR;
+  const progressBps = threshold > 0n ? Number((pending * 10000n) / threshold) : 0;
+  return {
+    ...row,
+    payout_wallet: maskWallet(String(row.payout_wallet ?? "")),
+    user_atomic_total: total.toString(),
+    user_atomic_pending: pending.toString(),
+    user_atomic_paid: String(row.user_atomic_paid ?? "0"),
+    mined_label: formatAtomicAmount(total.toString(), coin),
+    pending_label: formatAtomicAmount(pending.toString(), coin),
+    paid_label: formatAtomicAmount(String(row.user_atomic_paid ?? "0"), coin),
+    payout_threshold_atomic: threshold.toString(),
+    payout_threshold_label: formatAtomicAmount(threshold.toString(), coin),
+    payout_progress_bps: Math.max(0, Math.min(10000, progressBps)),
+    payout_progress_percent: Math.max(0, Math.min(100, progressBps / 100)),
+    payout_ready: pending >= threshold,
+    accounting_note: Number(row.accepted_pool_shares ?? 0) > 0
+      ? "Share pool presenti. Ricompensa visibile dopo riconciliazione pagamento pool."
+      : "Nessuna share pool verificata ancora."
+  };
+}
+
+function formatAtomicAmount(value: string, coin: string) {
+  const atomic = BigInt(value || "0");
+  const decimals = 12n;
+  const unit = 10n ** decimals;
+  const whole = atomic / unit;
+  const fraction = atomic % unit;
+  const fractionText = fraction.toString().padStart(Number(decimals), "0").replace(/0+$/, "").slice(0, 6);
+  return `${whole.toString()}${fractionText ? `.${fractionText}` : ""} ${coin}`;
 }
 
 function sanitizeError(value: string) {

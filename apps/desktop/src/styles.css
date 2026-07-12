@@ -863,3 +863,9 @@ button:disabled {
   border-color: rgba(49, 231, 159, 0.48);
   box-shadow: 0 0 24px rgba(49, 231, 159, 0.12);
 }
+
+.mining-live progress {
+  width: 100%;
+  height: 12px;
+  accent-color: var(--gold);
+}
