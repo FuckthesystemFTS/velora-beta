@@ -1,4 +1,4 @@
-import { createReadStream } from "node:fs";
+﻿import { createReadStream } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { basename, resolve } from "node:path";
@@ -401,12 +401,12 @@ export async function registerRoutes(app: FastifyInstance) {
 
     const message = {
       AVAILABLE: `La zona ${address} risulta disponibile. Puoi inviare la richiesta di assegnazione.`,
-      ASSIGNED: `La zona ${address} è già stata assegnata. Prova un nome differente.`,
-      PENDING_REVIEW: "È già presente una richiesta per questa zona. Puoi scegliere un’altra zona oppure ricevere un avviso se tornerà disponibile.",
-      RESERVED_NAME: "Questo nome non può essere richiesto direttamente.",
-      TEMPORARILY_RESERVED: `La zona ${address} è temporaneamente riservata.`,
-      BLOCKED: `La zona ${address} è attualmente bloccata.`,
-      INVALID: "La zona inserita non è valida."
+      ASSIGNED: `La zona ${address} Ã¨ giÃ  stata assegnata. Prova un nome differente.`,
+      PENDING_REVIEW: "Ãˆ giÃ  presente una richiesta per questa zona. Puoi scegliere unâ€™altra zona oppure ricevere un avviso se tornerÃ  disponibile.",
+      RESERVED_NAME: "Questo nome non puÃ² essere richiesto direttamente.",
+      TEMPORARILY_RESERVED: `La zona ${address} Ã¨ temporaneamente riservata.`,
+      BLOCKED: `La zona ${address} Ã¨ attualmente bloccata.`,
+      INVALID: "La zona inserita non Ã¨ valida."
     }[status];
 
     return { address, status, message };
@@ -428,9 +428,9 @@ export async function registerRoutes(app: FastifyInstance) {
     return {
       ...zoneRequest,
       targetReviewMessage:
-        "La richiesta sarà verificata appena possibile. In condizioni normali l’assegnazione può essere eseguita subito; in presenza di più richieste, la verifica può richiedere fino a 24 ore.",
+        "La richiesta sarÃ  verificata appena possibile. In condizioni normali lâ€™assegnazione puÃ² essere eseguita subito; in presenza di piÃ¹ richieste, la verifica puÃ² richiedere fino a 24 ore.",
       disclaimer:
-        "L’invio della richiesta non garantisce l’assegnazione. Velora può richiedere ulteriori informazioni, proporre un nome alternativo o rifiutare richieste non conformi alle regole della rete."
+        "Lâ€™invio della richiesta non garantisce lâ€™assegnazione. Velora puÃ² richiedere ulteriori informazioni, proporre un nome alternativo o rifiutare richieste non conformi alle regole della rete."
     };
   });
 
@@ -1874,7 +1874,7 @@ function publicPage(page: string) {
       </section>
       <dl>
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
-        <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - 6290708890DB7D30DEF8EFD68D600347647E1C1DA87E3BFA18F1E14E0E3D9000</dd>
+        <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - 6C684E60215151BD8989F1A6EEF64022131D78E0B99E7D03E649DDD4F8E81ED6</dd>
         <dt>macOS</dt><dd>Velora_0.1.0_aarch64.dmg - 449EBBFE2AE73430EA26971964A02A99CD8F9346D725E4D5C2B76B7B822BD6D5</dd>
       </dl>
     </section>
