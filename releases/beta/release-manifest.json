@@ -1,7 +1,7 @@
 ﻿{
     "version":  "0.1.0-beta",
     "channel":  "beta",
-    "releasedAt":  "2026-07-11T23:05:45.4859120Z",
+    "releasedAt":  "2026-07-12T05:01:53.5277318Z",
     "platforms":  {
                       "windows-x64":  {
                                           "available":  true,
@@ -26,8 +26,8 @@
                                             "notarized":  false,
                                             "filename":  "Velora_0.1.0_aarch64.dmg",
                                             "downloadUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/downloads/macos/Velora_0.1.0_aarch64.dmg",
-                                            "size":  6819466,
-                                            "sha256":  "BD58A2531F84AF9FDF7882BE61CF5E775C09B24D99E6EF4903E070FFE21E59FD"
+                                            "size":  6834136,
+                                            "sha256":  "D03DD3DAF6D3F6CF5DAE1D2DAACAF731FC32600E06794C168F8D046FE4C15028"
                                         },
                       "macos-x86_64":  {
                                            "available":  false,
