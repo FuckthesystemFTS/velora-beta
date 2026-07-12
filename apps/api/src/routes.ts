@@ -46,6 +46,7 @@ export async function registerRoutes(app: FastifyInstance) {
 
   app.get("/", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("home")));
   app.get("/download", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("download")));
+  app.get("/admin", async (_request, reply) => reply.type("text/html; charset=utf-8").send(adminPage()));
   app.get("/what-is-velora", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("what-is-velora")));
   app.get("/security", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("security")));
   app.get("/publishers", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("publishers")));
@@ -1875,6 +1876,188 @@ async function findNasFallbackDownload(file: string) {
     }
   }
   return undefined;
+}
+
+function adminPage() {
+  return `<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Velora Admin</title>
+  <style>
+    :root{--bg:#071522;--panel:#10283d;--panel2:#0b1d2c;--line:#284760;--gold:#e8c469;--ink:#f3f7fb;--muted:#a9bed0;--green:#31e79f;--red:#ff9d8c}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top left,#173f5f,transparent 34%),var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 28px;border-bottom:1px solid var(--line);background:rgba(5,14,23,.78);position:sticky;top:0;z-index:2;backdrop-filter:blur(16px)}
+    h1,h2,h3,p{margin-top:0} h1{font-size:28px;letter-spacing:.04em} h2{font-size:20px} a{color:var(--gold)}
+    main{display:grid;gap:18px;padding:24px;max-width:1440px;margin:auto}
+    .login,.grid section{border:1px solid var(--line);border-radius:22px;background:linear-gradient(160deg,rgba(16,40,61,.96),rgba(7,21,34,.92));box-shadow:0 24px 70px rgba(0,0,0,.25)}
+    .login{display:grid;gap:12px;padding:18px}.login-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px}
+    input,button{border:1px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;color:var(--ink);background:#07131e}
+    button{cursor:pointer;background:linear-gradient(135deg,#24465f,#142c42);font-weight:800}button.primary{background:linear-gradient(135deg,var(--gold),#f6de91);color:#09131d;border-color:transparent}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.wide{grid-column:1/-1}
+    section{padding:18px}.status{color:var(--muted)}.ok{color:var(--green)}.bad{color:var(--red)}
+    .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.card{border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.04);padding:14px}.card b{display:block;color:var(--gold);font-size:12px;text-transform:uppercase;letter-spacing:.08em}.card span{font-size:24px;font-weight:900}
+    table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;vertical-align:top;border-bottom:1px solid rgba(255,255,255,.08);padding:10px}th{color:var(--gold);font-size:12px;text-transform:uppercase;letter-spacing:.06em}td{color:#dce8f2}
+    code,pre{white-space:pre-wrap;overflow:auto;color:#dce8f2}.empty{color:var(--muted);padding:12px;border:1px dashed var(--line);border-radius:14px}
+    @media(max-width:900px){.grid,.cards{grid-template-columns:1fr}.login-row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>VELORA ADMIN</h1><p class="status">Pannello protetto per payout, nodi, mining e richieste siti</p></div>
+    <a href="/status">Status pubblico</a>
+  </header>
+  <main>
+    <section class="login">
+      <h2>Login admin</h2>
+      <div class="login-row">
+        <input id="token" type="password" placeholder="Incolla admin bearer token">
+        <button class="primary" id="save">Entra</button>
+        <button id="logout">Esci</button>
+      </div>
+      <p id="authState" class="status">Token non caricato</p>
+    </section>
+    <div class="grid">
+      <section class="wide">
+        <h2>Panoramica</h2>
+        <div class="cards" id="overview"></div>
+      </section>
+      <section>
+        <h2>Richieste payout mining</h2>
+        <div id="payouts"></div>
+      </section>
+      <section>
+        <h2>Mining</h2>
+        <div id="mining"></div>
+      </section>
+      <section>
+        <h2>Nodi beta</h2>
+        <div id="betaNodes"></div>
+      </section>
+      <section>
+        <h2>Nodi utenti</h2>
+        <div id="userNodes"></div>
+      </section>
+      <section>
+        <h2>Richieste siti</h2>
+        <div id="zoneRequests"></div>
+      </section>
+      <section>
+        <h2>Crediti</h2>
+        <div id="credits"></div>
+      </section>
+    </div>
+  </main>
+  <script>
+    const tokenInput = document.getElementById('token');
+    const authState = document.getElementById('authState');
+    const tokenKey = 'velora.admin.token';
+    tokenInput.value = localStorage.getItem(tokenKey) || '';
+    document.getElementById('save').onclick = () => { localStorage.setItem(tokenKey, tokenInput.value.trim()); loadAll(); };
+    document.getElementById('logout').onclick = () => { localStorage.removeItem(tokenKey); tokenInput.value = ''; authState.textContent = 'Token rimosso'; };
+
+    function authHeaders() {
+      const token = localStorage.getItem(tokenKey) || tokenInput.value.trim();
+      return token ? { Authorization: 'Bearer ' + token } : {};
+    }
+    async function getJson(path) {
+      const response = await fetch(path, { headers: authHeaders() });
+      if (!response.ok) throw new Error(path + ' -> ' + response.status);
+      return response.json();
+    }
+    function cell(value) {
+      if (value === null || value === undefined || value === '') return '-';
+      if (typeof value === 'object') return '<code>' + escapeHtml(JSON.stringify(value)) + '</code>';
+      return escapeHtml(String(value));
+    }
+    function escapeHtml(value) {
+      return value.replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+    }
+    function table(rows, columns) {
+      if (!rows || rows.length === 0) return '<div class="empty">Nessun dato</div>';
+      return '<table><thead><tr>' + columns.map((column) => '<th>' + column[1] + '</th>').join('') + '</tr></thead><tbody>' +
+        rows.map((row) => '<tr>' + columns.map((column) => '<td>' + cell(row[column[0]]) + '</td>').join('') + '</tr>').join('') +
+        '</tbody></table>';
+    }
+    function showError(id, error) {
+      document.getElementById(id).innerHTML = '<p class="bad">' + escapeHtml(error.message) + '</p>';
+    }
+    async function loadAll() {
+      const token = localStorage.getItem(tokenKey) || tokenInput.value.trim();
+      if (!token) {
+        authState.textContent = 'Incolla token admin per accedere';
+        return;
+      }
+      authState.textContent = 'Caricamento dati admin';
+      try {
+        const session = await getJson('/api/v1/control/session/refresh');
+        authState.innerHTML = '<span class="ok">Accesso admin attivo</span> ' + escapeHtml(session.adminId || '');
+      } catch (error) {
+        authState.innerHTML = '<span class="bad">Token non valido o scaduto</span>';
+        return;
+      }
+      loadOverview();
+      loadPayouts();
+      loadMining();
+      loadBetaNodes();
+      loadUserNodes();
+      loadZoneRequests();
+      loadCredits();
+    }
+    async function loadOverview() {
+      try {
+        const data = await getJson('/api/v1/control/dashboard');
+        const cards = [
+          ['Zone pending', data.pendingZoneRequests || 0],
+          ['Zone attive', data.activeZones || 0],
+          ['Utenti', data.users || 0],
+          ['Release', data.releases || 0]
+        ];
+        document.getElementById('overview').innerHTML = cards.map((item) => '<div class="card"><b>' + item[0] + '</b><span>' + item[1] + '</span></div>').join('');
+      } catch (error) { showError('overview', error); }
+    }
+    async function loadPayouts() {
+      try {
+        const data = await getJson('/api/admin/mining/payout-requests');
+        document.getElementById('payouts').innerHTML = table(data.requests, [['requested_at','Data'],['username','Utente'],['coin','Coin'],['payout_wallet','Wallet'],['status','Stato'],['note','Nota'],['worker_id','Worker']]);
+      } catch (error) { showError('payouts', error); }
+    }
+    async function loadMining() {
+      try {
+        const diagnostics = await getJson('/api/admin/mining/diagnostics');
+        const network = await getJson('/api/admin/mining/network');
+        document.getElementById('mining').innerHTML = '<h3>Diagnostica</h3><pre>' + escapeHtml(JSON.stringify(diagnostics, null, 2)) + '</pre><h3>Network</h3><pre>' + escapeHtml(JSON.stringify(network, null, 2)) + '</pre>';
+      } catch (error) { showError('mining', error); }
+    }
+    async function loadBetaNodes() {
+      try {
+        const data = await getJson('/api/admin/beta-nodes');
+        document.getElementById('betaNodes').innerHTML = table(data.nodes || [], [['name','Nome'],['role','Ruolo'],['status','Stato'],['lastHeartbeatAt','Heartbeat'],['failureCount','Fail']]);
+      } catch (error) { showError('betaNodes', error); }
+    }
+    async function loadUserNodes() {
+      try {
+        const data = await getJson('/api/admin/contribution/nodes');
+        document.getElementById('userNodes').innerHTML = table(data.nodes || [], [['username','Utente'],['module','Modulo'],['status','Stato'],['devicePeerId','Peer'],['lastHeartbeatAt','Heartbeat']]);
+      } catch (error) { showError('userNodes', error); }
+    }
+    async function loadZoneRequests() {
+      try {
+        const data = await getJson('/api/v1/control/zone-requests');
+        document.getElementById('zoneRequests').innerHTML = table(data.requests || data || [], [['createdAt','Data'],['requestedAddress','Indirizzo'],['status','Stato'],['category','Categoria'],['requesterUserId','Utente']]);
+      } catch (error) { showError('zoneRequests', error); }
+    }
+    async function loadCredits() {
+      try {
+        const data = await getJson('/api/admin/credits/requests');
+        document.getElementById('credits').innerHTML = table(data.requests || [], [['created_at','Data'],['username','Utente'],['amount_cents','Importo cent'],['status','Stato'],['requested_use','Uso']]);
+      } catch (error) { showError('credits', error); }
+    }
+    loadAll();
+  </script>
+</body>
+</html>`;
 }
 
 function publicPage(page: string) {
