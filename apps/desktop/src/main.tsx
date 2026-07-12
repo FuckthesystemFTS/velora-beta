@@ -87,6 +87,7 @@ type MiningLocalStatus = {
   running: boolean;
   minerPath: string;
   pidPath: string;
+  logPath: string;
   message: string;
 };
 
@@ -1406,7 +1407,7 @@ function MiningPartner(props: {
       <div className="workspace-grid">
         <article className="panel">
           <h2>Attiva e mina</h2>
-          <p>Scarica XMRig dal sito ufficiale, estrailo e metti il file miner nella cartella indicata. Velora non chiede seed, private key o password wallet.</p>
+          <p>Scarica XMRig dal sito ufficiale, estrailo e metti il file miner nella cartella indicata. Velora non scarica miner in automatico e non chiede seed, private key o password wallet.</p>
           <a className="ghost-link" href="https://xmrig.com/download">Scarica XMRig ufficiale</a>
           <label>Coin</label>
           <select value={props.form.coin} onChange={(event) => props.setForm({ ...props.form, coin: event.target.value })}>
@@ -1448,6 +1449,9 @@ function MiningPartner(props: {
           <p className="safe-detail">{currentProgress?.accounting_note ?? props.progress?.note ?? "Accedi e premi Controlla per vedere il progresso."}</p>
           <p>Cartella miner:</p>
           <code>{props.status?.minerPath ?? "Premi Controlla per vedere il percorso"}</code>
+          <p>Log miner:</p>
+          <code>{props.status?.logPath ?? "Premi Controlla per vedere il percorso log"}</code>
+          <p className="safe-detail">Se Windows Security o macOS chiudono il miner, installa solo XMRig ufficiale, autorizza manualmente quel file e riavvia da Velora. Velora non disattiva antivirus e non aggira protezioni di sistema.</p>
           <p>Divisione: 50% utente, 50% Velora. Il payout viene richiesto e autorizzato manualmente dal pannello admin.</p>
           <button type="button" onClick={props.onPayoutRequest} disabled={!props.form.payoutWallet}>Richiedi payout manuale</button>
           <p className="safe-detail">La richiesta payout usa il wallet salvato e viene verificata prima dell'invio.</p>

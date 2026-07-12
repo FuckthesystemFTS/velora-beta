@@ -216,6 +216,8 @@ struct MiningLocalStatus {
     miner_path: String,
     #[serde(rename = "pidPath")]
     pid_path: String,
+    #[serde(rename = "logPath")]
+    log_path: String,
     message: String,
 }
 
@@ -267,17 +269,26 @@ fn mining_status(app: AppHandle) -> Result<MiningLocalStatus, VeloraError> {
     let dir = mining_dir(&app)?;
     let miner_path = mining_executable_path(&app)?;
     let pid_path = dir.join("xmrig.pid");
+    let log_path = dir.join("xmrig.log");
     let ready = miner_path.exists();
     let running = read_running_pid(&pid_path).is_some();
+    let stale_pid = pid_path.exists() && !running;
     Ok(MiningLocalStatus {
         ready,
         running,
         miner_path: miner_path.to_string_lossy().to_string(),
         pid_path: pid_path.to_string_lossy().to_string(),
+        log_path: log_path.to_string_lossy().to_string(),
         message: if ready {
-            "Miner locale pronto".to_string()
+            if running {
+                "Miner locale in esecuzione".to_string()
+            } else if stale_pid {
+                "Miner non in esecuzione. Se si e' chiuso subito, controlla Windows Security, Gatekeeper o il file xmrig.log.".to_string()
+            } else {
+                "Miner locale pronto".to_string()
+            }
         } else {
-            "Inserisci xmrig.exe nella cartella miner indicata".to_string()
+            "Inserisci il miner XMRig ufficiale nella cartella indicata. Velora non scarica miner in automatico.".to_string()
         },
     })
 }
@@ -292,7 +303,8 @@ fn start_mining(app: AppHandle, input: StartMiningRequest) -> Result<MiningLocal
             running: false,
             miner_path: miner_path.to_string_lossy().to_string(),
             pid_path: dir.join("xmrig.pid").to_string_lossy().to_string(),
-            message: "xmrig.exe non trovato. Scarica XMRig ufficiale e metti xmrig.exe nella cartella indicata.".to_string(),
+            log_path: dir.join("xmrig.log").to_string_lossy().to_string(),
+            message: "Miner non trovato. Scarica XMRig ufficiale, estrailo e metti l'eseguibile nella cartella indicata.".to_string(),
         });
     }
     let pid_path = dir.join("xmrig.pid");
@@ -315,12 +327,14 @@ fn start_mining(app: AppHandle, input: StartMiningRequest) -> Result<MiningLocal
         args.push("-t".to_string());
         args.push(threads.clamp(1, 8).to_string());
     }
+    let log_file = fs::OpenOptions::new().create(true).append(true).open(dir.join("xmrig.log"))?;
+    let err_file = log_file.try_clone()?;
     let child = Command::new(&miner_path)
         .args(args)
         .current_dir(&dir)
         .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
+        .stdout(Stdio::from(log_file))
+        .stderr(Stdio::from(err_file))
         .spawn()?;
     fs::write(&pid_path, child.id().to_string())?;
     mining_status(app)
