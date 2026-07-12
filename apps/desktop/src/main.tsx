@@ -11,7 +11,7 @@ import {
 import { desktopBranding } from "./config/branding";
 import "./styles.css";
 
-type Workspace = "home" | "explore" | "mail" | "forum" | "mining" | "favorites" | "activity" | "identity" | "notifications" | "dev" | "settings" | "control";
+type Workspace = "home" | "explore" | "mail" | "forum" | "mining" | "nodes" | "favorites" | "activity" | "identity" | "notifications" | "dev" | "settings" | "control";
 type ViewerState = "idle" | "loading" | "verifying" | "ready" | "not-found" | "blocked" | "unavailable" | "error";
 type NetworkState = "ready" | "syncing" | "limited" | "offline";
 type PublishStage = "idle" | "selecting" | "validating" | "packaging" | "publishing" | "success" | "error";
@@ -88,6 +88,11 @@ type MiningLocalStatus = {
   minerPath: string;
   pidPath: string;
   message: string;
+};
+
+type MiningUiStats = {
+  startedAt: number | null;
+  elapsedSeconds: number;
 };
 
 const apiBaseUrl = "https://velora-beta-20260629-9a9196313b42.herokuapp.com";
@@ -183,12 +188,34 @@ function App() {
   const [forumStatus, setForumStatus] = React.useState("Forum in attesa");
   const [miningStatus, setMiningStatus] = React.useState<MiningLocalStatus | null>(null);
   const [miningMessage, setMiningMessage] = React.useState("Mining Partner non avviato");
-  const [miningForm, setMiningForm] = React.useState({ coin: "XMR", payoutWallet: "", threads: "2" });
+  const [miningForm, setMiningFormState] = React.useState(() => loadStoredMiningForm());
+  const [miningStats, setMiningStats] = React.useState<MiningUiStats>({ startedAt: null, elapsedSeconds: 0 });
+  const [nodeIdentity, setNodeIdentity] = React.useState<{ peer_id: string; public_key: string } | null>(null);
+  const [nodeEnrollMessage, setNodeEnrollMessage] = React.useState("Nodo utente non ancora attivato");
   const siteApi = createVeloraSiteApi(apiBaseUrl);
+
+  function setMiningForm(form: { coin: string; payoutWallet: string; threads: string }) {
+    setMiningFormState(form);
+    saveStoredMiningForm(form);
+  }
 
   React.useEffect(() => {
     void prepareVelora();
+    void refreshMiningStatus();
+    void loadNodeIdentity();
   }, []);
+
+  React.useEffect(() => {
+    if (!miningStatus?.running) {
+      setMiningStats((current) => ({ startedAt: null, elapsedSeconds: current.elapsedSeconds }));
+      return;
+    }
+    setMiningStats((current) => ({ startedAt: current.startedAt ?? Date.now(), elapsedSeconds: current.elapsedSeconds }));
+    const timer = window.setInterval(() => {
+      setMiningStats((current) => current.startedAt ? { ...current, elapsedSeconds: Math.max(0, Math.floor((Date.now() - current.startedAt) / 1000)) } : current);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [miningStatus?.running]);
 
   React.useEffect(() => {
     if (!session) {
@@ -640,6 +667,41 @@ function App() {
     setMiningMessage(status.message);
   }
 
+  async function loadNodeIdentity() {
+    const identity = await invoke<{ peer_id: string; public_key: string }>("get_or_create_node_identity");
+    setNodeIdentity(identity);
+  }
+
+  async function activateUserNode() {
+    if (!session) {
+      setNodeEnrollMessage("Accedi o crea un account Velora prima di attivare il nodo");
+      return;
+    }
+    try {
+      setNodeEnrollMessage("Attivazione nodo utente in corso");
+      const freshSession = await ensureFreshSession();
+      const identity = await invoke<{ peer_id: string; public_key: string }>("get_or_create_node_identity");
+      setNodeIdentity(identity);
+      const response = await fetch(`${apiBaseUrl}/api/v1/contribution/nodes/enroll`, {
+        method: "POST",
+        headers: { "content-type": "application/json", ...authHeaders(freshSession) },
+        body: JSON.stringify({
+          devicePeerId: identity.peer_id,
+          publicKey: identity.public_key,
+          module: "VELORA_NODE",
+          resourceProfile: "STANDARD"
+        })
+      });
+      if (!response.ok) {
+        setNodeEnrollMessage(await response.text());
+        return;
+      }
+      setNodeEnrollMessage("Nodo utente attivo e collegato al tuo account");
+    } catch (error) {
+      setNodeEnrollMessage(error instanceof Error ? error.message : "Attivazione nodo non riuscita");
+    }
+  }
+
   async function startMiningPartner() {
     if (!session) {
       setMiningMessage("Accedi o crea un account Velora prima di attivare il mining");
@@ -685,7 +747,8 @@ function App() {
         }
       });
       setMiningStatus(status);
-      setMiningMessage(status.running ? "Mining avviato. Puoi fermarlo in qualsiasi momento." : status.message);
+      setMiningStats({ startedAt: status.running ? Date.now() : null, elapsedSeconds: 0 });
+      setMiningMessage(status.running ? "Mining avviato. Velora sta usando XMRig locale con il tuo worker." : status.message);
     } catch (error) {
       setMiningMessage(error instanceof Error ? error.message : "Avvio mining non riuscito");
     }
@@ -694,6 +757,7 @@ function App() {
   async function stopMiningPartner() {
     const status = await invoke<MiningLocalStatus>("stop_mining");
     setMiningStatus(status);
+    setMiningStats((current) => ({ ...current, startedAt: null }));
     setMiningMessage("Mining fermato");
   }
 
@@ -816,11 +880,13 @@ function App() {
             message={miningMessage}
             form={miningForm}
             setForm={setMiningForm}
+            stats={miningStats}
             onRefresh={() => void refreshMiningStatus()}
             onStart={() => void startMiningPartner()}
             onStop={() => void stopMiningPartner()}
           />
         ) : null}
+        {workspace === "nodes" ? <UserNodes identity={nodeIdentity} message={nodeEnrollMessage} onRefresh={() => void loadNodeIdentity()} onActivate={() => void activateUserNode()} /> : null}
         {workspace === "favorites" ? <SimpleCollection title="Preferiti" items={favorites} onOpen={openZone} /> : null}
         {workspace === "activity" ? <Activity /> : null}
         {workspace === "identity" ? <Identity session={session} onVerify={() => void verifyIdentity()} /> : null}
@@ -859,6 +925,7 @@ function Sidebar({ workspace, setWorkspace, networkState }: { workspace: Workspa
     ["mail", "VeloMail"],
     ["forum", "Forum"],
     ["mining", "Mining Partner"],
+    ["nodes", "Nodi utente"],
     ["favorites", "Preferiti"],
     ["activity", "Attivita"],
     ["identity", "Identita"],
@@ -1243,28 +1310,30 @@ function MiningPartner(props: {
   message: string;
   form: { coin: string; payoutWallet: string; threads: string };
   setForm: (form: { coin: string; payoutWallet: string; threads: string }) => void;
+  stats: MiningUiStats;
   onRefresh: () => void;
   onStart: () => void;
   onStop: () => void;
 }) {
+  const runtime = formatDuration(props.stats.elapsedSeconds);
   return (
     <section className="dev-workspace">
       <header className="workspace-heading">
         <span>Velora Mining Network</span>
-        <h1>Il tuo computer puo diventare parte di qualcosa di piu grande</h1>
-        <p>Mining XMR/ZEPH custodial: la pool usa il wallet operativo Velora, il tuo wallet serve solo per il payout finale 50/50.</p>
+        <h1>Mining Partner</h1>
+        <p>Avvia il miner locale, guarda lo stato in tempo reale e usa il wallet pubblico per ricevere payout manuale dopo verifica admin.</p>
       </header>
       <div className="workspace-grid">
         <article className="panel">
           <h2>Attiva e mina</h2>
-          <p>Prima scarica XMRig dal sito ufficiale, estrai il file e metti `xmrig.exe` nella cartella indicata sotto. Velora non chiede seed, private key o password wallet.</p>
+          <p>Scarica XMRig dal sito ufficiale, estrailo e metti il file miner nella cartella indicata. Velora non chiede seed, private key o password wallet.</p>
           <a className="ghost-link" href="https://xmrig.com/download">Scarica XMRig ufficiale</a>
           <label>Coin</label>
           <select value={props.form.coin} onChange={(event) => props.setForm({ ...props.form, coin: event.target.value })}>
             <option value="XMR">Monero XMR</option>
             <option value="ZEPH">Zephyr ZEPH</option>
           </select>
-          <label>Wallet pubblico per payout futuro</label>
+          <label>Wallet pubblico payout</label>
           <input value={props.form.payoutWallet} onChange={(event) => props.setForm({ ...props.form, payoutWallet: event.target.value })} placeholder="Incolla indirizzo pubblico" />
           <label>Thread CPU</label>
           <input value={props.form.threads} onChange={(event) => props.setForm({ ...props.form, threads: event.target.value })} />
@@ -1276,12 +1345,56 @@ function MiningPartner(props: {
           <p>{props.message}</p>
         </article>
         <article className="panel">
-          <h2>Stato locale</h2>
-          <p>Pronto: {props.status?.ready ? "si" : "no"}</p>
-          <p>In esecuzione: {props.status?.running ? "si" : "no"}</p>
+          <h2>Stato mining</h2>
+          <div className={props.status?.running ? "mining-live on" : "mining-live"}>
+            <strong>{props.status?.running ? "Mining in corso" : "Mining fermo"}</strong>
+            <span>{props.status?.running ? `Attivo da ${runtime}` : "Premi Avvia mining per iniziare"}</span>
+          </div>
+          <p>Miner pronto: {props.status?.ready ? "si" : "no"}</p>
+          <p>Processo locale: {props.status?.running ? "attivo" : "non attivo"}</p>
+          <p>Coin selezionata: {props.form.coin}</p>
+          <p>Thread CPU: {props.form.threads || "2"}</p>
+          <p>Wallet salvato: {props.form.payoutWallet ? maskLocalWallet(props.form.payoutWallet) : "non inserito"}</p>
           <p>Cartella miner:</p>
           <code>{props.status?.minerPath ?? "Premi Controlla per vedere il percorso"}</code>
-          <p>Divisione chiara: 50% utente, 50% Velora. Nessun guadagno garantito.</p>
+          <p>Divisione: 50% utente, 50% Velora. Il payout viene richiesto e autorizzato manualmente dal pannello admin.</p>
+          <button type="button" disabled={!props.form.payoutWallet || !props.status?.running}>Richiedi payout manuale</button>
+          <p className="safe-detail">La richiesta payout usa il wallet salvato e viene verificata prima dell'invio.</p>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+function UserNodes(props: {
+  identity: { peer_id: string; public_key: string } | null;
+  message: string;
+  onRefresh: () => void;
+  onActivate: () => void;
+}) {
+  return (
+    <section className="dev-workspace">
+      <header className="workspace-heading">
+        <span>Rete Velora</span>
+        <h1>Nodi utente</h1>
+        <p>Collega questo dispositivo alla rete Velora come nodo beta del tuo account.</p>
+      </header>
+      <div className="workspace-grid">
+        <article className="panel">
+          <h2>Dispositivo</h2>
+          <p>{props.message}</p>
+          <p>Peer ID:</p>
+          <code>{props.identity?.peer_id ?? "Non ancora creato"}</code>
+          <div className="action-row">
+            <button type="button" onClick={props.onRefresh}>Controlla</button>
+            <button type="button" onClick={props.onActivate}>Attiva nodo utente</button>
+          </div>
+        </article>
+        <article className="panel">
+          <h2>Cosa fa</h2>
+          <p>Registra il dispositivo sul tuo account.</p>
+          <p>Permette heartbeat, contributi beta e futura replica autorizzata.</p>
+          <p>Non usa file personali e non apre accessi esterni al computer.</p>
         </article>
       </div>
     </section>
@@ -1502,6 +1615,39 @@ function loadStoredSession(): AccountSession | null {
 
 function saveStoredSession(session: AccountSession) {
   localStorage.setItem("velora.session", JSON.stringify(session));
+}
+
+function loadStoredMiningForm() {
+  try {
+    const raw = localStorage.getItem("velora.mining.form");
+    const parsed = raw ? JSON.parse(raw) as { coin?: string; payoutWallet?: string; threads?: string } : {};
+    return {
+      coin: parsed.coin === "ZEPH" ? "ZEPH" : "XMR",
+      payoutWallet: String(parsed.payoutWallet ?? ""),
+      threads: String(parsed.threads ?? "2")
+    };
+  } catch {
+    return { coin: "XMR", payoutWallet: "", threads: "2" };
+  }
+}
+
+function saveStoredMiningForm(form: { coin: string; payoutWallet: string; threads: string }) {
+  localStorage.setItem("velora.mining.form", JSON.stringify(form));
+}
+
+function maskLocalWallet(wallet: string) {
+  const normalized = wallet.trim();
+  if (normalized.length <= 14) {
+    return normalized;
+  }
+  return `${normalized.slice(0, 8)}...${normalized.slice(-6)}`;
+}
+
+function formatDuration(totalSeconds: number) {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":");
 }
 
 function normalizeAccountSlug(value: string) {

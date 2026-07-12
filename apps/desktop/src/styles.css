@@ -839,3 +839,27 @@ button:disabled {
 .danger {
   color: #ffb4a8;
 }
+
+.mining-live {
+  display: grid;
+  gap: 6px;
+  border: 1px solid rgba(115, 161, 200, 0.28);
+  border-radius: 18px;
+  background: rgba(12, 34, 53, 0.72);
+  padding: 16px;
+  margin: 12px 0;
+}
+
+.mining-live strong {
+  color: var(--ink);
+  font-size: 1.1rem;
+}
+
+.mining-live span {
+  color: var(--muted);
+}
+
+.mining-live.on {
+  border-color: rgba(49, 231, 159, 0.48);
+  box-shadow: 0 0 24px rgba(49, 231, 159, 0.12);
+}

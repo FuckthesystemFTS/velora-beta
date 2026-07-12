@@ -24,6 +24,11 @@ const macosDownloadRoots = [
   resolve("../releases/beta/macos"),
   resolve("../../releases/beta/macos")
 ];
+const nasFallbackRoots = [
+  resolve("releases/nas-fallback-agent"),
+  resolve("../releases/nas-fallback-agent"),
+  resolve("../../releases/nas-fallback-agent")
+];
 const publisherGuideCandidates = [
   resolve("VELORA_GUIDA_PUBBLICAZIONE.html"),
   resolve("../VELORA_GUIDA_PUBBLICAZIONE.html"),
@@ -33,6 +38,7 @@ const betaInstallerName = "Velora_0.1.0_x64_en-US.msi";
 const betaChecksumName = `${betaInstallerName}.sha256.txt`;
 const macosAarch64Name = "Velora_0.1.0_aarch64.dmg";
 const macosAarch64ChecksumName = `${macosAarch64Name}.sha256.txt`;
+const nasFallbackName = "velora-nas-fallback-agent-0.1.0-beta.zip";
 
 export async function registerRoutes(app: FastifyInstance) {
   await app.register(cors, { origin: true, credentials: true });
@@ -91,6 +97,7 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get(`/downloads/windows/${betaChecksumName}`, async (_request, reply) => sendBetaDownload(betaChecksumName, reply));
   app.get(`/downloads/macos/${macosAarch64Name}`, async (_request, reply) => sendMacosDownload(macosAarch64Name, reply));
   app.get(`/downloads/macos/${macosAarch64ChecksumName}`, async (_request, reply) => sendMacosDownload(macosAarch64ChecksumName, reply));
+  app.get(`/downloads/nas/${nasFallbackName}`, async (_request, reply) => sendNasFallbackDownload(nasFallbackName, reply));
   app.get("/downloads/windows/:file", async (request, reply) => {
     const file = routeParam(request.params, "file");
     if (![betaInstallerName, betaChecksumName].includes(file)) {
@@ -122,6 +129,14 @@ export async function registerRoutes(app: FastifyInstance) {
     reply.header("Content-Disposition", `attachment; filename="${basename(download.path)}"`);
     reply.type(file.endsWith(".dmg") ? "application/octet-stream" : "text/plain; charset=utf-8");
     return reply.send(createReadStream(download.path));
+  });
+  app.get("/downloads/nas/:file", async (request, reply) => {
+    const file = routeParam(request.params, "file");
+    if (file !== nasFallbackName) {
+      return reply.notFound("download not found");
+    }
+
+    return sendNasFallbackDownload(file, reply);
   });
 
   app.post("/api/v1/auth/register", async (request, reply) => {
@@ -1787,6 +1802,32 @@ async function findMacosDownload(file: string) {
   return undefined;
 }
 
+async function sendNasFallbackDownload(file: string, reply: FastifyReply) {
+  const download = await findNasFallbackDownload(file);
+  if (!download) {
+    return reply.notFound("download not found");
+  }
+
+  reply.header("Content-Length", String(download.info.size));
+  reply.header("Content-Disposition", `attachment; filename="${basename(download.path)}"`);
+  reply.type("application/zip");
+  return reply.send(createReadStream(download.path));
+}
+
+async function findNasFallbackDownload(file: string) {
+  for (const root of nasFallbackRoots) {
+    const path = resolve(root, file);
+    if (!path.startsWith(root)) {
+      continue;
+    }
+    const info = await stat(path).catch(() => undefined);
+    if (info?.isFile()) {
+      return { path, info };
+    }
+  }
+  return undefined;
+}
+
 function publicPage(page: string) {
   const title = {
     home: "VELORA - L'Upper Web",
@@ -1805,6 +1846,7 @@ function publicPage(page: string) {
   const checksumUrl = "/downloads/windows/Velora_0.1.0_x64_en-US.msi.sha256.txt";
   const macosDownloadUrl = "/downloads/macos/Velora_0.1.0_aarch64.dmg";
   const macosChecksumUrl = "/downloads/macos/Velora_0.1.0_aarch64.dmg.sha256.txt";
+  const nasFallbackUrl = "/downloads/nas/velora-nas-fallback-agent-0.1.0-beta.zip";
   const moneroWalletUrl = "https://www.getmonero.org/downloads/";
   const zephyrWalletUrl = "https://zephyrprotocol.com/";
   const body = page === "download" ? `
@@ -1824,6 +1866,11 @@ function publicPage(page: string) {
           <a class="cta" href="${macosDownloadUrl}">Scarica per macOS</a>
           <a class="ghost" href="${macosChecksumUrl}">Verifica SHA-256</a>
         </article>
+        <article>
+          <b>Nodo NAS fallback</b>
+          <p>Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso</p>
+          <a class="cta" href="${nasFallbackUrl}">Scarica nodo NAS</a>
+        </article>
       </section>
       <dl>
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
@@ -1832,11 +1879,11 @@ function publicPage(page: string) {
       </dl>
     </section>
     <section class="panel">
-      <h2>Wallet per payout futuri Mining Partner</h2>
+      <h2>Wallet Mining Partner</h2>
       <p>Usa soltanto wallet ufficiali e custodisci tu seed phrase e chiavi private<br>Velora non chiede mai seed, private key, password o file wallet</p>
       <a class="ghost" href="${moneroWalletUrl}" rel="noopener noreferrer">Wallet Monero ufficiale</a>
       <a class="ghost" href="${zephyrWalletUrl}" rel="noopener noreferrer">Wallet Zephyr ufficiale</a>
-      <p>Mining Partner beta: payout non ancora attivo finche accounting pool, wallet RPC e verifica on-chain non sono completati</p>
+      <p>Durante la beta puoi richiedere payout manuale dal tuo account quando la quota viene verificata nel pannello admin</p>
     </section>` : page === "publishers" ? `
     <section class="panel">
       <h1>Pubblica nell'Upper Web</h1>
