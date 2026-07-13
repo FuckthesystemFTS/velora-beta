@@ -206,6 +206,8 @@ struct StartMiningRequest {
     username: String,
     password: String,
     threads: Option<u8>,
+    #[serde(rename = "cpuPriority")]
+    cpu_priority: Option<u8>,
 }
 
 #[derive(Serialize)]
@@ -218,6 +220,8 @@ struct MiningLocalStatus {
     pid_path: String,
     #[serde(rename = "logPath")]
     log_path: String,
+    #[serde(rename = "maxThreads")]
+    max_threads: usize,
     message: String,
 }
 
@@ -282,6 +286,7 @@ fn mining_status(app: AppHandle) -> Result<MiningLocalStatus, VeloraError> {
         miner_path: miner_path.to_string_lossy().to_string(),
         pid_path: pid_path.to_string_lossy().to_string(),
         log_path: log_path.to_string_lossy().to_string(),
+        max_threads: max_mining_threads(),
         message: if ready {
             if running {
                 "Miner locale in esecuzione".to_string()
@@ -307,6 +312,7 @@ fn start_mining(app: AppHandle, input: StartMiningRequest) -> Result<MiningLocal
             miner_path: miner_path.to_string_lossy().to_string(),
             pid_path: dir.join("xmrig.pid").to_string_lossy().to_string(),
             log_path: dir.join("xmrig.log").to_string_lossy().to_string(),
+            max_threads: max_mining_threads(),
             message: "Miner non trovato. Scarica XMRig ufficiale, estrailo e metti l'eseguibile nella cartella indicata.".to_string(),
         });
     }
@@ -324,11 +330,12 @@ fn start_mining(app: AppHandle, input: StartMiningRequest) -> Result<MiningLocal
         "--donate-level".to_string(),
         "0".to_string(),
         "--cpu-priority".to_string(),
-        "1".to_string(),
+        input.cpu_priority.unwrap_or(1).clamp(0, 5).to_string(),
     ];
+    let max_threads = max_mining_threads().min(32);
     if let Some(threads) = input.threads {
         args.push("-t".to_string());
-        args.push(threads.clamp(1, 8).to_string());
+        args.push(usize::from(threads).clamp(1, max_threads).to_string());
     }
     let log_file = fs::OpenOptions::new().create(true).append(true).open(dir.join("xmrig.log"))?;
     let err_file = log_file.try_clone()?;
@@ -867,6 +874,13 @@ fn mining_executable_path(app: &AppHandle) -> Result<PathBuf, VeloraError> {
     {
         Ok(dir.join("xmrig"))
     }
+}
+
+fn max_mining_threads() -> usize {
+    std::thread::available_parallelism()
+        .map(|threads| threads.get())
+        .unwrap_or(2)
+        .max(1)
 }
 
 fn read_running_pid(pid_path: &Path) -> Option<u32> {

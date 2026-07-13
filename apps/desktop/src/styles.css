@@ -884,3 +884,24 @@ button:disabled {
   height: 12px;
   accent-color: var(--gold);
 }
+
+.power-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px 0 14px;
+}
+
+.power-profile-grid button {
+  padding: 10px 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(115, 161, 200, 0.32);
+  background: rgba(12, 34, 53, 0.72);
+  color: var(--ink);
+}
+
+.power-profile-grid button.selected {
+  border-color: rgba(242, 204, 111, 0.84);
+  background: linear-gradient(135deg, rgba(242, 204, 111, 0.24), rgba(49, 231, 159, 0.12));
+  box-shadow: 0 0 18px rgba(242, 204, 111, 0.12);
+}

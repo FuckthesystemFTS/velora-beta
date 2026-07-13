@@ -88,7 +88,18 @@ type MiningLocalStatus = {
   minerPath: string;
   pidPath: string;
   logPath: string;
+  maxThreads: number;
   message: string;
+};
+
+type MiningPowerProfile = "eco" | "balanced" | "boost" | "max";
+
+type MiningForm = {
+  coin: string;
+  payoutWallet: string;
+  threads: string;
+  cpuPriority: string;
+  powerProfile: MiningPowerProfile;
 };
 
 type MiningUiStats = {
@@ -216,7 +227,7 @@ function App() {
   const [nodeEnrollMessage, setNodeEnrollMessage] = React.useState("Nodo utente non ancora attivato");
   const siteApi = createVeloraSiteApi(apiBaseUrl);
 
-  function setMiningForm(form: { coin: string; payoutWallet: string; threads: string }) {
+  function setMiningForm(form: MiningForm) {
     setMiningFormState(form);
     saveStoredMiningForm(form);
   }
@@ -787,7 +798,8 @@ function App() {
           poolUrl: minerConfig.poolUrl,
           username: minerConfig.poolUsername,
           password: minerConfig.poolPassword,
-          threads: Number(miningForm.threads) || 2
+          threads: Number(miningForm.threads) || 2,
+          cpuPriority: Number(miningForm.cpuPriority) || 1
         }
       });
       setMiningStatus(status);
@@ -1388,8 +1400,8 @@ function Forum(props: {
 function MiningPartner(props: {
   status: MiningLocalStatus | null;
   message: string;
-  form: { coin: string; payoutWallet: string; threads: string };
-  setForm: (form: { coin: string; payoutWallet: string; threads: string }) => void;
+  form: MiningForm;
+  setForm: (form: MiningForm) => void;
   stats: MiningUiStats;
   progress: MiningProgress | null;
   onRefresh: () => void;
@@ -1400,6 +1412,24 @@ function MiningPartner(props: {
   const runtime = formatDuration(props.stats.elapsedSeconds);
   const currentProgress = props.progress?.workers.find((worker) => worker.coin === props.form.coin) ?? props.progress?.workers[0];
   const progressPercent = currentProgress ? Math.max(0, Math.min(100, Number(currentProgress.payout_progress_percent ?? 0))) : 0;
+  const maxThreads = Math.max(1, Number(props.status?.maxThreads ?? navigator.hardwareConcurrency ?? 2));
+  const selectedThreads = Math.max(1, Math.min(maxThreads, Number(props.form.threads) || 2));
+  const selectedPriority = Math.max(0, Math.min(5, Number(props.form.cpuPriority) || 1));
+  function applyPowerProfile(profile: MiningPowerProfile) {
+    const targetThreads = profile === "eco"
+      ? Math.max(1, Math.floor(maxThreads * 0.25))
+      : profile === "balanced"
+        ? Math.max(1, Math.floor(maxThreads * 0.5))
+        : profile === "boost"
+          ? Math.max(1, Math.floor(maxThreads * 0.75))
+          : maxThreads;
+    props.setForm({
+      ...props.form,
+      powerProfile: profile,
+      threads: String(targetThreads),
+      cpuPriority: profile === "eco" ? "1" : profile === "balanced" ? "2" : profile === "boost" ? "3" : "4"
+    });
+  }
   return (
     <section className="dev-workspace">
       <header className="workspace-heading">
@@ -1419,8 +1449,30 @@ function MiningPartner(props: {
           </select>
           <label>Wallet pubblico payout</label>
           <input value={props.form.payoutWallet} onChange={(event) => props.setForm({ ...props.form, payoutWallet: event.target.value })} placeholder="Incolla indirizzo pubblico" />
-          <label>Thread CPU</label>
-          <input value={props.form.threads} onChange={(event) => props.setForm({ ...props.form, threads: event.target.value })} />
+          <label>Potenza di calcolo</label>
+          <div className="power-profile-grid">
+            <button type="button" className={props.form.powerProfile === "eco" ? "selected" : ""} onClick={() => applyPowerProfile("eco")}>Eco</button>
+            <button type="button" className={props.form.powerProfile === "balanced" ? "selected" : ""} onClick={() => applyPowerProfile("balanced")}>Bilanciato</button>
+            <button type="button" className={props.form.powerProfile === "boost" ? "selected" : ""} onClick={() => applyPowerProfile("boost")}>Spinto</button>
+            <button type="button" className={props.form.powerProfile === "max" ? "selected" : ""} onClick={() => applyPowerProfile("max")}>Massimo</button>
+          </div>
+          <label>Thread CPU: {selectedThreads} di {maxThreads}</label>
+          <input
+            type="range"
+            min={1}
+            max={maxThreads}
+            value={selectedThreads}
+            onChange={(event) => props.setForm({ ...props.form, threads: event.target.value, powerProfile: "balanced" })}
+          />
+          <label>Priorita CPU: {selectedPriority}</label>
+          <input
+            type="range"
+            min={0}
+            max={5}
+            value={selectedPriority}
+            onChange={(event) => props.setForm({ ...props.form, cpuPriority: event.target.value })}
+          />
+          <p className="safe-detail">Eco consuma meno. Massimo usa tutta la CPU disponibile e puo rendere il PC lento o caldo.</p>
           <div className="action-row">
             <button onClick={props.onRefresh}>Controlla</button>
             <button onClick={props.onStart}>Avvia mining</button>
@@ -1437,7 +1489,7 @@ function MiningPartner(props: {
           <p>Miner pronto: {props.status?.ready ? "si" : "no"}</p>
           <p>Processo locale: {props.status?.running ? "attivo" : "non attivo"}</p>
           <p>Coin selezionata: {props.form.coin}</p>
-          <p>Thread CPU: {props.form.threads || "2"}</p>
+          <p>Potenza: {props.form.powerProfile} - {selectedThreads}/{maxThreads} thread - priorita {selectedPriority}</p>
           <p>Wallet salvato: {props.form.payoutWallet ? maskLocalWallet(props.form.payoutWallet) : "non inserito"}</p>
           <h3>Progresso payout</h3>
           <p>Soglia: {currentProgress?.payout_threshold_label ?? props.progress?.threshold.xmrLabel ?? "0.05 XMR"}</p>
@@ -1715,22 +1767,28 @@ function saveStoredSession(session: AccountSession) {
   localStorage.setItem("velora.session", JSON.stringify(session));
 }
 
-function loadStoredMiningForm() {
+function loadStoredMiningForm(): MiningForm {
   try {
     const raw = localStorage.getItem("velora.mining.form");
-    const parsed = raw ? JSON.parse(raw) as { coin?: string; payoutWallet?: string; threads?: string } : {};
+    const parsed = raw ? JSON.parse(raw) as Partial<MiningForm> : {};
     return {
       coin: parsed.coin === "ZEPH" ? "ZEPH" : "XMR",
       payoutWallet: String(parsed.payoutWallet ?? ""),
-      threads: String(parsed.threads ?? "2")
+      threads: String(parsed.threads ?? "2"),
+      cpuPriority: String(parsed.cpuPriority ?? "1"),
+      powerProfile: normalizeMiningPowerProfile(parsed.powerProfile)
     };
   } catch {
-    return { coin: "XMR", payoutWallet: "", threads: "2" };
+    return { coin: "XMR", payoutWallet: "", threads: "2", cpuPriority: "1", powerProfile: "balanced" };
   }
 }
 
-function saveStoredMiningForm(form: { coin: string; payoutWallet: string; threads: string }) {
+function saveStoredMiningForm(form: MiningForm) {
   localStorage.setItem("velora.mining.form", JSON.stringify(form));
+}
+
+function normalizeMiningPowerProfile(profile: unknown): MiningPowerProfile {
+  return profile === "eco" || profile === "boost" || profile === "max" ? profile : "balanced";
 }
 
 function maskLocalWallet(wallet: string) {
