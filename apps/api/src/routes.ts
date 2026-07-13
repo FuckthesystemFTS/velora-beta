@@ -2190,7 +2190,7 @@ function publicPage(page: string) {
       </section>
       <dl>
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
-        <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - E2FD1370D21B72C9D361F3B1A7462FE9B70921B568D0E716A0064030DAA456FA</dd>
+        <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - 23BB10963DE43FBAAE865D0AB0C45DD27AAEDB6F3A379285FA449CB74C04D4D2</dd>
         <dt>macOS</dt><dd>Velora_0.1.0_aarch64.dmg - 86FC67A3E1BED0DF1FFBECE0C67E68C330A71EF52124E64B7BB9D74072CE27ED</dd>
       </dl>
     </section>
@@ -2758,5 +2758,6 @@ function mapForumMessage(row: any) {
     createdAt: row.created_at
   };
 }
+
 
 
