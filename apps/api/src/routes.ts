@@ -663,6 +663,7 @@ export async function registerRoutes(app: FastifyInstance) {
     }
     return { query, results: await repository.searchDocuments(query) };
   });
+  app.get("/api/v1/oceano/status", async () => repository.getOceanoStatus());
   app.get("/api/v1/releases/latest", async () => ({ version: "0.1.0-beta", channel: "beta" }));
 
   app.get("/api/v1/forum/sections", async (_request, reply) => {

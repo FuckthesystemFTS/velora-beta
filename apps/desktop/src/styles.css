@@ -465,6 +465,9 @@ input {
   align-self: start;
   display: grid;
   gap: 12px;
+  background:
+    linear-gradient(145deg, rgba(10, 35, 58, 0.92), rgba(5, 15, 28, 0.96)),
+    radial-gradient(circle at 12% 0%, rgba(216, 174, 85, 0.18), transparent 38%);
 }
 
 .site-card {
@@ -476,6 +479,17 @@ input {
   border: 1px solid rgba(131, 220, 255, 0.16);
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.045);
+  position: relative;
+  overflow: hidden;
+}
+
+.site-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--gold), rgba(131, 220, 255, 0.2));
+  opacity: 0.75;
 }
 
 .site-card h3,
@@ -490,8 +504,9 @@ input {
   place-items: center;
   border-radius: 14px;
   color: #06111f;
-  background: linear-gradient(135deg, var(--gold-soft), var(--cyan));
+  background: linear-gradient(135deg, var(--gold-soft), var(--cyan) 55%, #2f9bff);
   font-weight: 900;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.26);
 }
 
 .empty-state {

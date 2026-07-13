@@ -915,7 +915,7 @@ export class PostgresRepository implements VeloraRepository {
   async searchDocuments(query: string) {
     const normalized = `%${query.toLowerCase()}%`;
     const result = await this.pool.query(
-      `SELECT address, category, slug, title, description, content_cid, release_version, availability
+      `SELECT address, category, slug, title, description, publisher, age_rating, family_safe, trust_level, content_cid, release_version, availability, updated_at
        FROM search_documents
        WHERE lower(address) LIKE $1
           OR lower(title) LIKE $1
@@ -930,6 +930,18 @@ export class PostgresRepository implements VeloraRepository {
       [normalized, query.toLowerCase(), query.toLowerCase().split(/\s+/)]
     );
     return result.rows;
+  }
+
+  async getOceanoStatus() {
+    const result = await this.pool.query(
+      `SELECT COUNT(*)::int AS entries,
+              MAX(updated_at) AS last_indexed_at,
+              MAX(content_cid) AS content_cid,
+              MAX(release_version) AS release_version
+       FROM search_documents
+       WHERE category = 'OCEANO'`
+    );
+    return result.rows[0] ?? { entries: 0, last_indexed_at: null, content_cid: null, release_version: null };
   }
 
   async approveZoneRequest(id: string, command: SignedAdminCommand) {

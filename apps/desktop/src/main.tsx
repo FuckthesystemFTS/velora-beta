@@ -444,10 +444,10 @@ function App() {
         zone: item.address,
         description: item.description ?? "Risultato indicizzato nella rete Velora.",
         category: item.category ?? "Upper Web",
-        publisher: item.address.split(".").slice(-1)[0] ?? "Publisher verificato",
-        identityLevel: "Livello 0",
-        verified: true,
-        familySafe: true,
+        publisher: item.publisher ?? (item.category === "OCEANO" ? "Velora Oceano" : item.address.split(".").slice(-1)[0] ?? "Publisher verificato"),
+        identityLevel: item.trust_level ? `Trust ${item.trust_level}` : "Livello 0",
+        verified: Number(item.trust_level ?? 0) > 0 || item.category === "OCEANO",
+        familySafe: item.family_safe !== false,
         availability: item.availability > 0 ? "Disponibile" : "Indicizzato",
         updatedAt: item.release_version ? `Release ${item.release_version}` : "Recente"
       }));
@@ -1314,7 +1314,7 @@ function CategoryCloud() {
     <article className="glass-card">
       <h2>Categorie</h2>
       <div className="tag-cloud">
-        {["Commercio", "Salute", "Creativita", "Istruzione", "Servizi", "Sistema"].map((item) => <span key={item}>{item}</span>)}
+        {["Oceano", "Conoscenza", "Commercio", "Salute", "Creativita", "Istruzione", "Servizi", "Sistema"].map((item) => <span key={item}>{item}</span>)}
       </div>
     </article>
   );

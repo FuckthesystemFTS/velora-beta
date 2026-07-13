@@ -107,9 +107,14 @@ export const publisherSearchResultSchema = z.object({
   slug: z.string(),
   title: z.string(),
   description: z.string(),
+  publisher: z.string().optional(),
+  age_rating: z.string().optional(),
+  family_safe: z.boolean().optional(),
+  trust_level: z.number().optional(),
   content_cid: z.string(),
   release_version: z.string(),
-  availability: z.number()
+  availability: z.number(),
+  updated_at: z.string().optional()
 });
 
 export const publisherContentObjectSchema = z.object({
