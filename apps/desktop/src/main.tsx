@@ -772,13 +772,16 @@ function App() {
         return;
       }
       const workerPayload = await createWorker.json();
-      const workerId = workerPayload.worker?.id;
-      const configResponse = await fetch(`${apiBaseUrl}/api/mining/workers/${workerId}/config`, { headers: authHeaders(freshSession) });
-      if (!configResponse.ok) {
-        setMiningMessage(await configResponse.text());
-        return;
+      let minerConfig = workerPayload.minerConfig;
+      if (!minerConfig) {
+        const workerId = workerPayload.worker?.id ?? workerPayload.worker?.workerId;
+        const configResponse = await fetch(`${apiBaseUrl}/api/mining/workers/${workerId}/config`, { headers: authHeaders(freshSession) });
+        if (!configResponse.ok) {
+          setMiningMessage(await configResponse.text());
+          return;
+        }
+        minerConfig = await configResponse.json();
       }
-      const minerConfig = await configResponse.json();
       const status = await invoke<MiningLocalStatus>("start_mining", {
         input: {
           poolUrl: minerConfig.poolUrl,

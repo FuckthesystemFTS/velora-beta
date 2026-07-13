@@ -1091,6 +1091,7 @@ export async function registerRoutes(app: FastifyInstance) {
       await client.query("COMMIT");
       return {
         worker: mapMiningWorker(worker.rows[0]),
+        minerConfig: buildMinerConfigResponse(worker.rows[0]),
         minerConnection: sanitizeMinerConnection(worker.rows[0]),
         payoutsEnabled: config.miningPayoutsEnabled,
         warning: config.miningPayoutsEnabled ? undefined : "PAYOUT NON ANCORA ATTIVO"
@@ -1289,7 +1290,7 @@ export async function registerRoutes(app: FastifyInstance) {
       `SELECT mw.*, md.user_id, md.device_peer_id
        FROM mining_workers mw
        JOIN mining_devices md ON md.id = mw.mining_device_id
-       WHERE mw.id = $1 AND md.user_id = $2`,
+       WHERE (mw.id::text = $1 OR mw.worker_id = $1) AND md.user_id = $2`,
       [routeParam(request.params, "id"), userId]
     );
     const worker = result.rows[0];
@@ -1299,16 +1300,7 @@ export async function registerRoutes(app: FastifyInstance) {
     if (worker.status !== "ENABLED") {
       return reply.failedDependency("worker is not enabled; complete accounting and consent first");
     }
-    return {
-      workerId: worker.worker_id,
-      coin: worker.coin,
-      poolUrl: worker.pool_url,
-      poolUsername: worker.coin === "ZEPH" ? `${worker.pool_username}.${worker.worker_id}` : worker.pool_username,
-      poolPassword: worker.coin === "XMR" ? worker.worker_id : "x",
-      payoutWallet: maskWallet(String(worker.payout_wallet ?? "")),
-      custodial: true,
-      warning: config.miningPayoutsEnabled ? undefined : "PAYOUT NON ANCORA ATTIVO"
-    };
+    return buildMinerConfigResponse(worker);
   });
 
   app.get("/api/mining/devices/:id", async (request, reply) => getMiningDeviceForUser(request, reply));
@@ -2457,6 +2449,21 @@ function sanitizeMinerConnection(row: any) {
     workerId,
     workerPassword: coin === "XMR" ? workerId : "x",
     note: coin === "ZEPH" ? "2Miners ZEPH usa WALLET.RIG_ID in -u." : "MoneroOcean usa wallet come login e worker nel campo password/pass."
+  };
+}
+
+function buildMinerConfigResponse(row: any) {
+  const coin = String(row.coin);
+  const workerId = String(row.worker_id ?? "");
+  return {
+    workerId,
+    coin,
+    poolUrl: String(row.pool_url ?? ""),
+    poolUsername: coin === "ZEPH" ? `${row.pool_username}.${workerId}` : String(row.pool_username ?? ""),
+    poolPassword: coin === "XMR" ? workerId : "x",
+    payoutWallet: maskWallet(String(row.payout_wallet ?? "")),
+    custodial: true,
+    warning: config.miningPayoutsEnabled ? undefined : "PAYOUT NON ANCORA ATTIVO"
   };
 }
 
