@@ -273,6 +273,9 @@ fn mining_status(app: AppHandle) -> Result<MiningLocalStatus, VeloraError> {
     let ready = miner_path.exists();
     let running = read_running_pid(&pid_path).is_some();
     let stale_pid = pid_path.exists() && !running;
+    if stale_pid {
+        let _ = fs::remove_file(&pid_path);
+    }
     Ok(MiningLocalStatus {
         ready,
         running,
@@ -870,9 +873,12 @@ fn read_running_pid(pid_path: &Path) -> Option<u32> {
     let pid = fs::read_to_string(pid_path).ok()?.trim().parse::<u32>().ok()?;
     #[cfg(target_os = "windows")]
     {
-        let output = Command::new("tasklist").args(["/FI", &format!("PID eq {}", pid)]).output().ok()?;
-        let text = String::from_utf8_lossy(&output.stdout);
-        text.contains(&pid.to_string()).then_some(pid)
+        let output = Command::new("tasklist")
+            .args(["/FI", &format!("PID eq {}", pid), "/FO", "CSV", "/NH"])
+            .output()
+            .ok()?;
+        let text = String::from_utf8_lossy(&output.stdout).to_lowercase();
+        text.contains("xmrig.exe").then_some(pid)
     }
     #[cfg(not(target_os = "windows"))]
     {
