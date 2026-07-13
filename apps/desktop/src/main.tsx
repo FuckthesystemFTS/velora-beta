@@ -1419,9 +1419,9 @@ function MiningPartner(props: {
     const targetThreads = profile === "eco"
       ? Math.max(1, Math.floor(maxThreads * 0.25))
       : profile === "balanced"
-        ? Math.max(1, Math.floor(maxThreads * 0.5))
+        ? Math.max(1, Math.ceil(maxThreads * 0.5))
         : profile === "boost"
-          ? Math.max(1, Math.floor(maxThreads * 0.75))
+          ? Math.max(1, Math.ceil(maxThreads * 0.75))
           : maxThreads;
     props.setForm({
       ...props.form,
