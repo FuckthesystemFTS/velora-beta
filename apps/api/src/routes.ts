@@ -1,5 +1,5 @@
 ﻿import { createReadStream } from "node:fs";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { basename, resolve } from "node:path";
 import sensible from "@fastify/sensible";
@@ -47,6 +47,17 @@ const miningPayoutThresholdAtomicByCoin: Record<string, bigint> = {
 export async function registerRoutes(app: FastifyInstance) {
   await app.register(cors, { origin: true, credentials: true });
   await app.register(sensible);
+  app.addHook("onRequest", async (request, reply) => {
+    const pathname = request.url.split("?")[0] ?? "/";
+    if (pathname === "/health" || pathname.startsWith("/downloads/")) {
+      return;
+    }
+    const clientId = String(request.headers["x-forwarded-for"] ?? request.ip ?? "local").split(",")[0]?.trim() ?? "local";
+    const limited = await hitRateLimit(hashValue(`${clientId}:${pathname.startsWith("/api/") ? pathname : "public"}`), pathname.startsWith("/api/") ? 240 : 600);
+    if (limited) {
+      reply.code(429).send({ code: "RATE_LIMIT", message: "Troppe richieste. Riprova tra poco." });
+    }
+  });
 
   app.get("/", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("home")));
   app.get("/download", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("download")));
@@ -70,6 +81,11 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get("/status", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("status")));
   app.get("/legal/privacy", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("privacy")));
   app.get("/legal/terms", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("terms")));
+  app.get("/z/:address", async (request, reply) => {
+    const address = routeParam(request.params, "address");
+    const fallback = await findPublicZone(address);
+    return reply.type("text/html; charset=utf-8").send(publicZonePage(address, fallback));
+  });
   app.get("/health", async () => {
     if (!config.betaNodeClusterEnabled) {
       return { ok: true, service: "velora-api", network: "cluster disattivato" };
@@ -98,6 +114,20 @@ export async function registerRoutes(app: FastifyInstance) {
     }
     return reply.notFound("release manifest not found");
   });
+  app.get("/api/v1/releases/check", async (_request, reply) => {
+    const manifest = await readReleaseManifestSafe();
+    if (!manifest) {
+      return reply.notFound("release manifest not found");
+    }
+    return {
+      current: manifest,
+      latestVersion: manifest.version,
+      channel: manifest.channel,
+      changelog: releaseChangelog(),
+      message: "Aggiornamento disponibile dalla pagina download quando versione e hash cambiano."
+    };
+  });
+  app.get("/api/v1/releases/changelog", async () => ({ version: "0.1.0-beta", channel: "beta", items: releaseChangelog() }));
   app.get(`/downloads/windows/${betaInstallerName}`, async (_request, reply) => sendBetaDownload(betaInstallerName, reply));
   app.get(`/downloads/windows/${betaChecksumName}`, async (_request, reply) => sendBetaDownload(betaChecksumName, reply));
   app.get(`/downloads/macos/${macosAarch64Name}`, async (_request, reply) => sendMacosDownload(macosAarch64Name, reply));
@@ -155,6 +185,7 @@ export async function registerRoutes(app: FastifyInstance) {
     }
 
     const user = await repository.createUser(body.username, hashPassword(body.password));
+    const recovery = await ensureRecoveryToken(user.id, true);
     const mail = await repository.getOrCreateVeloMailAccount(user.id, user.username);
     const session = await repository.createAuthSession(user.id);
     return {
@@ -163,7 +194,8 @@ export async function registerRoutes(app: FastifyInstance) {
       refreshToken: session.refreshToken,
       expiresAt: session.expiresAt,
       user: { id: user.id, username: user.username, identityLevel: mail.identityLevel },
-      mail
+      mail,
+      recovery
     };
   });
 
@@ -176,13 +208,16 @@ export async function registerRoutes(app: FastifyInstance) {
 
     const mail = await repository.getOrCreateVeloMailAccount(user.id, user.username);
     const session = await repository.createAuthSession(user.id);
+    const recovery = await ensureRecoveryToken(user.id, false);
+    await requirePool().query("UPDATE users SET last_login_at = NOW() WHERE id = $1", [user.id]);
     return {
       token: session.token,
       accessToken: session.token,
       refreshToken: session.refreshToken,
       expiresAt: session.expiresAt,
       user: { id: user.id, username: user.username, identityLevel: mail.identityLevel },
-      mail
+      mail,
+      recovery
     };
   });
 
@@ -339,7 +374,34 @@ export async function registerRoutes(app: FastifyInstance) {
     }
   }));
   app.post("/api/v1/auth/logout", async (request) => repository.revokeAuthSession(readBearerToken(request) ?? ""));
-  app.post("/api/v1/auth/recovery", async () => ({ ok: true, delivery: "internal-notification" }));
+  app.post("/api/v1/auth/recovery", async (request, reply) => {
+    const body = request.body as { username?: string; recoveryToken?: string; newPassword?: string };
+    if (!body?.username || !body?.recoveryToken || !body?.newPassword) {
+      return reply.badRequest("username, recoveryToken and newPassword are required");
+    }
+    if (body.newPassword.length < 8) {
+      return reply.badRequest("newPassword must be at least 8 characters");
+    }
+    const user = await repository.findUserByUsername(body.username);
+    if (!user) {
+      return reply.unauthorized("invalid recovery token");
+    }
+    const ok = await verifyRecoveryToken(user.id, body.recoveryToken);
+    if (!ok) {
+      return reply.unauthorized("invalid recovery token");
+    }
+    await requirePool().query("UPDATE users SET password_hash = $1 WHERE id = $2", [hashPassword(body.newPassword), user.id]);
+    await appendUserEvent(user.id, "PASSWORD_RECOVERED", "USER", user.id, "Password aggiornata tramite key token personale.");
+    return { ok: true, message: "Password aggiornata. Ora puoi accedere con la nuova password." };
+  });
+  app.post("/api/v1/auth/recovery-token/seen", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    await requirePool().query("UPDATE users SET recovery_token_seen_at = NOW() WHERE id = $1", [userId]);
+    return { ok: true };
+  });
 
   app.get("/api/v1/account", async (request, reply) => {
     const userId = await requireSessionUserId(request, reply);
@@ -351,7 +413,28 @@ export async function registerRoutes(app: FastifyInstance) {
       return reply.notFound("account not found");
     }
     const mail = await repository.getOrCreateVeloMailAccount(user.id, user.username);
-    return { id: user.id, username: user.username, identityLevel: mail.identityLevel, mail };
+    return {
+      id: user.id,
+      username: user.username,
+      identityLevel: mail.identityLevel,
+      mail,
+      profile: await buildAccountProfile(user.id)
+    };
+  });
+  app.get("/api/v1/account/profile", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    return buildAccountProfile(userId);
+  });
+  app.get("/api/v1/account/notifications", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const result = await requirePool().query("SELECT id, type, title, body, status, payload, created_at FROM user_notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 100", [userId]);
+    return { notifications: result.rows };
   });
 
   app.post("/api/v1/identity/verify-basic", async (request, reply) => {
@@ -379,6 +462,12 @@ export async function registerRoutes(app: FastifyInstance) {
         return reply.code(409).send({
           code: "DEVICE_ACCOUNT_LIMIT_REACHED",
           message: "Hai gia associato tre account a questo dispositivo. Utilizza uno degli account esistenti oppure rimuovine uno dalle impostazioni."
+        });
+      }
+      if (error instanceof Error && error.message === "USER_DEVICE_LIMIT_REACHED") {
+        return reply.code(409).send({
+          code: "USER_DEVICE_LIMIT_REACHED",
+          message: "Questo account ha gia tre dispositivi attivi. Rimuovi un dispositivo dalle impostazioni prima di aggiungerne un altro."
         });
       }
       return reply.failedDependency("membership signing key is not configured");
@@ -823,6 +912,93 @@ export async function registerRoutes(app: FastifyInstance) {
       return;
     }
     return repository.dashboard();
+  });
+  app.get("/api/admin/overview", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    return buildAdminOverview();
+  });
+  app.get("/api/admin/users", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const result = await requirePool().query(
+      `SELECT u.id, u.username, u.created_at, u.last_login_at,
+              vm.address AS mail_address,
+              COUNT(DISTINCT d.id)::int AS devices,
+              COUNT(DISTINCT sr.id)::int AS releases
+       FROM users u
+       LEFT JOIN velomail_accounts vm ON vm.user_id = u.id
+       LEFT JOIN devices d ON d.user_id = u.id
+       LEFT JOIN navigation_zones nz ON nz.owner_user_id = u.id
+       LEFT JOIN site_releases sr ON sr.zone_id = nz.id
+       GROUP BY u.id, vm.address
+       ORDER BY u.created_at DESC
+       LIMIT 250`
+    );
+    return { users: result.rows };
+  });
+  app.get("/api/admin/sites", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const result = await requirePool().query(
+      `SELECT nz.address, nz.status AS zone_status, u.username AS owner,
+              sr.id AS release_id, sr.version, sr.status AS release_status, sr.content_cid, sr.created_at
+       FROM navigation_zones nz
+       LEFT JOIN users u ON u.id = nz.owner_user_id
+       LEFT JOIN LATERAL (
+         SELECT * FROM site_releases sr WHERE sr.zone_id = nz.id ORDER BY sr.created_at DESC LIMIT 1
+       ) sr ON TRUE
+       ORDER BY COALESCE(sr.created_at, nz.created_at) DESC
+       LIMIT 250`
+    );
+    return { sites: result.rows };
+  });
+  app.get("/api/admin/reports", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const [spam, moderation] = await Promise.all([
+      requirePool().query("SELECT * FROM velomail_spam_reports ORDER BY created_at DESC LIMIT 100").catch(() => ({ rows: [] })),
+      requirePool().query("SELECT * FROM forum_moderation_actions ORDER BY created_at DESC LIMIT 100").catch(() => ({ rows: [] }))
+    ]);
+    return { mailSpam: spam.rows, forumModeration: moderation.rows };
+  });
+  app.get("/api/admin/audit", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const [audit, operational] = await Promise.all([
+      requirePool().query("SELECT id, admin_id, action, target_type, target_id, reason, previous_hash, entry_hash, created_at FROM audit_logs ORDER BY created_at DESC LIMIT 200"),
+      requirePool().query("SELECT id, actor_user_id, actor_admin_id, event_type, target_type, target_id, summary, severity, created_at FROM operational_events ORDER BY created_at DESC LIMIT 200").catch(() => ({ rows: [] }))
+    ]);
+    return { audit: audit.rows, operational: operational.rows };
+  });
+  app.get("/api/admin/health", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    const status = await betaLogicalNodeCluster.status();
+    return {
+      api: "OK",
+      database: "OK",
+      nodes: status,
+      storage: {
+        mode: process.env.VELORA_STORAGE_PROVIDER ?? "local/heroku-filesystem-beta",
+        externalConfigured: Boolean(process.env.S3_BUCKET || process.env.VELORA_STORAGE_BUCKET),
+        note: "Per distribuzione globale usare storage esterno/CDN; Heroku filesystem non e storage persistente."
+      },
+      backups: {
+        configured: Boolean(process.env.HEROKU_API_KEY || process.env.DATABASE_BACKUP_URL),
+        restoreTested: process.env.VELORA_BACKUP_RESTORE_TESTED === "true"
+      },
+      uptimeMonitor: {
+        configured: Boolean(process.env.VELORA_UPTIME_MONITOR_URL),
+        urlPresent: Boolean(process.env.VELORA_UPTIME_MONITOR_URL)
+      }
+    };
   });
   app.get("/api/v1/control/zone-requests", async (request, reply) => {
     if (!(await requireAdminSession(request, reply))) {
@@ -1547,6 +1723,48 @@ export async function registerRoutes(app: FastifyInstance) {
     );
     return { requests: result.rows.map((row) => ({ ...row, payout_wallet: maskWallet(String(row.payout_wallet ?? "")) })) };
   });
+  app.post("/api/admin/mining/payout-requests/:id/decision", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) {
+      return;
+    }
+    const body = request.body as { status?: string; adminNote?: string; txHash?: string };
+    const status = normalizeChoice(body.status, ["APPROVED", "HOLD", "REJECTED", "PAID"], "");
+    if (!status || !body.adminNote) {
+      return reply.badRequest("status and adminNote are required");
+    }
+    if (status === "PAID" && !String(body.txHash ?? "").trim()) {
+      return reply.badRequest("txHash is required when marking payout as PAID");
+    }
+    const result = await requirePool().query(
+      `UPDATE mining_payout_requests
+       SET status = $1,
+           admin_note = $2,
+           admin_id = $3,
+           payout_tx_hash = COALESCE(NULLIF($4,''), payout_tx_hash),
+           decided_at = NOW(),
+           paid_at = CASE WHEN $1 = 'PAID' THEN NOW() ELSE paid_at END
+       WHERE id = $5
+       RETURNING id, user_id, coin, status, payout_tx_hash`,
+      [status, body.adminNote, admin.adminId, String(body.txHash ?? "").trim(), routeParam(request.params, "id")]
+    );
+    const row = result.rows[0];
+    if (!row) {
+      return reply.notFound("payout request not found");
+    }
+    if (status === "PAID") {
+      await requirePool().query(
+        `UPDATE mining_ledger
+         SET status = 'PAID', payout_tx_hash = $1, confirmations = GREATEST(confirmations, 1)
+         WHERE worker_id IN (SELECT worker_id FROM mining_payout_requests WHERE id = $2 AND worker_id IS NOT NULL)
+           AND status IN ('PENDING','PENDING_PAYOUT','PENDING_PAYOUT_DISABLED')`,
+        [String(body.txHash ?? "").trim(), row.id]
+      );
+    }
+    await appendOperationalAudit(admin.adminId, `MINING_PAYOUT_${status}`, "MINING_PAYOUT_REQUEST", row.id, body.adminNote);
+    await notifyUser(row.user_id, "MINING_PAYOUT", `Payout mining ${status}`, status === "PAID" ? `Payout ${row.coin} segnato come pagato. TX: ${row.payout_tx_hash}` : body.adminNote, { payoutRequestId: row.id, status, txHash: row.payout_tx_hash });
+    return { request: row };
+  });
 
   app.post("/api/admin/mining/shares/import", async (request, reply) => {
     const admin = await requireAdminSession(request, reply);
@@ -1759,6 +1977,48 @@ export async function registerRoutes(app: FastifyInstance) {
       threshold: miningThresholdPayload(),
       workers: result.rows.map(mapMiningProgressRow),
       note: "Il progresso payout aumenta solo dopo share pool importate e pagamento pool riconciliato. Hashrate locale e tempo attivo sono diagnostici."
+    };
+  });
+  app.get("/api/v1/mining/history", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const pool = requirePool();
+    const [workers, metrics, payouts, ledger] = await Promise.all([
+      pool.query(
+        `SELECT mw.id, mw.worker_id, mw.coin, mw.status, mw.payout_wallet, mw.updated_at, md.device_peer_id
+         FROM mining_workers mw
+         JOIN mining_devices md ON md.id = mw.mining_device_id
+         WHERE md.user_id = $1
+         ORDER BY mw.updated_at DESC LIMIT 50`,
+        [userId]
+      ),
+      pool.query(
+        `SELECT mdm.coin, mdm.observed_hashrate_hs, mdm.accepted_shares, mdm.rejected_shares, mdm.stale_shares, mdm.created_at
+         FROM mining_device_metrics mdm
+         JOIN mining_devices md ON md.id = mdm.mining_device_id
+         WHERE md.user_id = $1
+         ORDER BY mdm.created_at DESC LIMIT 100`,
+        [userId]
+      ),
+      pool.query("SELECT id, coin, payout_wallet, status, note, admin_note, payout_tx_hash, requested_at, decided_at, paid_at FROM mining_payout_requests WHERE user_id = $1 ORDER BY requested_at DESC LIMIT 100", [userId]),
+      pool.query(
+        `SELECT ml.coin, ml.user_atomic_amount, ml.status, ml.payout_tx_hash, ml.created_at
+         FROM mining_ledger ml
+         JOIN mining_workers mw ON mw.id = ml.worker_id
+         JOIN mining_devices md ON md.id = mw.mining_device_id
+         WHERE md.user_id = $1
+         ORDER BY ml.created_at DESC LIMIT 100`,
+        [userId]
+      )
+    ]);
+    return {
+      workers: workers.rows.map(mapMiningWorker),
+      metrics: metrics.rows,
+      payoutRequests: payouts.rows.map((row) => ({ ...row, payout_wallet: maskWallet(String(row.payout_wallet ?? "")) })),
+      ledger: ledger.rows,
+      explanation: "Stai contribuendo al mining collettivo Velora. Le metriche mostrano attivita locale e pool; il ledger mostra solo importi verificati."
     };
   });
 
@@ -2023,6 +2283,26 @@ function adminPage() {
         <h2>Crediti</h2>
         <div id="credits"></div>
       </section>
+      <section>
+        <h2>Utenti</h2>
+        <div id="users"></div>
+      </section>
+      <section>
+        <h2>Siti pubblicati</h2>
+        <div id="sites"></div>
+      </section>
+      <section>
+        <h2>Segnalazioni</h2>
+        <div id="reports"></div>
+      </section>
+      <section>
+        <h2>Audit e sicurezza</h2>
+        <div id="audit"></div>
+      </section>
+      <section class="wide">
+        <h2>Health admin</h2>
+        <div id="adminHealth"></div>
+      </section>
     </div>
   </main>
   <script>
@@ -2084,15 +2364,20 @@ function adminPage() {
       loadUserNodes();
       loadZoneRequests();
       loadCredits();
+      loadUsers();
+      loadSites();
+      loadReports();
+      loadAudit();
+      loadAdminHealth();
     }
     async function loadOverview() {
       try {
-        const data = await getJson('/api/v1/control/dashboard');
+        const data = await getJson('/api/admin/overview');
         const cards = [
-          ['Zone pending', data.pendingZoneRequests || 0],
-          ['Zone attive', data.activeZones || 0],
-          ['Utenti', data.users || 0],
-          ['Release', data.releases || 0]
+          ['Zone pending', data.dashboard?.pendingZoneRequests || 0],
+          ['Zone attive', data.dashboard?.activeZones || 0],
+          ['Utenti', data.dashboard?.users || 0],
+          ['Payout richieste', (data.payoutRequests || []).reduce((sum,row)=>sum + Number(row.count || 0),0)]
         ];
         document.getElementById('overview').innerHTML = cards.map((item) => '<div class="card"><b>' + item[0] + '</b><span>' + item[1] + '</span></div>').join('');
       } catch (error) { showError('overview', error); }
@@ -2100,8 +2385,23 @@ function adminPage() {
     async function loadPayouts() {
       try {
         const data = await getJson('/api/admin/mining/payout-requests');
-        document.getElementById('payouts').innerHTML = table(data.requests, [['requested_at','Data'],['username','Utente'],['coin','Coin'],['payout_wallet','Wallet'],['status','Stato'],['note','Nota'],['worker_id','Worker']]);
+        document.getElementById('payouts').innerHTML =
+          table(data.requests, [['requested_at','Data'],['username','Utente'],['coin','Coin'],['payout_wallet','Wallet'],['status','Stato'],['note','Nota'],['worker_id','Worker']]) +
+          '<h3>Decisione payout</h3><p class="status">Inserisci ID richiesta, scegli stato e conferma. TX hash obbligatorio per PAID.</p>' +
+          '<input id="payoutId" placeholder="ID richiesta"><input id="payoutStatus" placeholder="APPROVED / HOLD / REJECTED / PAID"><input id="payoutTx" placeholder="TX hash se pagato"><input id="payoutNote" placeholder="Nota admin">' +
+          '<button class="primary" onclick="decidePayout()">Conferma payout</button>';
       } catch (error) { showError('payouts', error); }
+    }
+    async function decidePayout() {
+      const id = document.getElementById('payoutId').value.trim();
+      const status = document.getElementById('payoutStatus').value.trim();
+      const txHash = document.getElementById('payoutTx').value.trim();
+      const adminNote = document.getElementById('payoutNote').value.trim() || 'Decisione manuale admin';
+      if (!id || !status) return alert('ID richiesta e stato obbligatori');
+      if (!confirm('Confermi decisione payout ' + status + '?')) return;
+      await postJson('/api/admin/mining/payout-requests/' + encodeURIComponent(id) + '/decision', { status, txHash, adminNote });
+      await loadPayouts();
+      await loadMining();
     }
     async function loadMining() {
       try {
@@ -2138,6 +2438,36 @@ function adminPage() {
         const data = await getJson('/api/admin/credits/requests');
         document.getElementById('credits').innerHTML = table(data.requests || [], [['created_at','Data'],['username','Utente'],['amount_cents','Importo cent'],['status','Stato'],['requested_use','Uso']]);
       } catch (error) { showError('credits', error); }
+    }
+    async function loadUsers() {
+      try {
+        const data = await getJson('/api/admin/users');
+        document.getElementById('users').innerHTML = table(data.users || [], [['created_at','Creato'],['username','Utente'],['mail_address','Mail'],['devices','Device'],['releases','Release'],['last_login_at','Ultimo login']]);
+      } catch (error) { showError('users', error); }
+    }
+    async function loadSites() {
+      try {
+        const data = await getJson('/api/admin/sites');
+        document.getElementById('sites').innerHTML = table(data.sites || [], [['address','Zona'],['owner','Owner'],['zone_status','Zona'],['version','Versione'],['release_status','Release'],['content_cid','CID'],['created_at','Data']]);
+      } catch (error) { showError('sites', error); }
+    }
+    async function loadReports() {
+      try {
+        const data = await getJson('/api/admin/reports');
+        document.getElementById('reports').innerHTML = '<h3>Mail spam</h3>' + table(data.mailSpam || [], [['created_at','Data'],['reason','Motivo'],['message_id','Messaggio']]) + '<h3>Forum</h3>' + table(data.forumModeration || [], [['created_at','Data'],['action','Azione'],['reason','Motivo'],['message_id','Messaggio']]);
+      } catch (error) { showError('reports', error); }
+    }
+    async function loadAudit() {
+      try {
+        const data = await getJson('/api/admin/audit');
+        document.getElementById('audit').innerHTML = '<h3>Audit firmato</h3>' + table(data.audit || [], [['created_at','Data'],['admin_id','Admin'],['action','Azione'],['target_type','Target'],['target_id','ID'],['reason','Motivo']]) + '<h3>Eventi operativi</h3>' + table(data.operational || [], [['created_at','Data'],['event_type','Evento'],['target_type','Target'],['summary','Sintesi'],['severity','Livello']]);
+      } catch (error) { showError('audit', error); }
+    }
+    async function loadAdminHealth() {
+      try {
+        const data = await getJson('/api/admin/health');
+        document.getElementById('adminHealth').innerHTML = '<pre>' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
+      } catch (error) { showError('adminHealth', error); }
     }
     loadAll();
   </script>
@@ -2191,9 +2521,14 @@ function publicPage(page: string) {
       </section>
       <dl>
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
+        <dt>Stato release</dt><dd>Windows x64 operativo<br>macOS Apple Silicon beta tecnica con firma ad-hoc<br>Manifest aggiornamenti: /release-manifest.json<br>API aggiornatore desktop: /api/v1/releases/check</dd>
         <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - EFAEC18D5EB321D64A8830B58D99F6FA7A7E0BFEC09F1A1FA4C6D7C5EF92A27A</dd>
         <dt>macOS</dt><dd>Velora_0.1.0_aarch64.dmg - 9488202260F2E5E2E3A8FAC2DE6F2C79878690A6AF0BE18E40ED6BC04E9073D0</dd>
       </dl>
+      <h2>Changelog beta</h2>
+      <ul>
+        ${releaseChangelog().map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+      </ul>
     </section>
     <section class="panel">
       <h2>macOS: messaggio "app danneggiata"</h2>
@@ -2283,6 +2618,181 @@ xattr -dr com.apple.quarantine /Applications/Velora.app
 
 function routeParam(params: unknown, key: string) {
   return String((params as Record<string, string>)[key]);
+}
+
+async function hitRateLimit(bucket: string, maxHits: number) {
+  try {
+    const result = await requirePool().query(
+      `INSERT INTO api_rate_limits (bucket, window_start, hit_count, updated_at)
+       VALUES ($1, date_trunc('minute', NOW()), 1, NOW())
+       ON CONFLICT (bucket) DO UPDATE SET
+         hit_count = CASE
+           WHEN api_rate_limits.window_start < date_trunc('minute', NOW()) THEN 1
+           ELSE api_rate_limits.hit_count + 1
+         END,
+         window_start = CASE
+           WHEN api_rate_limits.window_start < date_trunc('minute', NOW()) THEN date_trunc('minute', NOW())
+           ELSE api_rate_limits.window_start
+         END,
+         updated_at = NOW()
+       RETURNING hit_count`,
+      [bucket]
+    );
+    return Number(result.rows[0]?.hit_count ?? 0) > maxHits;
+  } catch {
+    return false;
+  }
+}
+
+async function readReleaseManifestSafe() {
+  const candidates = [resolve("releases/beta/release-manifest.json"), resolve("../releases/beta/release-manifest.json"), resolve("../../releases/beta/release-manifest.json")];
+  for (const manifest of candidates) {
+    try {
+      return JSON.parse(await readFile(manifest, "utf8")) as Record<string, any>;
+    } catch {
+      continue;
+    }
+  }
+  return undefined;
+}
+
+function releaseChangelog() {
+  return [
+    "Aggiornatore desktop: endpoint versione, manifest, hash e changelog pubblico",
+    "Mining: dashboard con potenza collettiva, worker, share, soglia payout e storico",
+    "Admin: pannelli payout, utenti, nodi, siti, segnalazioni, audit e health",
+    "Account: sessioni persistenti, recovery key personale e profilo completo",
+    "Publisher: stato pubblicazione piu leggibile e pagina pubblica per zona",
+    "Sicurezza: rate limit, audit operativo e nessun segreto esposto nei log/API"
+  ];
+}
+
+async function ensureRecoveryToken(userId: string, forceShow: boolean) {
+  const pool = requirePool();
+  const existing = await pool.query("SELECT recovery_token_hash, recovery_token_seen_at FROM users WHERE id = $1", [userId]);
+  const row = existing.rows[0];
+  if (row?.recovery_token_hash && row.recovery_token_seen_at && !forceShow) {
+    return { required: false, visibleOnce: false };
+  }
+  const token = `vlk-${randomBytes(18).toString("base64url")}`;
+  await pool.query("UPDATE users SET recovery_token_hash = COALESCE(recovery_token_hash, $1) WHERE id = $2", [hashValue(token), userId]);
+  if (row?.recovery_token_hash && !forceShow) {
+    return { required: true, visibleOnce: false, message: "Key token gia generato. Conferma di averlo visto dalle impostazioni se lo hai salvato." };
+  }
+  return {
+    required: true,
+    visibleOnce: true,
+    token,
+    message: "Salva questo key token personale. Serve per recuperare l'account. Dopo conferma non verra piu mostrato."
+  };
+}
+
+async function verifyRecoveryToken(userId: string, token: string) {
+  const result = await requirePool().query("SELECT 1 FROM users WHERE id = $1 AND recovery_token_hash = $2", [userId, hashValue(token)]);
+  return Boolean(result.rows[0]);
+}
+
+async function buildAccountProfile(userId: string) {
+  const pool = requirePool();
+  const [devices, nodes, zones, mining, payouts, notifications] = await Promise.all([
+    pool.query("SELECT id, device_name, peer_id, status, created_at, updated_at FROM devices WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 20", [userId]),
+    pool.query("SELECT id, module, status, device_peer_id, resource_profile, last_heartbeat_at, updated_at FROM contributor_nodes WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 20", [userId]).catch(() => ({ rows: [] })),
+    pool.query(
+      `SELECT nz.address, nz.status, sr.version, sr.status AS release_status, sr.content_cid, sr.created_at
+       FROM navigation_zones nz
+       LEFT JOIN LATERAL (SELECT * FROM site_releases sr WHERE sr.zone_id = nz.id ORDER BY sr.created_at DESC LIMIT 1) sr ON TRUE
+       WHERE nz.owner_user_id = $1
+       ORDER BY COALESCE(sr.created_at, nz.updated_at) DESC LIMIT 50`,
+      [userId]
+    ).catch(() => ({ rows: [] })),
+    pool.query(
+      `SELECT mw.id, mw.worker_id, mw.coin, mw.status, mw.payout_wallet, md.device_peer_id, mw.updated_at
+       FROM mining_workers mw JOIN mining_devices md ON md.id = mw.mining_device_id
+       WHERE md.user_id = $1 ORDER BY mw.updated_at DESC LIMIT 20`,
+      [userId]
+    ).catch(() => ({ rows: [] })),
+    pool.query("SELECT id, coin, payout_wallet, status, requested_at, decided_at, paid_at, payout_tx_hash FROM mining_payout_requests WHERE user_id = $1 ORDER BY requested_at DESC LIMIT 20", [userId]).catch(() => ({ rows: [] })),
+    pool.query("SELECT COUNT(*)::int AS unread FROM user_notifications WHERE user_id = $1 AND status = 'UNREAD'", [userId]).catch(() => ({ rows: [{ unread: 0 }] }))
+  ]);
+  return {
+    devices: devices.rows,
+    nodes: nodes.rows,
+    sites: zones.rows,
+    mining: mining.rows.map(mapMiningWorker),
+    payoutRequests: payouts.rows.map((row) => ({ ...row, payout_wallet: maskWallet(String(row.payout_wallet ?? "")) })),
+    unreadNotifications: Number(notifications.rows[0]?.unread ?? 0),
+    limits: { maxDevicesPerAccount: 3, maxAccountsPerDevice: 3 }
+  };
+}
+
+async function notifyUser(userId: string, type: string, title: string, body: string, payload: Record<string, unknown> = {}) {
+  try {
+    await requirePool().query(
+      "INSERT INTO user_notifications (id, user_id, type, title, body, payload) VALUES ($1,$2,$3,$4,$5,$6)",
+      [randomUUID(), userId, type, title, body, JSON.stringify(payload)]
+    );
+  } catch {
+    // Notification failures must not block the user action.
+  }
+}
+
+async function appendUserEvent(userId: string, eventType: string, targetType: string, targetId: string, summary: string, payload: Record<string, unknown> = {}) {
+  try {
+    await requirePool().query(
+      `INSERT INTO operational_events (id, actor_user_id, event_type, target_type, target_id, summary, payload)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [randomUUID(), userId, eventType, targetType, targetId, summary, JSON.stringify(payload)]
+    );
+  } catch {
+    // Operational audit is best effort on legacy databases before migrations run.
+  }
+}
+
+async function findPublicZone(address: string) {
+  try {
+    const result = await requirePool().query(
+      `SELECT nz.address, nz.status AS zone_status, u.username AS owner,
+              sr.version, sr.status AS release_status, sr.content_cid, sr.manifest_json, sr.created_at
+       FROM navigation_zones nz
+       LEFT JOIN users u ON u.id = nz.owner_user_id
+       LEFT JOIN LATERAL (
+         SELECT * FROM site_releases sr WHERE sr.zone_id = nz.id AND sr.status IN ('ACTIVE','PUBLISHED','APPROVED') ORDER BY sr.created_at DESC LIMIT 1
+       ) sr ON TRUE
+       WHERE nz.address = $1
+       LIMIT 1`,
+      [address]
+    );
+    return result.rows[0];
+  } catch {
+    return undefined;
+  }
+}
+
+function publicZonePage(address: string, row: any) {
+  const manifest = row?.manifest_json ?? {};
+  const title = String(manifest.title ?? row?.address ?? address);
+  const description = String(manifest.description ?? "Zona Velora pubblicata");
+  const status = row?.release_status ?? row?.zone_status ?? "NON_TROVATA";
+  return `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} - Velora</title>
+  <style>body{margin:0;background:#071524;color:#f6fbff;font-family:Georgia,serif}main{max-width:900px;margin:auto;padding:60px 22px}.card{border:1px solid #35506a;border-radius:28px;background:#0d2236;padding:34px}a{color:#f1d68b}</style></head>
+  <body><main><div class="card"><p>Zona Velora</p><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p><p>Indirizzo: <b>${escapeHtml(address)}</b></p><p>Stato: ${escapeHtml(String(status))}</p><p>Release: ${escapeHtml(String(row?.version ?? "non disponibile"))}</p><p>CID: ${escapeHtml(String(row?.content_cid ?? "non disponibile"))}</p><a href="/download">Scarica Velora per aprire e usare il sito</a></div></main></body></html>`;
+}
+
+async function buildAdminOverview() {
+  const pool = requirePool();
+  const [dashboard, mining, payouts, nodes, sites, reports] = await Promise.all([
+    repository.dashboard(),
+    buildMiningNetworkStats().catch((error) => ({ error: error instanceof Error ? error.message : "mining stats unavailable" })),
+    pool.query("SELECT status, COUNT(*)::int AS count FROM mining_payout_requests GROUP BY status").catch(() => ({ rows: [] })),
+    betaLogicalNodeCluster.publicStatus().catch(() => ({ ok: false })),
+    pool.query("SELECT COUNT(*)::int AS count FROM site_releases").catch(() => ({ rows: [{ count: 0 }] })),
+    pool.query("SELECT COUNT(*)::int AS count FROM forum_moderation_actions").catch(() => ({ rows: [{ count: 0 }] }))
+  ]);
+  return { dashboard, mining, payoutRequests: payouts.rows, nodes, sites: sites.rows[0], reports: reports.rows[0] };
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[char] ?? char));
 }
 
 async function getContributionProfile(userId: string) {

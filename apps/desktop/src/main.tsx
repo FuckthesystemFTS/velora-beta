@@ -69,6 +69,12 @@ type AccountSession = {
   token: string;
   refreshToken?: string;
   expiresAt?: string;
+  recovery?: {
+    required: boolean;
+    visibleOnce: boolean;
+    token?: string;
+    message?: string;
+  };
   user: {
     id: string;
     username: string;
@@ -156,6 +162,16 @@ type MiningNetworkStats = {
   };
   contributionModel: string;
   warning: string;
+};
+
+type ReleaseCheck = {
+  latestVersion: string;
+  channel: string;
+  changelog: string[];
+  current: {
+    platforms?: Record<string, { available: boolean; filename: string; sha256: string; size: number; downloadUrl: string }>;
+  };
+  message: string;
 };
 
 const apiBaseUrl = "https://velora-beta-20260629-9a9196313b42.herokuapp.com";
@@ -255,6 +271,9 @@ function App() {
   const [miningStats, setMiningStats] = React.useState<MiningUiStats>({ startedAt: null, elapsedSeconds: 0 });
   const [miningProgress, setMiningProgress] = React.useState<MiningProgress | null>(null);
   const [miningNetworkStats, setMiningNetworkStats] = React.useState<MiningNetworkStats | null>(null);
+  const [miningHistory, setMiningHistory] = React.useState<any | null>(null);
+  const [releaseCheck, setReleaseCheck] = React.useState<ReleaseCheck | null>(null);
+  const [releaseMessage, setReleaseMessage] = React.useState("Controllo aggiornamenti in attesa");
   const [nodeIdentity, setNodeIdentity] = React.useState<{ peer_id: string; public_key: string } | null>(null);
   const [nodeEnrollMessage, setNodeEnrollMessage] = React.useState("Nodo utente non ancora attivato");
   const siteApi = createVeloraSiteApi(apiBaseUrl);
@@ -268,6 +287,7 @@ function App() {
     void prepareVelora();
     void refreshMiningStatus();
     void loadNodeIdentity();
+    void checkForUpdates();
   }, []);
 
   React.useEffect(() => {
@@ -752,9 +772,45 @@ function App() {
       if (networkResponse.ok) {
         setMiningNetworkStats(await networkResponse.json() as MiningNetworkStats);
       }
+      const historyResponse = await fetch(`${apiBaseUrl}/api/v1/mining/history`, { headers: authHeaders(freshSession) });
+      if (historyResponse.ok) {
+        setMiningHistory(await historyResponse.json());
+      }
     } catch {
       setMiningProgress(null);
       setMiningNetworkStats(null);
+      setMiningHistory(null);
+    }
+  }
+
+  async function checkForUpdates() {
+    try {
+      setReleaseMessage("Controllo aggiornamenti");
+      const response = await fetch(`${apiBaseUrl}/api/v1/releases/check`);
+      if (!response.ok) {
+        throw new Error("Controllo aggiornamenti non disponibile");
+      }
+      const data = await response.json() as ReleaseCheck;
+      setReleaseCheck(data);
+      setReleaseMessage(`Versione ${data.latestVersion} ${data.channel}`);
+    } catch (error) {
+      setReleaseMessage(error instanceof Error ? error.message : "Aggiornamenti non disponibili");
+    }
+  }
+
+  async function markRecoverySeen() {
+    if (!session) {
+      return;
+    }
+    try {
+      const freshSession = await ensureFreshSession();
+      await fetch(`${apiBaseUrl}/api/v1/auth/recovery-token/seen`, { method: "POST", headers: authHeaders(freshSession) });
+      const nextSession = { ...freshSession, recovery: { required: false, visibleOnce: false } };
+      saveStoredSession(nextSession);
+      setSession(nextSession);
+      setAuthMessage("Key token confermato e nascosto");
+    } catch (error) {
+      setAuthMessage(error instanceof Error ? error.message : "Conferma token non riuscita");
     }
   }
 
@@ -962,7 +1018,7 @@ function App() {
           />
         ) : null}
         {workspace === "home" ? (
-          <Home query={query} setQuery={setQuery} onSubmit={() => void openZone()} onSearch={() => void runSearch()} onOpen={openZone} onMail={() => void loadMail("INBOX")} viewerState={viewerState} viewerMessage={viewerMessage} session={session} />
+          <Home query={query} setQuery={setQuery} onSubmit={() => void openZone()} onSearch={() => void runSearch()} onOpen={openZone} onMail={() => void loadMail("INBOX")} viewerState={viewerState} viewerMessage={viewerMessage} session={session} releaseCheck={releaseCheck} releaseMessage={releaseMessage} onCheckUpdates={() => void checkForUpdates()} />
         ) : null}
         {workspace === "explore" ? (
           <Explore
@@ -1012,6 +1068,7 @@ function App() {
             stats={miningStats}
             progress={miningProgress}
             networkStats={miningNetworkStats}
+            history={miningHistory}
             onRefresh={() => void refreshMiningStatus()}
             onStart={() => void startMiningPartner()}
             onStop={() => void stopMiningPartner()}
@@ -1021,9 +1078,9 @@ function App() {
         {workspace === "nodes" ? <UserNodes identity={nodeIdentity} message={nodeEnrollMessage} onRefresh={() => void loadNodeIdentity()} onActivate={() => void activateUserNode()} /> : null}
         {workspace === "favorites" ? <SimpleCollection title="Preferiti" items={favorites} onOpen={openZone} /> : null}
         {workspace === "activity" ? <Activity /> : null}
-        {workspace === "identity" ? <Identity session={session} onVerify={() => void verifyIdentity()} /> : null}
+        {workspace === "identity" ? <Identity session={session} onVerify={() => void verifyIdentity()} onRecoverySeen={() => void markRecoverySeen()} /> : null}
         {workspace === "notifications" ? <Notifications /> : null}
-        {workspace === "settings" ? <Settings nodeMessage={nodeMessage} onRetry={() => void prepareVelora()} /> : null}
+        {workspace === "settings" ? <Settings nodeMessage={nodeMessage} releaseCheck={releaseCheck} releaseMessage={releaseMessage} onRetry={() => void prepareVelora()} onCheckUpdates={() => void checkForUpdates()} /> : null}
         {workspace === "dev" ? (
           <VeloraDev
             sitePath={publisherSitePath}
@@ -1130,7 +1187,7 @@ function AccountGate(props: {
   );
 }
 
-function Home({ query, setQuery, onSubmit, onSearch, onOpen, onMail, viewerState, viewerMessage, session }: {
+function Home({ query, setQuery, onSubmit, onSearch, onOpen, onMail, viewerState, viewerMessage, session, releaseCheck, releaseMessage, onCheckUpdates }: {
   query: string;
   setQuery: (query: string) => void;
   onSubmit: () => void;
@@ -1140,6 +1197,9 @@ function Home({ query, setQuery, onSubmit, onSearch, onOpen, onMail, viewerState
   viewerState: ViewerState;
   viewerMessage: string;
   session: AccountSession | null;
+  releaseCheck: ReleaseCheck | null;
+  releaseMessage: string;
+  onCheckUpdates: () => void;
 }) {
   return (
     <section className="home">
@@ -1173,6 +1233,13 @@ function Home({ query, setQuery, onSubmit, onSearch, onOpen, onMail, viewerState
           <button type="button" onClick={onMail} disabled={!session}>Apri VeloMail</button>
         </article>
         <FeatureBlock title="Siti verificati" sites={featuredSites.filter((site) => site.verified)} onOpen={onOpen} />
+        <article className="glass-card">
+          <span className="app-pill">Aggiornamenti</span>
+          <h2>Velora Beta</h2>
+          <p>{releaseMessage}</p>
+          <p>{releaseCheck?.latestVersion ? `Ultima versione: ${releaseCheck.latestVersion}` : "Premi controlla per leggere manifest e changelog."}</p>
+          <button type="button" onClick={onCheckUpdates}>Controlla aggiornamenti</button>
+        </article>
         <FeatureBlock title="Siti Emergenti" sites={featuredSites.slice(0, 2)} onOpen={onOpen} />
         <CategoryCloud />
         <Milestones />
@@ -1445,6 +1512,7 @@ function MiningPartner(props: {
   stats: MiningUiStats;
   progress: MiningProgress | null;
   networkStats: MiningNetworkStats | null;
+  history: any | null;
   onRefresh: () => void;
   onStart: () => void;
   onStop: () => void;
@@ -1560,6 +1628,13 @@ function MiningPartner(props: {
           <p>Divisione: 50% utente, 50% Velora. Il payout viene richiesto e autorizzato manualmente dal pannello admin.</p>
           <button type="button" onClick={props.onPayoutRequest} disabled={!props.form.payoutWallet}>Richiedi payout manuale</button>
           <p className="safe-detail">La richiesta payout usa il wallet salvato e viene verificata prima dell'invio.</p>
+          <h3>Storico mining</h3>
+          <p>Richieste payout: {props.history?.payoutRequests?.length ?? 0}</p>
+          <p>Metriche recenti: {props.history?.metrics?.length ?? 0}</p>
+          <p>Movimenti ledger: {props.history?.ledger?.length ?? 0}</p>
+          {props.history?.payoutRequests?.slice(0, 5).map((item: any) => (
+            <p key={item.id} className="safe-detail">{item.coin} - {item.status} - {formatDateTime(item.requested_at)}</p>
+          ))}
         </article>
       </div>
     </section>
@@ -1614,12 +1689,20 @@ function Activity() {
   return <section className="page-card"><h1>Attivita</h1><p>Le visite e le pubblicazioni recenti appariranno qui quando disponibili.</p></section>;
 }
 
-function Identity({ session, onVerify }: { session: AccountSession | null; onVerify: () => void }) {
+function Identity({ session, onVerify, onRecoverySeen }: { session: AccountSession | null; onVerify: () => void; onRecoverySeen: () => void }) {
   return (
     <section className="page-card">
       <h1>Identita Velora</h1>
       <p>{session ? `Account: ${session.user.username} - Livello ${session.user.identityLevel}` : "Accedi per verificare il dispositivo."}</p>
       <button type="button" onClick={onVerify} disabled={!session || session.user.identityLevel >= 1}>Verifica dispositivo</button>
+      {session?.recovery?.required ? (
+        <div className="review-box warn">
+          <strong>Key token personale</strong>
+          <p>{session.recovery.message ?? "Salva il token di recupero account."}</p>
+          {session.recovery.token ? <code>{session.recovery.token}</code> : <p>Token gia generato. Se lo hai salvato, conferma la presa visione.</p>}
+          <button type="button" onClick={onRecoverySeen}>Ho salvato il key token</button>
+        </div>
+      ) : null}
       <div className="plan-grid">
         {identityLevels.map(([level, title, text]) => <article key={level}><b>{level}</b><h3>{title}</h3><p>{text}</p></article>)}
       </div>
@@ -1631,12 +1714,19 @@ function Notifications() {
   return <section className="page-card"><h1>Notifiche</h1><p>Nessuna notifica. Velora ti avvisera quando una zona, release o replica richiede attenzione.</p></section>;
 }
 
-function Settings({ nodeMessage, onRetry }: { nodeMessage: string; onRetry: () => void }) {
+function Settings({ nodeMessage, releaseCheck, releaseMessage, onRetry, onCheckUpdates }: { nodeMessage: string; releaseCheck: ReleaseCheck | null; releaseMessage: string; onRetry: () => void; onCheckUpdates: () => void }) {
   return (
     <section className="page-card">
       <h1>Impostazioni</h1>
       <p>{nodeMessage}</p>
       <button type="button" onClick={onRetry}>Riprova preparazione</button>
+      <div className="review-box ok">
+        <strong>Aggiornatore desktop</strong>
+        <p>{releaseMessage}</p>
+        <p>Manifest: {releaseCheck?.latestVersion ?? "non ancora letto"}</p>
+        <button type="button" onClick={onCheckUpdates}>Controlla aggiornamenti</button>
+        {releaseCheck?.changelog?.length ? releaseCheck.changelog.map((item) => <p key={item} className="safe-detail">{item}</p>) : null}
+      </div>
     </section>
   );
 }

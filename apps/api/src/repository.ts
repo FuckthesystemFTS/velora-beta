@@ -170,8 +170,8 @@ export class PostgresRepository implements VeloraRepository {
   async createAuthSession(userId: string, devicePeerId?: string) {
     const token = `vla_${randomUUID()}_${randomUUID()}`;
     const refreshToken = `vlr_${randomUUID()}_${randomUUID()}`;
-    const expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
-    const refreshExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
+    const refreshExpiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
     await this.pool.query(
       `INSERT INTO auth_sessions (
         id, user_id, access_token_hash, refresh_token_hash, device_peer_id, expires_at, refresh_expires_at
@@ -248,6 +248,13 @@ export class PostgresRepository implements VeloraRepository {
       );
       if (Number(linkCount.rows[0]?.count ?? 0) >= 3) {
         throw new Error("DEVICE_ACCOUNT_LIMIT_REACHED");
+      }
+      const userDeviceCount = await client.query(
+        "SELECT COUNT(*)::int AS count FROM devices WHERE user_id = $1 AND status = 'ACTIVE' AND peer_id <> $2",
+        [input.userId, input.peerId]
+      );
+      if (Number(userDeviceCount.rows[0]?.count ?? 0) >= 3) {
+        throw new Error("USER_DEVICE_LIMIT_REACHED");
       }
       await client.query(
         `INSERT INTO device_account_links (id, device_id, user_id, status)
