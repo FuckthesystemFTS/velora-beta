@@ -2648,7 +2648,7 @@ async function readReleaseManifestSafe() {
   const candidates = [resolve("releases/beta/release-manifest.json"), resolve("../releases/beta/release-manifest.json"), resolve("../../releases/beta/release-manifest.json")];
   for (const manifest of candidates) {
     try {
-      return JSON.parse(await readFile(manifest, "utf8")) as Record<string, any>;
+      return JSON.parse((await readFile(manifest, "utf8")).replace(/^\uFEFF/, "")) as Record<string, any>;
     } catch {
       continue;
     }
