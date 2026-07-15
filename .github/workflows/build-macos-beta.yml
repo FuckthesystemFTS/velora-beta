@@ -85,6 +85,21 @@ jobs:
             pnpm exec tauri build --config src-tauri/tauri.macos.conf.json
           fi
 
+      - name: Ad-hoc sign unsigned macOS app and rebuild DMG
+        if: ${{ env.APPLE_SIGNING_IDENTITY == '' }}
+        shell: bash
+        run: |
+          app="apps/desktop/src-tauri/target/release/bundle/macos/Velora.app"
+          dmg="apps/desktop/src-tauri/target/release/bundle/dmg/Velora_0.1.0_aarch64.dmg"
+          staging="$(mktemp -d)"
+          codesign --force --deep --options runtime --sign - "$app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          rm -f "$dmg"
+          mkdir -p "$staging"
+          cp -R "$app" "$staging/Velora.app"
+          ln -s /Applications "$staging/Applications"
+          hdiutil create -volname "Velora" -srcfolder "$staging" -ov -format UDZO "$dmg"
+
       - name: Notarize and staple DMG
         if: ${{ env.APPLE_ID != '' && env.APPLE_APP_SPECIFIC_PASSWORD != '' && env.APPLE_TEAM_ID != '' }}
         run: |
