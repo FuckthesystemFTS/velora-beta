@@ -2169,7 +2169,7 @@ function publicPage(page: string) {
   const body = page === "download" ? `
     <section class="panel">
       <h1>Scarica Velora Beta</h1>
-      <p>Beta pubblica pronta per Windows x64 e macOS Apple Silicon<br>I pacchetti non sono ancora firmati o notarizzati, quindi il sistema operativo puo mostrare un avviso</p>
+      <p>Beta pubblica pronta per Windows x64<br>macOS Apple Silicon e disponibile come beta tecnica non notarizzata: se macOS mostra "Velora e danneggiato", segui le istruzioni sotto</p>
       <section class="cards">
         <article>
           <b>Windows</b>
@@ -2179,7 +2179,7 @@ function publicPage(page: string) {
         </article>
         <article>
           <b>macOS</b>
-          <p>DMG per Mac Apple Silicon</p>
+          <p>DMG Apple Silicon beta tecnica non firmata Apple</p>
           <a class="cta" href="${macosDownloadUrl}">Scarica per macOS</a>
           <a class="ghost" href="${macosChecksumUrl}">Verifica SHA-256</a>
         </article>
@@ -2191,9 +2191,21 @@ function publicPage(page: string) {
       </section>
       <dl>
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
-        <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - 113B1C583B5E844A4761C8A151DB087858A8DCE4CAA6766C86632C17567A6EE7</dd>
+        <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - EFAEC18D5EB321D64A8830B58D99F6FA7A7E0BFEC09F1A1FA4C6D7C5EF92A27A</dd>
         <dt>macOS</dt><dd>Velora_0.1.0_aarch64.dmg - 86FC67A3E1BED0DF1FFBECE0C67E68C330A71EF52124E64B7BB9D74072CE27ED</dd>
       </dl>
+    </section>
+    <section class="panel">
+      <h2>macOS: messaggio "app danneggiata"</h2>
+      <p>Il DMG beta non e ancora firmato e notarizzato da Apple. Su macOS questo puo apparire come app danneggiata anche quando il file e integro</p>
+      <p>Procedura beta:</p>
+      <pre>1. Scarica il DMG
+2. Apri il DMG e trascina Velora in Applicazioni
+3. Apri Terminale
+4. Esegui:
+xattr -dr com.apple.quarantine /Applications/Velora.app
+5. Apri Velora da Applicazioni con tasto destro, Apri</pre>
+      <p>Per una distribuzione macOS senza questo passaggio servono certificato Apple Developer ID e notarizzazione Apple nella pipeline GitHub</p>
     </section>
     <section class="panel">
       <h2>Wallet Mining Partner</h2>
@@ -2500,14 +2512,55 @@ async function buildMiningNetworkStats(userId?: string) {
      ${where}`,
     params
   );
+  const poolStats = await fetchMoneroOceanStats(config.veloraMoneroWallet);
   return {
-    source: "server_side_pool_shares_only",
+    source: "pool_wallet_plus_server_side_worker_records",
     payoutStatus: config.miningPayoutsEnabled ? "ENABLED" : "PAYOUT_NON_ANCORA_ATTIVO",
     network: metrics.rows[0],
+    pool: poolStats,
     rewards: ledger.rows[0],
-    contributionModel: "USER_VALIDATED_WORK / TOTAL_VALIDATED_WORK",
-    warning: "Client-reported hashrate is diagnostic only and is not used for payouts."
+    contributionModel: "Tutti i PC Velora minano verso il wallet operativo Velora; ogni dispositivo usa un worker pseudonimo separato per attribuzione e controllo.",
+    warning: "Le statistiche pool mostrano potenza collettiva reale del wallet. Gli accrediti restano basati su share verificabili, pagamenti pool riconciliati e ledger."
   };
+}
+
+async function fetchMoneroOceanStats(wallet: string) {
+  const trimmed = wallet.trim();
+  if (!isLikelyCoinAddress("XMR", trimmed)) {
+    return { configured: false, error: "XMR operational wallet missing or invalid" };
+  }
+  try {
+    const response = await fetch(`https://api.moneroocean.stream/miner/${encodeURIComponent(trimmed)}/stats`, {
+      headers: { accept: "application/json" }
+    });
+    if (!response.ok) {
+      return { configured: true, wallet: maskWallet(trimmed), reachable: false, error: `MoneroOcean HTTP ${response.status}` };
+    }
+    const data = await response.json() as Record<string, unknown>;
+    return {
+      configured: true,
+      reachable: true,
+      wallet: maskWallet(trimmed),
+      source: "MoneroOcean",
+      hash: Number(data.hash || 0),
+      hash2: Number(data.hash2 || 0),
+      lastHash: data.lastHash || null,
+      lastShareAlgo: data.lastShareAlgo || null,
+      totalHashes: Number(data.totalHashes || 0),
+      validShares: Number(data.validShares || 0),
+      invalidShares: Number(data.invalidShares || 0),
+      amtDueAtomic: String(data.amtDue || 0),
+      amtPaidAtomic: String(data.amtPaid || 0),
+      txnCount: Number(data.txnCount || 0)
+    };
+  } catch (error) {
+    return {
+      configured: true,
+      wallet: maskWallet(trimmed),
+      reachable: false,
+      error: error instanceof Error ? error.message : "MoneroOcean stats unavailable"
+    };
+  }
 }
 
 async function getAutoSwitchStatus(userId: string) {

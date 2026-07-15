@@ -127,6 +127,37 @@ type MiningProgress = {
   note: string;
 };
 
+type MiningNetworkStats = {
+  source: string;
+  payoutStatus: string;
+  network: {
+    total_hashrate_hs: number;
+    xmr_hashrate_hs: number;
+    zeph_hashrate_hs: number;
+    accepted_shares: number;
+    rejected_shares: number;
+    stale_shares: number;
+    active_workers: number;
+    active_devices: number;
+    active_boost_boxes: number;
+  };
+  pool?: {
+    reachable?: boolean;
+    wallet?: string;
+    source?: string;
+    hash?: number;
+    hash2?: number;
+    totalHashes?: number;
+    validShares?: number;
+    invalidShares?: number;
+    lastShareAlgo?: string | null;
+    amtDueAtomic?: string;
+    error?: string;
+  };
+  contributionModel: string;
+  warning: string;
+};
+
 const apiBaseUrl = "https://velora-beta-20260629-9a9196313b42.herokuapp.com";
 const demoSitePath = "examples/velora-demo-site";
 const isAdminSessionEnabled = false;
@@ -223,6 +254,7 @@ function App() {
   const [miningForm, setMiningFormState] = React.useState(() => loadStoredMiningForm());
   const [miningStats, setMiningStats] = React.useState<MiningUiStats>({ startedAt: null, elapsedSeconds: 0 });
   const [miningProgress, setMiningProgress] = React.useState<MiningProgress | null>(null);
+  const [miningNetworkStats, setMiningNetworkStats] = React.useState<MiningNetworkStats | null>(null);
   const [nodeIdentity, setNodeIdentity] = React.useState<{ peer_id: string; public_key: string } | null>(null);
   const [nodeEnrollMessage, setNodeEnrollMessage] = React.useState("Nodo utente non ancora attivato");
   const siteApi = createVeloraSiteApi(apiBaseUrl);
@@ -705,17 +737,24 @@ function App() {
     const currentSession = activeSession ?? session;
     if (!currentSession) {
       setMiningProgress(null);
+      setMiningNetworkStats(null);
       return;
     }
     try {
       const freshSession = activeSession ?? await ensureFreshSession();
-      const response = await fetch(`${apiBaseUrl}/api/v1/mining/progress`, { headers: authHeaders(freshSession) });
-      if (!response.ok) {
-        return;
+      const [progressResponse, networkResponse] = await Promise.all([
+        fetch(`${apiBaseUrl}/api/v1/mining/progress`, { headers: authHeaders(freshSession) }),
+        fetch(`${apiBaseUrl}/api/mining/network/stats`, { headers: authHeaders(freshSession) })
+      ]);
+      if (progressResponse.ok) {
+        setMiningProgress(await progressResponse.json() as MiningProgress);
       }
-      setMiningProgress(await response.json() as MiningProgress);
+      if (networkResponse.ok) {
+        setMiningNetworkStats(await networkResponse.json() as MiningNetworkStats);
+      }
     } catch {
       setMiningProgress(null);
+      setMiningNetworkStats(null);
     }
   }
 
@@ -972,6 +1011,7 @@ function App() {
             setForm={setMiningForm}
             stats={miningStats}
             progress={miningProgress}
+            networkStats={miningNetworkStats}
             onRefresh={() => void refreshMiningStatus()}
             onStart={() => void startMiningPartner()}
             onStop={() => void stopMiningPartner()}
@@ -1404,6 +1444,7 @@ function MiningPartner(props: {
   setForm: (form: MiningForm) => void;
   stats: MiningUiStats;
   progress: MiningProgress | null;
+  networkStats: MiningNetworkStats | null;
   onRefresh: () => void;
   onStart: () => void;
   onStop: () => void;
@@ -1491,6 +1532,15 @@ function MiningPartner(props: {
           <p>Coin selezionata: {props.form.coin}</p>
           <p>Potenza: {props.form.powerProfile} - {selectedThreads}/{maxThreads} thread - priorita {selectedPriority}</p>
           <p>Wallet salvato: {props.form.payoutWallet ? maskLocalWallet(props.form.payoutWallet) : "non inserito"}</p>
+          <h3>Potenza collettiva Velora</h3>
+          <div className="mining-live on">
+            <strong>{formatHashrate(props.networkStats?.pool?.hash ?? props.networkStats?.network?.total_hashrate_hs ?? 0)}</strong>
+            <span>Tutti i PC attivi minano nello stesso wallet operativo Velora, con worker separati per ogni dispositivo</span>
+          </div>
+          <p>Share collettive pool: {props.networkStats?.pool?.validShares ?? props.networkStats?.network?.accepted_shares ?? 0} ok, {props.networkStats?.pool?.invalidShares ?? props.networkStats?.network?.rejected_shares ?? 0} ko</p>
+          <p>Hash totali pool: {formatNumber(props.networkStats?.pool?.totalHashes ?? 0)}</p>
+          <p>Worker registrati: {props.networkStats?.network?.active_workers ?? 0} - dispositivi registrati: {props.networkStats?.network?.active_devices ?? 0}</p>
+          <p className="safe-detail">{props.networkStats?.pool?.reachable === false ? props.networkStats.pool.error : props.networkStats?.warning ?? "Premi Controlla per aggiornare la potenza collettiva."}</p>
           <h3>Progresso payout</h3>
           <p>Soglia: {currentProgress?.payout_threshold_label ?? props.progress?.threshold.xmrLabel ?? "0.05 XMR"}</p>
           <p>Da pagare: {currentProgress?.pending_label ?? "0 XMR"}</p>
@@ -1797,6 +1847,21 @@ function maskLocalWallet(wallet: string) {
     return normalized;
   }
   return `${normalized.slice(0, 8)}...${normalized.slice(-6)}`;
+}
+
+function formatHashrate(value: number) {
+  const rate = Number(value || 0);
+  if (rate >= 1_000_000) {
+    return `${(rate / 1_000_000).toFixed(2)} MH/s`;
+  }
+  if (rate >= 1_000) {
+    return `${(rate / 1_000).toFixed(2)} KH/s`;
+  }
+  return `${rate.toFixed(2)} H/s`;
+}
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat("it-IT", { maximumFractionDigits: 2 }).format(Number(value || 0));
 }
 
 function formatDuration(totalSeconds: number) {
