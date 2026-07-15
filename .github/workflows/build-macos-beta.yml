@@ -76,7 +76,14 @@ jobs:
 
       - name: Build macOS beta
         working-directory: apps/desktop
-        run: pnpm exec tauri build --config src-tauri/tauri.macos.conf.json
+        shell: bash
+        run: |
+          if [ -n "${APPLE_SIGNING_IDENTITY:-}" ]; then
+            pnpm exec tauri build --config src-tauri/tauri.macos.conf.json
+          else
+            unset APPLE_SIGNING_IDENTITY
+            pnpm exec tauri build --config src-tauri/tauri.macos.conf.json
+          fi
 
       - name: Notarize and staple DMG
         if: ${{ env.APPLE_ID != '' && env.APPLE_APP_SPECIFIC_PASSWORD != '' && env.APPLE_TEAM_ID != '' }}
