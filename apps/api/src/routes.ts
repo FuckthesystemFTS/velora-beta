@@ -2523,7 +2523,7 @@ function publicPage(page: string) {
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
         <dt>Stato release</dt><dd>Windows x64 operativo<br>macOS Apple Silicon beta tecnica con firma ad-hoc<br>Manifest aggiornamenti: /release-manifest.json<br>API aggiornatore desktop: /api/v1/releases/check</dd>
         <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - A8AFE6D0BC8D674FE8E84E95BE74365A27D654539DBA7B5249A3AE9EC226B282</dd>
-        <dt>macOS</dt><dd>Velora_0.1.0_aarch64.dmg - 9488202260F2E5E2E3A8FAC2DE6F2C79878690A6AF0BE18E40ED6BC04E9073D0</dd>
+        <dt>macOS</dt><dd>Velora_0.1.0_aarch64.dmg - C726CB7B1CCE7028A904C076427636CCAF65406289C0F2B5EAC81B5605D3B634</dd>
       </dl>
       <h2>Changelog beta</h2>
       <ul>
