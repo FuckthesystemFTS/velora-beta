@@ -2192,7 +2192,7 @@ function publicPage(page: string) {
       <dl>
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
         <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - EFAEC18D5EB321D64A8830B58D99F6FA7A7E0BFEC09F1A1FA4C6D7C5EF92A27A</dd>
-        <dt>macOS</dt><dd>Velora_0.1.0_aarch64.dmg - 86FC67A3E1BED0DF1FFBECE0C67E68C330A71EF52124E64B7BB9D74072CE27ED</dd>
+        <dt>macOS</dt><dd>Velora_0.1.0_aarch64.dmg - 5747FA40A1850C0B8B5733CC0093C367BA28108B10378397B40E0C9A8853CB2F</dd>
       </dl>
     </section>
     <section class="panel">
