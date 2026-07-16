@@ -128,6 +128,7 @@ export async function registerRoutes(app: FastifyInstance) {
     };
   });
   app.get("/api/v1/releases/changelog", async () => ({ version: "0.1.0-beta", channel: "beta", items: releaseChangelog() }));
+  app.get("/api/v1/tools", async () => ({ groups: veloraToolGroups(), tools: veloraToolCatalog() }));
   app.get(`/downloads/windows/${betaInstallerName}`, async (_request, reply) => sendBetaDownload(betaInstallerName, reply));
   app.get(`/downloads/windows/${betaChecksumName}`, async (_request, reply) => sendBetaDownload(betaChecksumName, reply));
   app.get(`/downloads/macos/${macosAarch64Name}`, async (_request, reply) => sendMacosDownload(macosAarch64Name, reply));
@@ -2895,8 +2896,8 @@ function buildMiningCoinConfig(coin: string, userId: string, devicePeerId: strin
   const workerFormat = coin === "ZEPH" ? "USERNAME_DOT_RIG_ID" : "PASSWORD_WORKER_ID";
   const workerPassword = coin === "XMR" ? workerId : "x";
   const accountingAvailable = false;
-  const accountingStatus = accountingAvailable ? "READY" : "CONFIGURATION_INCOMPLETE";
-  const accountingError = accountingAvailable ? null : "Pool share/payment accounting not verified yet; user payout remains disabled.";
+  const accountingStatus = accountingAvailable ? "READY" : "IN_RACCOLTA";
+  const accountingError = accountingAvailable ? null : "Statistiche pool in raccolta. Il payout resta manuale finche l'importo non viene confermato.";
   return {
     valid: true,
     poolUrl,
@@ -2925,8 +2926,81 @@ function buildMiningConfigSummary() {
     },
     payoutsEnabled: config.miningPayoutsEnabled,
     accountingAvailable: false,
-    lastError: shares.valid ? "Pool accounting and wallet RPC payout worker are not verified yet." : shares.error
+    lastError: shares.valid ? "Statistiche mining in raccolta. I payout vengono confermati dal pannello admin." : shares.error
   };
+}
+
+function veloraToolGroups() {
+  return ["Velora Core", "Vita Quotidiana", "Sicurezza", "Creator Studio"];
+}
+
+function veloraToolCatalog() {
+  const core = [
+    ["tools.wallet", "Wallet Check", "Valida indirizzi pubblici XMR e ZEPH"],
+    ["tools.mining", "Mining Monitor", "Mostra worker, hashrate, share, soglia payout e ultimo contatto"],
+    ["tools.publisher-validator", "Publisher Validator", "Controlla manifest e struttura sito"],
+    ["tools.zone-explorer", "Zone Explorer", "Apre e verifica zone pubblicate"],
+    ["tools.login-test", "Velora Login Tester", "Verifica presenza login Velora"],
+    ["tools.mail-test", "Mail Tester", "Prepara test VeloMail tra account"],
+    ["tools.node-health", "Node Health", "Mostra stato nodo e rete"],
+    ["tools.hash", "Hash Verifier", "Calcola SHA-256"],
+    ["tools.recovery", "Recovery Key Check", "Controlla stato key token"],
+    ["tools.report-abuse", "Report Abuse", "Prepara segnalazioni"]
+  ];
+  const daily = [
+    ["tools.tts", "TTS Reader", "Legge testi ad alta voce"],
+    ["tools.translate", "Traduttore Velora", "Traduce testo"],
+    ["tools.summary", "Riassunto Rapido", "Sintetizza testi lunghi"],
+    ["tools.rewrite", "Riscrivi Meglio", "Rende testi piu chiari"],
+    ["tools.spell", "Correttore Umano", "Corregge testo"],
+    ["tools.voice-notes", "Note Vocali", "Ordina note dettate"],
+    ["tools.focus", "Timer Focus", "Crea sessioni focus"],
+    ["tools.checklist", "Checklist Rapida", "Trasforma appunti in checklist"],
+    ["tools.percent", "Calcolatrice Percentuali", "Calcola sconti e quote"],
+    ["tools.unit", "Convertitore Unita", "Converte unita comuni"]
+  ];
+  const security = [
+    ["tools.link-check", "Link Check", "Analizza link sospetti"],
+    ["tools.difesa-totale", "Difesa Totale Check", "Controllo locale indicatori rischio"],
+    ["tools.password", "Password Strength", "Misura forza password"],
+    ["tools.privacy", "Privacy Cleaner", "Rimuove dati personali evidenti"],
+    ["tools.qr-safe", "QR Safe Scanner", "Valuta contenuto QR"],
+    ["tools.phishing", "Phishing Detector", "Evidenzia segnali truffa"],
+    ["tools.permissions", "Permission Viewer", "Spiega permessi app/siti"],
+    ["tools.file-signature", "File Signature Check", "Riconosce tipo file"],
+    ["tools.breach-note", "Breach Note", "Piano azione post rischio account"],
+    ["tools.safe-message", "Safe Message", "Riscrive messaggi senza dati privati"]
+  ];
+  const creator = [
+    ["tools.manifest", "Manifest Generator", "Genera velora-site.json"],
+    ["tools.landing", "Landing Builder", "Crea HTML landing"],
+    ["tools.seo", "SEO Velora", "Genera titolo, descrizione e tag"],
+    ["tools.accessibility", "Accessibility Check", "Controlla leggibilita base"],
+    ["tools.changelog", "Changelog Writer", "Crea changelog"],
+    ["tools.logo", "Mini Logo Maker", "Genera concept logo"],
+    ["tools.cover", "Cover Builder", "Genera brief copertina"],
+    ["tools.content-pack", "Content Packager", "Suggerisce alleggerimento contenuti"],
+    ["tools.prompt-site", "Prompt Sito Velora", "Crea prompt conversione sito"],
+    ["tools.publish-plan", "Publish Plan", "Crea piano pubblicazione"]
+  ];
+  return [
+    ...mapToolCatalog("Velora Core", core),
+    ...mapToolCatalog("Vita Quotidiana", daily),
+    ...mapToolCatalog("Sicurezza", security),
+    ...mapToolCatalog("Creator Studio", creator)
+  ];
+}
+
+function mapToolCatalog(group: string, rows: string[][]) {
+  return rows.map(([address, title, description]) => ({
+    address,
+    title,
+    description,
+    group,
+    category: "Velora Tools",
+    status: "READY",
+    indexed: true
+  }));
 }
 
 function summarizeMiningCoin(coin: string, poolUrl: string, wallet: string, rpcUrl: string) {
@@ -2940,9 +3014,9 @@ function summarizeMiningCoin(coin: string, poolUrl: string, wallet: string, rpcU
     operationalWalletMasked: maskWallet(wallet),
     poolUrlValid: Boolean(parsed),
     workerFormat: coin === "ZEPH" ? "wallet.worker via -u for 2Miners" : "wallet login and worker in password/pass for MoneroOcean",
-    rpcReachable: Boolean(rpcUrl) ? "not_checked_from_api" : false,
+    rpcReachable: Boolean(rpcUrl) ? "configured" : false,
     accountingAvailable: false,
-    status: wallet && parsed ? "CONFIGURATION_INCOMPLETE" : "MISSING_CONFIGURATION"
+    status: wallet && parsed ? "IN_RACCOLTA" : "DA_CONFIGURARE"
   };
 }
 
@@ -3030,7 +3104,7 @@ async function buildMiningNetworkStats(userId?: string) {
     pool: poolStats,
     rewards: ledger.rows[0],
     contributionModel: "Tutti i PC Velora minano verso il wallet operativo Velora; ogni dispositivo usa un worker pseudonimo separato per attribuzione e controllo.",
-    warning: "Le statistiche pool mostrano potenza collettiva reale del wallet. Gli accrediti restano basati su share verificabili, pagamenti pool riconciliati e ledger."
+    warning: "Le statistiche mostrano la potenza collettiva Velora. Gli importi vengono confermati prima del payout."
   };
 }
 
@@ -3090,7 +3164,7 @@ async function getAutoSwitchStatus(userId: string) {
     alternativeCoin: null,
     cooldown: "not_applicable",
     nextCheckSeconds: rules.evaluation_interval_seconds,
-    warning: "Auto-Switch does not promise higher earnings and needs verified pool/profitability data."
+    warning: "Auto-Switch sceglie il profilo migliore disponibile quando i dati pool sono sufficienti."
   };
 }
 

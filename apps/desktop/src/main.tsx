@@ -11,7 +11,7 @@ import {
 import { desktopBranding } from "./config/branding";
 import "./styles.css";
 
-type Workspace = "home" | "explore" | "mail" | "forum" | "mining" | "nodes" | "favorites" | "activity" | "identity" | "notifications" | "dev" | "settings" | "control";
+type Workspace = "home" | "explore" | "tools" | "mail" | "forum" | "mining" | "nodes" | "favorites" | "activity" | "identity" | "notifications" | "dev" | "settings" | "control";
 type ViewerState = "idle" | "loading" | "verifying" | "ready" | "not-found" | "blocked" | "unavailable" | "error";
 type NetworkState = "ready" | "syncing" | "limited" | "offline";
 type PublishStage = "idle" | "selecting" | "validating" | "packaging" | "publishing" | "success" | "error";
@@ -35,6 +35,57 @@ type SearchCard = {
   availability: string;
   updatedAt: string;
 };
+
+type ToolGroup = "Velora Core" | "Vita Quotidiana" | "Sicurezza" | "Creator Studio";
+
+type ToolDefinition = SearchCard & {
+  group: ToolGroup;
+  action: ToolAction;
+  inputLabel: string;
+  placeholder: string;
+};
+
+type ToolAction =
+  | "wallet-check"
+  | "mining-summary"
+  | "publisher-validator"
+  | "zone-open"
+  | "login-test"
+  | "mail-test"
+  | "node-health"
+  | "hash"
+  | "recovery"
+  | "report"
+  | "tts"
+  | "translate"
+  | "summary"
+  | "rewrite"
+  | "spell"
+  | "dictation-note"
+  | "focus-timer"
+  | "checklist"
+  | "percent"
+  | "unit"
+  | "link-check"
+  | "difesa-check"
+  | "password"
+  | "privacy-clean"
+  | "qr-safe"
+  | "phishing"
+  | "permission"
+  | "file-signature"
+  | "breach-note"
+  | "safe-message"
+  | "manifest"
+  | "landing"
+  | "seo"
+  | "accessibility"
+  | "changelog"
+  | "logo"
+  | "cover"
+  | "content-pack"
+  | "prompt-site"
+  | "publish-plan";
 
 type MailMessage = {
   id: string;
@@ -217,6 +268,49 @@ const featuredSites: SearchCard[] = [
   }
 ];
 
+const veloraTools: ToolDefinition[] = [
+  tool("Wallet Check", "tools.wallet", "Velora Core", "Valida indirizzi pubblici XMR e ZEPH senza salvare chiavi.", "wallet-check", "Wallet pubblico", "Incolla indirizzo XMR o ZEPH"),
+  tool("Mining Monitor", "tools.mining", "Velora Core", "Legge lo stato mining, worker, hashrate e soglia payout.", "mining-summary", "Stato mining", "Premi Esegui per riepilogo mining"),
+  tool("Publisher Validator", "tools.publisher-validator", "Velora Core", "Controlla struttura minima, manifest e indirizzo di una zona Velora.", "publisher-validator", "Manifest o appunti sito", "Incolla contenuto velora-site.json o percorso/zona"),
+  tool("Zone Explorer", "tools.zone-explorer", "Velora Core", "Apre una zona Velora valida dalla sezione Esplora.", "zone-open", "Zona", "happy.meter"),
+  tool("Velora Login Tester", "tools.login-test", "Velora Core", "Verifica se una pagina espone richiesta login Velora o SDK.", "login-test", "HTML o URL zona", "Incolla HTML o testo della pagina"),
+  tool("Mail Tester", "tools.mail-test", "Velora Core", "Prepara un messaggio test VeloMail tra due account.", "mail-test", "Destinatario", "alias@velora"),
+  tool("Node Health", "tools.node-health", "Velora Core", "Mostra stato nodo locale e rete Velora.", "node-health", "Nodo", "Premi Esegui per controllare"),
+  tool("Hash Verifier", "tools.hash", "Velora Core", "Calcola SHA-256 di testo o file piccolo incollato.", "hash", "Contenuto", "Incolla testo o hash atteso"),
+  tool("Recovery Key Check", "tools.recovery", "Velora Core", "Controlla se il key token e stato salvato senza mostrarlo di nuovo.", "recovery", "Promemoria", "Scrivi dove hai salvato il key token"),
+  tool("Report Abuse", "tools.report-abuse", "Velora Core", "Prepara una segnalazione chiara per sito, mail, chat o utente.", "report", "Segnalazione", "Descrivi problema, zona e motivo"),
+  tool("TTS Reader", "tools.tts", "Vita Quotidiana", "Legge ad alta voce testi, mail e pagine usando la voce del dispositivo.", "tts", "Testo da leggere", "Incolla testo da ascoltare"),
+  tool("Traduttore Velora", "tools.translate", "Vita Quotidiana", "Traduce testo con servizio online e fallback locale.", "translate", "Testo", "it>en Ciao mondo"),
+  tool("Riassunto Rapido", "tools.summary", "Vita Quotidiana", "Estrae punti principali e versione breve da testi lunghi.", "summary", "Testo lungo", "Incolla un testo da riassumere"),
+  tool("Riscrivi Meglio", "tools.rewrite", "Vita Quotidiana", "Rende un testo piu chiaro, diretto e pubblicabile.", "rewrite", "Testo", "Incolla testo da migliorare"),
+  tool("Correttore Umano", "tools.spell", "Vita Quotidiana", "Corregge spazi, maiuscole, punteggiatura e frasi confuse.", "spell", "Testo", "Incolla testo da correggere"),
+  tool("Note Vocali", "tools.voice-notes", "Vita Quotidiana", "Prepara una nota ordinata da testo dettato o appunti veloci.", "dictation-note", "Nota", "Incolla appunti vocali trascritti"),
+  tool("Timer Focus", "tools.focus", "Vita Quotidiana", "Crea sessioni focus con durata e pausa consigliata.", "focus-timer", "Minuti", "25"),
+  tool("Checklist Rapida", "tools.checklist", "Vita Quotidiana", "Trasforma testo libero in checklist operativa.", "checklist", "Appunti", "Incolla cose da fare"),
+  tool("Calcolatrice Percentuali", "tools.percent", "Vita Quotidiana", "Calcola percentuali, sconti, aumenti e quote.", "percent", "Valori", "20% di 150"),
+  tool("Convertitore Unita", "tools.unit", "Vita Quotidiana", "Converte km/mi, kg/lb, C/F, EUR/USD indicativo manuale.", "unit", "Conversione", "10 km in mi"),
+  tool("Link Check", "tools.link-check", "Sicurezza", "Analizza link sospetti prima di aprirli.", "link-check", "Link", "https://esempio.com"),
+  tool("Difesa Totale Check", "tools.difesa-totale", "Sicurezza", "Controllo locale su link, testo e indicatori sospetti.", "difesa-check", "Testo o link", "Incolla messaggio, link o nome file"),
+  tool("Password Strength", "tools.password", "Sicurezza", "Misura forza password senza salvarla.", "password", "Password", "Scrivi password da controllare"),
+  tool("Privacy Cleaner", "tools.privacy", "Sicurezza", "Rimuove dati personali evidenti da testo prima di condividerlo.", "privacy-clean", "Testo", "Incolla testo da pulire"),
+  tool("QR Safe Scanner", "tools.qr-safe", "Sicurezza", "Valuta contenuto QR gia letto prima di aprirlo.", "qr-safe", "Contenuto QR", "Incolla testo letto dal QR"),
+  tool("Phishing Detector", "tools.phishing", "Sicurezza", "Evidenzia segnali di truffa in mail e messaggi.", "phishing", "Messaggio", "Incolla messaggio sospetto"),
+  tool("Permission Viewer", "tools.permissions", "Sicurezza", "Spiega in modo semplice permessi richiesti da app o sito.", "permission", "Permessi", "camera, posizione, notifiche"),
+  tool("File Signature Check", "tools.file-signature", "Sicurezza", "Riconosce tipo file da nome, estensione o firma nota.", "file-signature", "Nome o firma file", "setup.exe oppure %PDF"),
+  tool("Breach Note", "tools.breach-note", "Sicurezza", "Crea piano azione dopo possibile furto account.", "breach-note", "Servizio coinvolto", "email, social, wallet"),
+  tool("Safe Message", "tools.safe-message", "Sicurezza", "Riscrive messaggi delicati senza dati privati inutili.", "safe-message", "Messaggio", "Incolla messaggio da rendere sicuro"),
+  tool("Manifest Generator", "tools.manifest", "Creator Studio", "Genera velora-site.json base valido per pubblicazione.", "manifest", "Dati sito", "zona: happy.meter; titolo: HappyMeter"),
+  tool("Landing Builder", "tools.landing", "Creator Studio", "Crea HTML landing minimale pronta per Velora.", "landing", "Idea pagina", "Titolo, sottotitolo, sezioni"),
+  tool("SEO Velora", "tools.seo", "Creator Studio", "Genera titolo, descrizione e tag per ricerca interna.", "seo", "Descrizione sito", "Incolla descrizione del sito"),
+  tool("Accessibility Check", "tools.accessibility", "Creator Studio", "Controlla leggibilita base, contrasto testuale e alternative.", "accessibility", "HTML o testo", "Incolla HTML o testo pagina"),
+  tool("Changelog Writer", "tools.changelog", "Creator Studio", "Crea changelog leggibile per sito o app.", "changelog", "Modifiche", "Incolla elenco modifiche"),
+  tool("Mini Logo Maker", "tools.logo", "Creator Studio", "Genera concept testuale per logo e palette.", "logo", "Nome progetto", "HappyMeter"),
+  tool("Cover Builder", "tools.cover", "Creator Studio", "Genera brief copertina per sito/zona.", "cover", "Tema", "Benessere quotidiano"),
+  tool("Content Packager", "tools.content-pack", "Creator Studio", "Suggerisce alleggerimento contenuti prima della pubblicazione.", "content-pack", "Lista file", "Incolla nomi file o dimensioni"),
+  tool("Prompt Sito Velora", "tools.prompt-site", "Creator Studio", "Crea prompt per adattare un sito a Velora.", "prompt-site", "Percorso o nome sito", "C:\\\\sito-da-convertire"),
+  tool("Publish Plan", "tools.publish-plan", "Creator Studio", "Crea piano pubblicazione: controllo, manifest, upload, indicizzazione.", "publish-plan", "Zona", "nome.zona")
+];
+
 const defaultFeaturedSites = featuredSites.filter((site) => site.zone === "shop.demo" || site.verified);
 
 const identityLevels = [
@@ -240,6 +334,7 @@ function App() {
   const [query, setQuery] = React.useState("");
   const [address, setAddress] = React.useState("shop.demo");
   const [loadedSite, setLoadedSite] = React.useState<LoadedSiteDocument | null>(null);
+  const [activeToolZone, setActiveToolZone] = React.useState("tools.tts");
   const [viewerState, setViewerState] = React.useState<ViewerState>("idle");
   const [viewerMessage, setViewerMessage] = React.useState("Cerca o apri una zona dell'Upper Web.");
   const [favorites, setFavorites] = React.useState<string[]>(["shop.demo"]);
@@ -454,6 +549,16 @@ function App() {
       setViewerMessage("Questo indirizzo non appartiene all'Upper Web.");
       return;
     }
+    const toolMatch = veloraTools.find((item) => item.zone === normalized);
+    if (toolMatch) {
+      setActiveToolZone(toolMatch.zone);
+      setWorkspace("tools");
+      setQuery(normalized);
+      setSearchResults(veloraTools.filter((item) => item.group === toolMatch.group));
+      setViewerState("ready");
+      setViewerMessage(`${toolMatch.title} pronto`);
+      return;
+    }
     if (!looksLikeZone(normalized)) {
       await runSearch(normalized);
       return;
@@ -495,7 +600,11 @@ function App() {
     }
 
     setWorkspace("explore");
-    const localResults = normalized ? [] : defaultFeaturedSites.filter((site) => {
+    const localTools = veloraTools.filter((toolItem) => {
+      const haystack = `${toolItem.title} ${toolItem.zone} ${toolItem.description} ${toolItem.category} ${toolItem.publisher} ${toolItem.group}`.toLowerCase();
+      return !normalized || haystack.includes(normalized);
+    });
+    const localResults = normalized ? localTools : [...defaultFeaturedSites, ...localTools].filter((site) => {
       const haystack = `${site.title} ${site.zone} ${site.description} ${site.category} ${site.publisher}`.toLowerCase();
       return !normalized || haystack.includes(normalized);
     });
@@ -1035,6 +1144,23 @@ function App() {
             onFavorite={toggleFavorite}
           />
         ) : null}
+        {workspace === "tools" ? (
+          <VeloraTools
+            tools={veloraTools}
+            activeZone={activeToolZone}
+            setActiveZone={setActiveToolZone}
+            session={session}
+            miningStatus={miningStatus}
+            miningProgress={miningProgress}
+            miningNetworkStats={miningNetworkStats}
+            nodeIdentity={nodeIdentity}
+            releaseCheck={releaseCheck}
+            onOpenZone={openZone}
+            onRefreshMining={() => void refreshMiningStatus()}
+            onRefreshNode={() => void loadNodeIdentity()}
+            onCheckUpdates={() => void checkForUpdates()}
+          />
+        ) : null}
         {workspace === "mail" ? (
           <VeloMail
             address={mailAddress}
@@ -1111,6 +1237,7 @@ function Sidebar({ workspace, setWorkspace, networkState }: { workspace: Workspa
   const primary: Array<[Workspace, string]> = [
     ["home", "Home"],
     ["explore", "Esplora"],
+    ["tools", "Velora Tools"],
     ["mail", "VeloMail"],
     ["forum", "Forum"],
     ["mining", "Mining Partner"],
@@ -1411,6 +1538,98 @@ function SiteCard({ site, onOpen }: { site: SearchCard; onOpen: (zone: string) =
       </div>
       <button type="button" onClick={() => onOpen(site.zone)}>Apri</button>
     </article>
+  );
+}
+
+function VeloraTools(props: {
+  tools: ToolDefinition[];
+  activeZone: string;
+  setActiveZone: (zone: string) => void;
+  session: AccountSession | null;
+  miningStatus: MiningLocalStatus | null;
+  miningProgress: MiningProgress | null;
+  miningNetworkStats: MiningNetworkStats | null;
+  nodeIdentity: { peer_id: string; public_key: string } | null;
+  releaseCheck: ReleaseCheck | null;
+  onOpenZone: (zone: string) => void;
+  onRefreshMining: () => void;
+  onRefreshNode: () => void;
+  onCheckUpdates: () => void;
+}) {
+  const activeTool = props.tools.find((item) => item.zone === props.activeZone) ?? props.tools[0];
+  const [input, setInput] = React.useState("");
+  const [output, setOutput] = React.useState("Scegli un tool e premi Esegui.");
+  const [busy, setBusy] = React.useState(false);
+  const grouped = groupTools(props.tools);
+
+  React.useEffect(() => {
+    setInput("");
+    setOutput(`${activeTool.title} pronto.`);
+  }, [activeTool.zone]);
+
+  async function execute() {
+    setBusy(true);
+    try {
+      const result = await runToolAction(activeTool, input, {
+        session: props.session,
+        miningStatus: props.miningStatus,
+        miningProgress: props.miningProgress,
+        miningNetworkStats: props.miningNetworkStats,
+        nodeIdentity: props.nodeIdentity,
+        releaseCheck: props.releaseCheck,
+        onOpenZone: props.onOpenZone,
+        onRefreshMining: props.onRefreshMining,
+        onRefreshNode: props.onRefreshNode,
+        onCheckUpdates: props.onCheckUpdates
+      });
+      setOutput(result);
+    } catch (error) {
+      setOutput(error instanceof Error ? error.message : "Operazione non riuscita.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="dev-workspace">
+      <header className="workspace-heading">
+        <span className="eyebrow">VELORA TOOLS</span>
+        <h1>40 strumenti pronti</h1>
+        <p>Utility Velora, strumenti quotidiani, sicurezza e creator studio indicizzati nell'Upper Web.</p>
+      </header>
+      <div className="tools-layout">
+        <aside className="tools-groups">
+          {Object.entries(grouped).map(([group, tools]) => (
+            <article key={group} className="glass-card">
+              <h2>{group}</h2>
+              {tools.map((item) => (
+                <button key={item.zone} type="button" className={activeTool.zone === item.zone ? "feature-row active" : "feature-row"} onClick={() => props.setActiveZone(item.zone)}>
+                  <span>{item.title}</span>
+                  <small>{item.zone}</small>
+                </button>
+              ))}
+            </article>
+          ))}
+        </aside>
+        <article className="page-card tool-runner">
+          <div className="meta-row">
+            <span>{activeTool.group}</span>
+            <span>{activeTool.zone}</span>
+            <span>{activeTool.category}</span>
+            <span className="verified">Pronto</span>
+          </div>
+          <h1>{activeTool.title}</h1>
+          <p>{activeTool.description}</p>
+          <label>{activeTool.inputLabel}</label>
+          <textarea value={input} onChange={(event) => setInput(event.target.value)} placeholder={activeTool.placeholder} />
+          <div className="button-row">
+            <button type="button" onClick={execute} disabled={busy}>{busy ? "Esecuzione" : "Esegui"}</button>
+            <button type="button" className="secondary" onClick={() => setInput("")}>Pulisci</button>
+          </div>
+          <pre>{output}</pre>
+        </article>
+      </div>
+    </section>
   );
 }
 
@@ -1853,6 +2072,349 @@ function networkLabel(state: NetworkState) {
     limited: "Connessione limitata",
     offline: "Offline"
   }[state];
+}
+
+function tool(title: string, zone: string, group: ToolGroup, description: string, action: ToolAction, inputLabel: string, placeholder: string): ToolDefinition {
+  return {
+    title,
+    zone,
+    description,
+    group,
+    action,
+    inputLabel,
+    placeholder,
+    category: group,
+    publisher: "Velora Tools",
+    identityLevel: "Tool",
+    verified: true,
+    familySafe: true,
+    availability: "Pronto",
+    updatedAt: "Build corrente"
+  };
+}
+
+function groupTools(tools: ToolDefinition[]) {
+  return tools.reduce<Record<string, ToolDefinition[]>>((groups, item) => {
+    groups[item.group] = [...(groups[item.group] ?? []), item];
+    return groups;
+  }, {});
+}
+
+async function runToolAction(toolItem: ToolDefinition, input: string, context: {
+  session: AccountSession | null;
+  miningStatus: MiningLocalStatus | null;
+  miningProgress: MiningProgress | null;
+  miningNetworkStats: MiningNetworkStats | null;
+  nodeIdentity: { peer_id: string; public_key: string } | null;
+  releaseCheck: ReleaseCheck | null;
+  onOpenZone: (zone: string) => void;
+  onRefreshMining: () => void;
+  onRefreshNode: () => void;
+  onCheckUpdates: () => void;
+}) {
+  const text = input.trim();
+  switch (toolItem.action) {
+    case "wallet-check":
+      return walletCheck(text);
+    case "mining-summary":
+      context.onRefreshMining();
+      return [
+        `Stato locale: ${context.miningStatus?.running ? "mining in corso" : "fermo"}`,
+        `Miner pronto: ${context.miningStatus?.ready ? "si" : "no"}`,
+        `Hashrate pool: ${formatHashrate(context.miningNetworkStats?.pool?.hash ?? context.miningNetworkStats?.network?.total_hashrate_hs ?? 0)}`,
+        `Share accettate: ${context.miningNetworkStats?.pool?.validShares ?? context.miningNetworkStats?.network?.accepted_shares ?? 0}`,
+        `Worker attivi: ${context.miningNetworkStats?.network?.active_workers ?? 0}`,
+        `Soglia: ${context.miningProgress?.threshold?.xmrLabel ?? "0.05 XMR"}`
+      ].join("\n");
+    case "publisher-validator":
+      return publisherQuickCheck(text);
+    case "zone-open":
+      if (!looksLikeToolZoneInput(text)) {
+        return "Inserisci una zona valida, esempio happy.meter";
+      }
+      context.onOpenZone(text.toLowerCase());
+      return `Apertura zona: ${text.toLowerCase()}`;
+    case "login-test":
+      return loginSdkCheck(text);
+    case "mail-test":
+      return context.session ? `Messaggio test pronto per ${text || context.session.mail.address}\nOggetto: Test VeloMail\nCorpo: Se ricevi questo messaggio, VeloMail e operativo.` : "Accedi prima di usare Mail Tester.";
+    case "node-health":
+      context.onRefreshNode();
+      return `Nodo locale: ${context.nodeIdentity?.peer_id ?? "non ancora creato"}\nChiave pubblica: ${context.nodeIdentity?.public_key ? "presente" : "assente"}\nStato: ${context.nodeIdentity ? "pronto" : "da attivare"}`;
+    case "hash":
+      return `SHA-256:\n${await sha256Text(text)}`;
+    case "recovery":
+      return context.session?.recovery?.required ? "Key token ancora da confermare nella sezione Identita." : "Key token non visibile. Se lo hai confermato, resta nascosto per sicurezza.";
+    case "report":
+      return `Segnalazione pronta\nTipo: sito/mail/chat/utente\nDettagli: ${text || "nessun dettaglio inserito"}\nInviala dal pannello segnalazioni quando disponibile.`;
+    case "tts":
+      return speakText(text || "Velora Tools pronto");
+    case "translate":
+      return translateText(text);
+    case "summary":
+      return summarizeText(text);
+    case "rewrite":
+      return rewriteText(text);
+    case "spell":
+      return cleanText(text);
+    case "dictation-note":
+      return makeNote(text);
+    case "focus-timer":
+      return focusPlan(text);
+    case "checklist":
+      return makeChecklist(text);
+    case "percent":
+      return percentCalc(text);
+    case "unit":
+      return unitConvert(text);
+    case "link-check":
+      return linkCheck(text);
+    case "difesa-check":
+      return difesaTotaleCheck(text);
+    case "password":
+      return passwordStrength(text);
+    case "privacy-clean":
+      return privacyClean(text);
+    case "qr-safe":
+      return `Contenuto QR\n${linkCheck(text)}\nAprilo solo se riconosci destinazione e scopo.`;
+    case "phishing":
+      return phishingCheck(text);
+    case "permission":
+      return permissionExplain(text);
+    case "file-signature":
+      return fileSignature(text);
+    case "breach-note":
+      return breachPlan(text);
+    case "safe-message":
+      return privacyClean(rewriteText(text));
+    case "manifest":
+      return manifestGenerator(text);
+    case "landing":
+      return landingBuilder(text);
+    case "seo":
+      return seoVelora(text);
+    case "accessibility":
+      return accessibilityCheck(text);
+    case "changelog":
+      return makeChangelog(text);
+    case "logo":
+      return logoConcept(text);
+    case "cover":
+      return coverBrief(text);
+    case "content-pack":
+      return contentPack(text);
+    case "prompt-site":
+      return promptSite(text);
+    case "publish-plan":
+      return publishPlan(text);
+    default:
+      return `${toolItem.title} pronto.`;
+  }
+}
+
+function looksLikeToolZoneInput(value: string) {
+  return /^[a-z0-9][a-z0-9-]{1,62}\.[a-z][a-z0-9-]{1,30}$/i.test(value.trim());
+}
+
+function walletCheck(value: string) {
+  const trimmed = value.trim();
+  const xmr = /^[48][1-9A-HJ-NP-Za-km-z]{94,105}$/.test(trimmed);
+  const zeph = /^ZEPH[A-Za-z0-9]{60,120}$/.test(trimmed) || /^[1-9A-HJ-NP-Za-km-z]{90,120}$/.test(trimmed);
+  return xmr ? "Wallet XMR valido come indirizzo pubblico." : zeph ? "Wallet ZEPH valido come indirizzo pubblico." : "Wallet non valido. Incolla solo indirizzo pubblico, mai seed o chiavi private.";
+}
+
+function publisherQuickCheck(value: string) {
+  const hasManifest = /velora-site\.json|\"address\"|\"title\"/i.test(value);
+  const address = /[a-z0-9][a-z0-9-]{1,62}\.[a-z][a-z0-9-]{1,30}/i.exec(value)?.[0];
+  return [`Manifest: ${hasManifest ? "presente" : "manca velora-site.json o campi address/title"}`, `Zona: ${address ?? "non trovata"}`, `Esito: ${hasManifest && address ? "pronto per controllo Publisher" : "correggi prima di pubblicare"}`].join("\n");
+}
+
+function loginSdkCheck(value: string) {
+  const hasBridge = /VELORA_AUTH_REQUEST|velora|login velora|@velora\/sdk/i.test(value);
+  return hasBridge ? "Login Velora rilevato. Il sito sembra predisposto per identita unificata." : "Login Velora non rilevato. Aggiungi SDK o bridge VELORA_AUTH_REQUEST.";
+}
+
+async function sha256Text(value: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+
+function speakText(value: string) {
+  if (!("speechSynthesis" in window)) {
+    return "TTS non disponibile su questo dispositivo.";
+  }
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(value.slice(0, 5000));
+  utterance.lang = "it-IT";
+  window.speechSynthesis.speak(utterance);
+  return `Lettura avviata: ${Math.min(value.length, 5000)} caratteri.`;
+}
+
+async function translateText(value: string) {
+  const match = /^(it|en|es|fr|de)>(it|en|es|fr|de)\s+([\s\S]+)/i.exec(value);
+  const from = match?.[1] ?? "it";
+  const to = match?.[2] ?? "en";
+  const text = match?.[3] ?? value;
+  if (!text.trim()) {
+    return "Inserisci testo, esempio: it>en Ciao mondo";
+  }
+  try {
+    const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0, 450))}&langpair=${from}|${to}`);
+    const data = await response.json() as { responseData?: { translatedText?: string } };
+    return data.responseData?.translatedText || simpleTranslateFallback(text);
+  } catch {
+    return simpleTranslateFallback(text);
+  }
+}
+
+function simpleTranslateFallback(value: string) {
+  const dict: Record<string, string> = { ciao: "hello", mondo: "world", grazie: "thank you", sicurezza: "security", sito: "site", pubblica: "publish" };
+  return value.split(/\b/).map((part) => dict[part.toLowerCase()] ?? part).join("");
+}
+
+function summarizeText(value: string) {
+  const sentences = value.split(/[.!?\n]+/).map((item) => item.trim()).filter(Boolean);
+  return sentences.slice(0, 5).map((item, index) => `${index + 1}. ${item}`).join("\n") || "Inserisci un testo da riassumere.";
+}
+
+function rewriteText(value: string) {
+  const cleaned = cleanText(value);
+  return cleaned ? `Versione chiara:\n${cleaned.replace(/\bforse\b/gi, "probabilmente").replace(/\bdevo\b/gi, "serve").replace(/\s+/g, " ")}` : "Inserisci testo da riscrivere.";
+}
+
+function cleanText(value: string) {
+  return value.replace(/\s+/g, " ").replace(/\s+([,.!?;:])/g, "$1").replace(/(^|[.!?]\s+)([a-zà-ÿ])/g, (m) => m.toUpperCase()).trim();
+}
+
+function makeNote(value: string) {
+  return `Titolo: Nota Velora\nPunti:\n${makeChecklist(value)}\nProssima azione: scegli il primo punto e completalo.`;
+}
+
+function focusPlan(value: string) {
+  const minutes = Math.max(5, Math.min(120, Number(/\d+/.exec(value)?.[0] ?? 25)));
+  return `Focus ${minutes} minuti\n1. Chiudi distrazioni\n2. Lavora su un solo obiettivo\n3. Pausa ${Math.max(5, Math.round(minutes / 5))} minuti\n4. Scrivi cosa hai completato`;
+}
+
+function makeChecklist(value: string) {
+  const items = value.split(/[\n,;.]+/).map((item) => item.trim()).filter(Boolean);
+  return (items.length ? items : ["Definisci obiettivo", "Controlla materiale", "Esegui", "Verifica risultato"]).map((item) => `- [ ] ${item}`).join("\n");
+}
+
+function percentCalc(value: string) {
+  const numbers = value.match(/-?\d+(?:[.,]\d+)?/g)?.map((n) => Number(n.replace(",", "."))) ?? [];
+  if (numbers.length < 2) return "Esempi: 20% di 150 oppure 150 + 20%";
+  const [a, b] = numbers;
+  return `${a}% di ${b} = ${(b * a / 100).toFixed(2)}\n${b} + ${a}% = ${(b * (1 + a / 100)).toFixed(2)}\n${b} - ${a}% = ${(b * (1 - a / 100)).toFixed(2)}`;
+}
+
+function unitConvert(value: string) {
+  const n = Number((value.match(/-?\d+(?:[.,]\d+)?/)?.[0] ?? "0").replace(",", "."));
+  const lower = value.toLowerCase();
+  if (lower.includes("km")) return `${n} km = ${(n * 0.621371).toFixed(3)} mi`;
+  if (lower.includes("mi")) return `${n} mi = ${(n / 0.621371).toFixed(3)} km`;
+  if (lower.includes("kg")) return `${n} kg = ${(n * 2.20462).toFixed(3)} lb`;
+  if (lower.includes("lb")) return `${n} lb = ${(n / 2.20462).toFixed(3)} kg`;
+  if (lower.includes("f")) return `${n} F = ${((n - 32) * 5 / 9).toFixed(2)} C`;
+  return `${n} C = ${(n * 9 / 5 + 32).toFixed(2)} F`;
+}
+
+function linkCheck(value: string) {
+  const suspicious = [/bit\.ly|tinyurl|t\.co/i, /login|verify|urgent|wallet|seed|bonus/i, /xn--/i, /@/];
+  const score = suspicious.reduce((total, pattern) => total + (pattern.test(value) ? 1 : 0), 0);
+  return `Rischio: ${score >= 3 ? "alto" : score >= 1 ? "medio" : "basso"}\nHTTPS: ${/^https:\/\//i.test(value) ? "si" : "no"}\nApri solo se riconosci dominio e mittente.`;
+}
+
+function difesaTotaleCheck(value: string) {
+  const indicators = ["seed", "private key", "password", "bonifico", "urgente", ".exe", ".scr", "macro", "abilita contenuto"].filter((word) => value.toLowerCase().includes(word));
+  return `Difesa Totale Check\nIndicatori trovati: ${indicators.length ? indicators.join(", ") : "nessuno evidente"}\nEsito: ${indicators.length >= 2 ? "attenzione alta" : indicators.length ? "controlla prima di procedere" : "nessun segnale evidente"}\nNota: non inviare mai seed, chiavi private o password.`;
+}
+
+function passwordStrength(value: string) {
+  const score = [value.length >= 12, /[a-z]/.test(value), /[A-Z]/.test(value), /\d/.test(value), /[^A-Za-z0-9]/.test(value)].filter(Boolean).length;
+  return `Forza: ${score}/5\nConsiglio: usa almeno 12 caratteri, mai parole personali, meglio frase lunga con simboli.`;
+}
+
+function privacyClean(value: string) {
+  return value
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email]")
+    .replace(/\+?\d[\d\s().-]{7,}\d/g, "[telefono]")
+    .replace(/[48][1-9A-HJ-NP-Za-km-z]{30,}/g, "[wallet]")
+    .replace(/\b\d{1,3}(?:\.\d{1,3}){3}\b/g, "[ip]");
+}
+
+function phishingCheck(value: string) {
+  const flags = ["urgente", "password", "verifica account", "clicca", "wallet", "seed", "premio", "scade"].filter((word) => value.toLowerCase().includes(word));
+  return `Segnali phishing: ${flags.length ? flags.join(", ") : "nessuno evidente"}\nRischio: ${flags.length >= 3 ? "alto" : flags.length ? "medio" : "basso"}`;
+}
+
+function permissionExplain(value: string) {
+  return value.split(/[,;\n]+/).map((item) => item.trim()).filter(Boolean).map((item) => `${item}: consenti solo se serve davvero alla funzione che vuoi usare`).join("\n") || "Inserisci permessi da spiegare.";
+}
+
+function fileSignature(value: string) {
+  const lower = value.toLowerCase();
+  if (lower.includes("%pdf") || lower.endsWith(".pdf")) return "PDF: apri solo da fonte nota, attenzione a link interni.";
+  if (/\.(exe|scr|bat|cmd|ps1|msi)$/.test(lower)) return "Eseguibile/script: controlla firma, hash e provenienza prima di avviare.";
+  if (/\.(jpg|jpeg|png|webp)$/.test(lower)) return "Immagine: prima di pubblicare rimuovi metadati se contiene dati privati.";
+  return "Tipo non riconosciuto. Controlla estensione, origine e hash.";
+}
+
+function breachPlan(value: string) {
+  return `Piano sicurezza per ${value || "account"}\n1. Cambia password\n2. Chiudi sessioni aperte\n3. Attiva 2FA\n4. Controlla email/telefono di recupero\n5. Verifica movimenti e messaggi inviati\n6. Segnala se necessario`;
+}
+
+function manifestGenerator(value: string) {
+  const zone = /zona:\s*([a-z0-9.-]+)/i.exec(value)?.[1] ?? "mia.zona";
+  const title = /titolo:\s*([^;\n]+)/i.exec(value)?.[1] ?? zone;
+  return JSON.stringify({ address: zone, title, description: "Sito pubblicato su Velora", entry: "index.html", category: "Community", tags: ["velora"], auth: { veloraLogin: true } }, null, 2);
+}
+
+function landingBuilder(value: string) {
+  const title = cleanText(value.split(/[,;\n]/)[0] || "Nuova zona Velora");
+  return `<!doctype html>\n<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeText(title)}</title><style>body{font-family:Arial,sans-serif;background:#071525;color:white;margin:0;padding:40px}main{max-width:860px;margin:auto}.card{background:#10253b;border:1px solid #d8ae55;border-radius:24px;padding:28px}</style></head><body><main><div class="card"><h1>${escapeText(title)}</h1><p>Pagina pronta per Velora con login unificato.</p><button>Accedi con Velora</button></div></main></body></html>`;
+}
+
+function seoVelora(value: string) {
+  const words = value.toLowerCase().match(/[a-zà-ÿ0-9]{4,}/g)?.slice(0, 8) ?? ["velora", "upperweb"];
+  return `Titolo: ${cleanText(value).slice(0, 58) || "Sito Velora"}\nDescrizione: ${cleanText(value).slice(0, 150)}\nTag: ${Array.from(new Set(words)).join(", ")}`;
+}
+
+function accessibilityCheck(value: string) {
+  const hasAlt = /alt=/i.test(value);
+  const hasH1 = /<h1|^#\s/m.test(value);
+  const longText = value.length > 120;
+  return `Titolo principale: ${hasH1 ? "presente" : "da aggiungere"}\nTesti alternativi immagini: ${hasAlt ? "presenti" : "da controllare"}\nContenuto leggibile: ${longText ? "si" : "aggiungi descrizione piu chiara"}`;
+}
+
+function makeChangelog(value: string) {
+  return makeChecklist(value).replace(/\[ \]/g, "Aggiunto");
+}
+
+function logoConcept(value: string) {
+  const name = value || "Velora Project";
+  return `Logo ${name}\nForma: monogramma iniziale + cerchio luminoso\nPalette: oro Velora, blu notte, ciano\nStile: pulito, leggibile anche piccolo`;
+}
+
+function coverBrief(value: string) {
+  return `Copertina\nTema: ${value || "Upper Web"}\nComposizione: titolo grande, sfondo sfumato, simbolo centrale, 3 parole chiave\nFormato: 16:9 e quadrato`;
+}
+
+function contentPack(value: string) {
+  const heavy = value.split(/\n|,/).filter((item) => /\.(png|jpg|jpeg|mp4|mov|zip)$/i.test(item));
+  return `File pesanti rilevati: ${heavy.length}\nAzioni: comprimi immagini, rimuovi video non essenziali, usa index.html leggero, mantieni velora-site.json valido.`;
+}
+
+function promptSite(value: string) {
+  return `Adatta il sito "${value || "cartella sito"}" per Velora senza modificare l'originale. Crea una copia pubblicabile con index.html, assets leggeri, velora-site.json valido, login Velora tramite bridge VELORA_AUTH_REQUEST, nessun account parallelo obbligatorio, testi chiari e controlla con Publisher Validator.`;
+}
+
+function publishPlan(value: string) {
+  const zone = value || "mia.zona";
+  return `Piano pubblicazione ${zone}\n1. Crea copia sito\n2. Aggiungi velora-site.json\n3. Collega Login Velora\n4. Alleggerisci assets\n5. Controlla con Publisher Validator\n6. Pubblica da Velora\n7. Apri zona dal motore di ricerca`;
+}
+
+function escapeText(value: string) {
+  return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[char] ?? char));
 }
 
 function mergeSearchResults(primary: SearchCard[], secondary: SearchCard[]) {
