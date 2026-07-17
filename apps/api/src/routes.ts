@@ -494,7 +494,7 @@ export async function registerRoutes(app: FastifyInstance) {
     const status = await repository.checkZone(body);
     const address = `${body.category}.${body.slug}`;
 
-    const message = {
+    const messages = {
       AVAILABLE: `La zona ${address} risulta disponibile. Puoi inviare la richiesta di assegnazione.`,
       ASSIGNED: `La zona ${address} Ã¨ giÃ  stata assegnata. Prova un nome differente.`,
       PENDING_REVIEW: "Ãˆ giÃ  presente una richiesta per questa zona. Puoi scegliere unâ€™altra zona oppure ricevere un avviso se tornerÃ  disponibile.",
@@ -502,7 +502,8 @@ export async function registerRoutes(app: FastifyInstance) {
       TEMPORARILY_RESERVED: `La zona ${address} Ã¨ temporaneamente riservata.`,
       BLOCKED: `La zona ${address} Ã¨ attualmente bloccata.`,
       INVALID: "La zona inserita non Ã¨ valida."
-    }[status];
+    } as const;
+    const message = messages[status as keyof typeof messages] ?? messages.INVALID;
 
     return { address, status, message };
   });
@@ -754,6 +755,42 @@ export async function registerRoutes(app: FastifyInstance) {
     return { query, results: await repository.searchDocuments(query) };
   });
   app.get("/api/v1/oceano/status", async () => repository.getOceanoStatus());
+  app.post("/api/v1/oceano/submissions", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) return;
+    const body = request.body as { title?: string; summary?: string; body?: string; contentType?: string; sourceUrl?: string; tags?: string[] };
+    const title = String(body.title ?? "").trim();
+    const summary = String(body.summary ?? "").trim();
+    const content = String(body.body ?? "").trim();
+    if (title.length < 3 || title.length > 140 || summary.length < 10 || summary.length > 500 || content.length < 30 || content.length > 100000) {
+      return reply.badRequest("title, summary or body has an invalid length");
+    }
+    const id = randomUUID();
+    const result = await requirePool().query(
+      `INSERT INTO oceano_content_submissions (id,user_id,title,summary,body,content_type,source_url,tags)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id,status,submitted_at`,
+      [id, userId, title, summary, content, String(body.contentType ?? "ARTICLE").toUpperCase(), String(body.sourceUrl ?? "").trim() || null, (body.tags ?? []).map(String).slice(0, 20)]
+    );
+    return reply.code(201).send({ submission: result.rows[0], message: "Contenuto inviato alla revisione Oceano." });
+  });
+  app.get("/api/v1/oceano/submissions/mine", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) return;
+    const result = await requirePool().query(
+      "SELECT id,address,title,summary,content_type,status,admin_note,submitted_at,reviewed_at,published_at FROM oceano_content_submissions WHERE user_id=$1 ORDER BY submitted_at DESC LIMIT 100",
+      [userId]
+    );
+    return { submissions: result.rows };
+  });
+  app.get("/api/v1/oceano/content/:address", async (request, reply) => {
+    const result = await requirePool().query(
+      `SELECT address,title,summary,body,content_type,source_url,tags,published_at
+       FROM oceano_content_submissions WHERE address=$1 AND status='PUBLISHED' LIMIT 1`,
+      [routeParam(request.params, "address")]
+    );
+    if (!result.rows[0]) return reply.notFound("oceano content not found");
+    return { content: result.rows[0] };
+  });
   app.get("/api/v1/releases/latest", async () => ({ version: "0.1.0-beta", channel: "beta" }));
 
   app.get("/api/v1/forum/sections", async (_request, reply) => {
@@ -956,6 +993,46 @@ export async function registerRoutes(app: FastifyInstance) {
        LIMIT 250`
     );
     return { sites: result.rows };
+  });
+  app.get("/api/admin/oceano/submissions", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) return;
+    const result = await requirePool().query(
+      `SELECT o.id,o.address,o.title,o.summary,o.content_type,o.source_url,o.tags,o.status,o.admin_note,o.submitted_at,o.reviewed_at,o.published_at,u.username
+       FROM oceano_content_submissions o JOIN users u ON u.id=o.user_id ORDER BY o.submitted_at DESC LIMIT 250`
+    );
+    return { submissions: result.rows };
+  });
+  app.post("/api/admin/oceano/submissions/:id/decision", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) return;
+    const body = request.body as { decision?: string; note?: string };
+    const decision = String(body.decision ?? "").toUpperCase();
+    if (!['APPROVED','REJECTED','CHANGES_REQUIRED'].includes(decision)) return reply.badRequest("invalid decision");
+    const client = await requirePool().connect();
+    try {
+      await client.query('BEGIN');
+      const current = await client.query("SELECT * FROM oceano_content_submissions WHERE id=$1 FOR UPDATE", [routeParam(request.params, "id")]);
+      if (!current.rows[0]) { await client.query('ROLLBACK'); return reply.notFound("submission not found"); }
+      const row = current.rows[0];
+      const published = decision === 'APPROVED';
+      const address = row.address ?? `oceano.${String(row.id).replace(/-/g, '').slice(0, 16)}`;
+      const status = published ? 'PUBLISHED' : decision;
+      await client.query(
+        `UPDATE oceano_content_submissions SET address=$2,status=$3,admin_note=$4,reviewed_by=$5,reviewed_at=NOW(),published_at=CASE WHEN $6 THEN NOW() ELSE published_at END WHERE id=$1`,
+        [row.id, address, status, String(body.note ?? '').trim() || null, admin.adminId, published]
+      );
+      if (published) {
+        const searchable = `${row.title} ${row.summary} ${row.body} ${(row.tags ?? []).join(' ')}`;
+        await client.query(
+          `INSERT INTO search_documents (id,zone_id,release_id,address,category,slug,title,description,keywords,languages,headings,searchable_text,publisher,age_rating,family_safe,content_cid,release_version,trust_level,availability)
+           VALUES ($1,NULL,NULL,$2,'OCEANO',$3,$4,$5,$6,'["it"]',$7,$8,'Velora Oceano','EVERYONE',true,$9,'1.0.0',50,1)
+           ON CONFLICT DO NOTHING`,
+          [randomUUID(), address, address.split('.')[1], row.title, row.summary, JSON.stringify(row.tags ?? []), JSON.stringify([row.title]), searchable, `oceano:${row.id}`]
+        );
+      }
+      await client.query('COMMIT');
+      return { id: row.id, address, status };
+    } catch (error) { await client.query('ROLLBACK'); throw error; } finally { client.release(); }
   });
   app.get("/api/admin/reports", async (request, reply) => {
     if (!(await requireAdminSession(request, reply))) {
@@ -2292,6 +2369,10 @@ function adminPage() {
         <h2>Siti pubblicati</h2>
         <div id="sites"></div>
       </section>
+      <section class="wide">
+        <h2>Revisione contenuti Oceano</h2>
+        <div id="oceanoReviews"></div>
+      </section>
       <section>
         <h2>Segnalazioni</h2>
         <div id="reports"></div>
@@ -2367,6 +2448,7 @@ function adminPage() {
       loadCredits();
       loadUsers();
       loadSites();
+      loadOceanoReviews();
       loadReports();
       loadAudit();
       loadAdminHealth();
@@ -2451,6 +2533,24 @@ function adminPage() {
         const data = await getJson('/api/admin/sites');
         document.getElementById('sites').innerHTML = table(data.sites || [], [['address','Zona'],['owner','Owner'],['zone_status','Zona'],['version','Versione'],['release_status','Release'],['content_cid','CID'],['created_at','Data']]);
       } catch (error) { showError('sites', error); }
+    }
+    async function loadOceanoReviews() {
+      try {
+        const data = await getJson('/api/admin/oceano/submissions');
+        const rows = data.submissions || [];
+        document.getElementById('oceanoReviews').innerHTML = table(rows, [['submitted_at','Data'],['username','Autore'],['title','Titolo'],['summary','Riepilogo'],['content_type','Tipo'],['status','Stato'],['admin_note','Nota']]) +
+          '<h3>Decisione</h3><p class="status">Inserisci ID contenuto e scegli APPROVED, CHANGES_REQUIRED o REJECTED.</p>' +
+          '<input id="oceanoReviewId" placeholder="ID contenuto"><input id="oceanoDecision" placeholder="APPROVED / CHANGES_REQUIRED / REJECTED"><input id="oceanoNote" placeholder="Nota admin">' +
+          '<button class="primary" onclick="decideOceano()">Conferma revisione</button>';
+      } catch (error) { showError('oceanoReviews', error); }
+    }
+    async function decideOceano() {
+      const id = document.getElementById('oceanoReviewId').value.trim();
+      const decision = document.getElementById('oceanoDecision').value.trim().toUpperCase();
+      const note = document.getElementById('oceanoNote').value.trim();
+      if (!id || !decision) return;
+      await postJson('/api/admin/oceano/submissions/' + encodeURIComponent(id) + '/decision', { decision, note });
+      await loadOceanoReviews();
     }
     async function loadReports() {
       try {
@@ -3396,7 +3496,3 @@ function mapForumMessage(row: any) {
     createdAt: row.created_at
   };
 }
-
-
-
-
