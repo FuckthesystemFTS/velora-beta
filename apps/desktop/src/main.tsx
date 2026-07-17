@@ -11,7 +11,7 @@ import {
 import { desktopBranding } from "./config/branding";
 import "./styles.css";
 
-type Workspace = "home" | "explore" | "tools" | "mail" | "forum" | "mining" | "nodes" | "favorites" | "activity" | "identity" | "notifications" | "dev" | "settings" | "control";
+type Workspace = "home" | "explore" | "oceano-upload" | "tools" | "cloud" | "mail" | "forum" | "mining" | "nodes" | "favorites" | "activity" | "identity" | "notifications" | "dev" | "settings" | "control";
 type ViewerState = "idle" | "loading" | "verifying" | "ready" | "not-found" | "blocked" | "unavailable" | "error";
 type NetworkState = "ready" | "syncing" | "limited" | "offline";
 type PublishStage = "idle" | "selecting" | "validating" | "packaging" | "publishing" | "success" | "error";
@@ -35,6 +35,11 @@ type SearchCard = {
   availability: string;
   updatedAt: string;
 };
+
+type OceanoSubmission = { id: string; address?: string | null; title: string; summary: string; content_type: string; status: string; admin_note?: string | null; submitted_at: string; published_at?: string | null };
+
+type CloudFile = { id: string; name: string; mime_type: string; size_bytes: number; sha256: string; created_at: string; updated_at: string };
+type CloudQuota = { quotaBytes: number; usedBytes: number; remainingBytes: number; quotaLabel: string; storage: string; nasFallback: string };
 
 type ToolGroup = "Velora Core" | "Vita Quotidiana" | "Sicurezza" | "Creator Studio";
 
@@ -339,6 +344,9 @@ function App() {
   const [viewerMessage, setViewerMessage] = React.useState("Cerca o apri una zona dell'Upper Web.");
   const [favorites, setFavorites] = React.useState<string[]>(["shop.demo"]);
   const [searchResults, setSearchResults] = React.useState<SearchCard[]>([]);
+  const [oceanoDraft, setOceanoDraft] = React.useState({ title: "", summary: "", body: "", contentType: "ARTICLE", sourceUrl: "", tags: "" });
+  const [oceanoSubmissions, setOceanoSubmissions] = React.useState<OceanoSubmission[]>([]);
+  const [oceanoUploadMessage, setOceanoUploadMessage] = React.useState("Compila il contenuto e invialo alla revisione admin.");
   const [publisherSitePath, setPublisherSitePath] = React.useState(demoSitePath);
   const [publisherAddress, setPublisherAddress] = React.useState("shop.demo");
   const [validation, setValidation] = React.useState<VeloraValidationResult | null>(null);
@@ -371,6 +379,10 @@ function App() {
   const [releaseMessage, setReleaseMessage] = React.useState("Controllo aggiornamenti in attesa");
   const [nodeIdentity, setNodeIdentity] = React.useState<{ peer_id: string; public_key: string } | null>(null);
   const [nodeEnrollMessage, setNodeEnrollMessage] = React.useState("Nodo utente non ancora attivato");
+  const [cloudFiles, setCloudFiles] = React.useState<CloudFile[]>([]);
+  const [cloudQuota, setCloudQuota] = React.useState<CloudQuota | null>(null);
+  const [cloudMessage, setCloudMessage] = React.useState("Cloud beta pronto: 25 MB per account registrato.");
+  const [cloudBusy, setCloudBusy] = React.useState(false);
   const siteApi = createVeloraSiteApi(apiBaseUrl);
 
   function setMiningForm(form: MiningForm) {
@@ -405,7 +417,15 @@ function App() {
     setPublisherAddress(`shop.${slug}`);
     setMailDraft((current) => current.to === "beta@velora" || current.to === "alias@velora" ? { ...current, to: session.mail.address } : current);
     void loadForum(session);
+    void loadCloud(session);
   }, [session]);
+
+  React.useEffect(() => {
+    if (!session || workspace !== "cloud") {
+      return;
+    }
+    void loadCloud(session);
+  }, [workspace, session?.token]);
 
   React.useEffect(() => {
     if (!session || workspace !== "forum") {
@@ -559,6 +579,50 @@ function App() {
       setViewerMessage(`${toolMatch.title} pronto`);
       return;
     }
+    const indexedResult = searchResults.find((item) => item.zone.toLowerCase() === normalized);
+    if (normalized.startsWith("guide.") || indexedResult?.category.toUpperCase() === "GUIDA") {
+      const slug = normalized.replace(/^guide\./, "");
+      setAddress(normalized);
+      setWorkspace("explore");
+      setViewerState("loading");
+      setViewerMessage("Apertura guida Velora");
+      try {
+        const response = await fetch(`${apiBaseUrl}/api/v1/guide/${encodeURIComponent(slug)}`);
+        if (!response.ok) throw new Error("Guida non trovata");
+        const payload = await response.json() as { section: { title: string; description: string; body: string; category: string } };
+        setLoadedSite({ address: normalized, title: payload.section.title, html: renderOceanoDocument({ title: payload.section.title, summary: payload.section.description, body: payload.section.body, content_type: "GUIDA" }), source: "velora-guide" });
+        setViewerState("ready");
+        setViewerMessage(`${payload.section.title} aperta`);
+      } catch {
+        setLoadedSite({ address: normalized, title: indexedResult?.title ?? "Guida Velora", html: renderOceanoDocument({ title: indexedResult?.title ?? "Guida Velora", summary: indexedResult?.description ?? "Guida Velora", body: indexedResult?.description ?? "Contenuto guida non disponibile.", content_type: "GUIDA" }), source: "velora-guide-index" });
+        setViewerState("ready");
+        setViewerMessage("Guida aperta dall'indice");
+      }
+      return;
+    }
+    if (normalized.startsWith("oceano.") || indexedResult?.category.toUpperCase() === "OCEANO") {
+      setAddress(normalized);
+      setWorkspace("explore");
+      setViewerState("loading");
+      setViewerMessage("Apertura contenuto Oceano");
+      try {
+        const response = await fetch(`${apiBaseUrl}/api/v1/oceano/content/${encodeURIComponent(normalized)}`);
+        const payload = response.ok ? await response.json() as { content: { title: string; summary: string; body: string; content_type: string; source_url?: string | null; published_at?: string } } : null;
+        setLoadedSite({
+          address: normalized,
+          title: payload?.content.title ?? indexedResult?.title ?? normalized,
+          html: renderOceanoDocument(payload?.content ?? { title: indexedResult?.title ?? normalized, summary: indexedResult?.description ?? "Contenuto Oceano indicizzato.", body: indexedResult?.description ?? "Contenuto Oceano indicizzato.", content_type: "OCEANO" }),
+          source: "oceano"
+        });
+        setViewerState("ready");
+        setViewerMessage(`${payload?.content.title ?? indexedResult?.title ?? normalized} aperto da Oceano`);
+      } catch {
+        setLoadedSite({ address: normalized, title: indexedResult?.title ?? normalized, html: renderOceanoDocument({ title: indexedResult?.title ?? normalized, summary: indexedResult?.description ?? "Contenuto Oceano indicizzato.", body: indexedResult?.description ?? "Contenuto Oceano indicizzato.", content_type: "OCEANO" }), source: "oceano-index" });
+        setViewerState("ready");
+        setViewerMessage(`${indexedResult?.title ?? normalized} aperto dall'indice Oceano`);
+      }
+      return;
+    }
     if (!looksLikeZone(normalized)) {
       await runSearch(normalized);
       return;
@@ -600,6 +664,9 @@ function App() {
     }
 
     setWorkspace("explore");
+    setLoadedSite(null);
+    setViewerState("idle");
+    setViewerMessage("Seleziona un risultato per aprirlo a pagina intera.");
     const localTools = veloraTools.filter((toolItem) => {
       const haystack = `${toolItem.title} ${toolItem.zone} ${toolItem.description} ${toolItem.category} ${toolItem.publisher} ${toolItem.group}`.toLowerCase();
       return !normalized || haystack.includes(normalized);
@@ -740,6 +807,110 @@ function App() {
   async function loadReleases() {
     const result = await siteApi.listReleases(publisherAddress);
     setReleases(result.releases ?? []);
+  }
+
+  async function loadOceanoSubmissions() {
+    if (!session) return;
+    const response = await fetch(`${apiBaseUrl}/api/v1/oceano/submissions/mine`, { headers: authHeaders(session) });
+    if (response.ok) setOceanoSubmissions(((await response.json()) as { submissions: OceanoSubmission[] }).submissions ?? []);
+  }
+
+  async function submitOceanoContent() {
+    if (!session) { setOceanoUploadMessage("Accedi prima di inviare un contenuto."); return; }
+    setOceanoUploadMessage("Invio alla revisione in corso...");
+    const response = await fetch(`${apiBaseUrl}/api/v1/oceano/submissions`, {
+      method: "POST", headers: { "content-type": "application/json", ...authHeaders(session) },
+      body: JSON.stringify({ ...oceanoDraft, tags: oceanoDraft.tags.split(",").map((tag) => tag.trim()).filter(Boolean) })
+    });
+    if (!response.ok) { setOceanoUploadMessage("Controlla titolo, riepilogo e contenuto prima di inviare."); return; }
+    setOceanoDraft({ title: "", summary: "", body: "", contentType: "ARTICLE", sourceUrl: "", tags: "" });
+    setOceanoUploadMessage("Contenuto inviato. Ora è in revisione admin.");
+    await loadOceanoSubmissions();
+  }
+
+  async function loadCloud(activeSession = session) {
+    if (!activeSession) {
+      setCloudMessage("Accedi a Velora per usare il Cloud beta.");
+      return;
+    }
+    try {
+      const freshSession = activeSession === session ? await ensureFreshSession() : activeSession;
+      const response = await fetch(`${apiBaseUrl}/api/v1/cloud/files`, { headers: authHeaders(freshSession) });
+      if (!response.ok) throw new Error(await response.text());
+      const payload = await response.json() as { files: CloudFile[]; quota: CloudQuota };
+      setCloudFiles(payload.files ?? []);
+      setCloudQuota(payload.quota);
+      setCloudMessage("Cloud beta sincronizzato.");
+    } catch (error) {
+      setCloudMessage(error instanceof Error ? error.message : "Cloud non raggiungibile.");
+    }
+  }
+
+  async function uploadCloudFile(file: File | null) {
+    if (!file) return;
+    if (!session) {
+      setCloudMessage("Accedi a Velora per caricare file.");
+      return;
+    }
+    setCloudBusy(true);
+    setCloudMessage("Upload in corso");
+    try {
+      const freshSession = await ensureFreshSession();
+      const contentBase64 = await fileToBase64(file);
+      const response = await fetch(`${apiBaseUrl}/api/v1/cloud/files`, {
+        method: "POST",
+        headers: { "content-type": "application/json", ...authHeaders(freshSession) },
+        body: JSON.stringify({ name: file.name, mimeType: file.type || "application/octet-stream", contentBase64 })
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null) as { message?: string } | null;
+        throw new Error(payload?.message ?? "Upload non riuscito");
+      }
+      await loadCloud(freshSession);
+      setCloudMessage(`${file.name} caricato nel Cloud beta.`);
+    } catch (error) {
+      setCloudMessage(error instanceof Error ? error.message : "Upload non riuscito.");
+    } finally {
+      setCloudBusy(false);
+    }
+  }
+
+  async function deleteCloudFile(id: string) {
+    if (!session) return;
+    setCloudBusy(true);
+    try {
+      const freshSession = await ensureFreshSession();
+      const response = await fetch(`${apiBaseUrl}/api/v1/cloud/files/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders(freshSession) });
+      if (!response.ok) throw new Error("Eliminazione non riuscita");
+      await loadCloud(freshSession);
+      setCloudMessage("File rimosso.");
+    } catch (error) {
+      setCloudMessage(error instanceof Error ? error.message : "Eliminazione non riuscita.");
+    } finally {
+      setCloudBusy(false);
+    }
+  }
+
+  async function downloadCloudFile(file: CloudFile) {
+    if (!session) {
+      setCloudMessage("Accedi a Velora per scaricare file.");
+      return;
+    }
+    try {
+      const freshSession = await ensureFreshSession();
+      const response = await fetch(`${apiBaseUrl}/api/v1/cloud/files/${encodeURIComponent(file.id)}/download`, { headers: authHeaders(freshSession) });
+      if (!response.ok) throw new Error("Download non riuscito");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = file.name;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setCloudMessage(`${file.name} scaricato.`);
+    } catch (error) {
+      setCloudMessage(error instanceof Error ? error.message : "Download non riuscito.");
+    }
   }
 
   function toggleFavorite(zone: string) {
@@ -1161,6 +1332,8 @@ function App() {
             onCheckUpdates={() => void checkForUpdates()}
           />
         ) : null}
+        {workspace === "cloud" ? <VeloraCloud files={cloudFiles} quota={cloudQuota} message={cloudMessage} busy={cloudBusy} session={session} onRefresh={() => void loadCloud()} onUpload={(file) => void uploadCloudFile(file)} onDownload={(file) => void downloadCloudFile(file)} onDelete={(id) => void deleteCloudFile(id)} /> : null}
+        {workspace === "oceano-upload" ? <OceanoUpload draft={oceanoDraft} setDraft={setOceanoDraft} submissions={oceanoSubmissions} message={oceanoUploadMessage} session={session} onSubmit={() => void submitOceanoContent()} onRefresh={() => void loadOceanoSubmissions()} /> : null}
         {workspace === "mail" ? (
           <VeloMail
             address={mailAddress}
@@ -1237,7 +1410,9 @@ function Sidebar({ workspace, setWorkspace, networkState }: { workspace: Workspa
   const primary: Array<[Workspace, string]> = [
     ["home", "Home"],
     ["explore", "Esplora"],
+    ["oceano-upload", "Carica su Oceano"],
     ["tools", "Velora Tools"],
+    ["cloud", "Velora Cloud"],
     ["mail", "VeloMail"],
     ["forum", "Forum"],
     ["mining", "Mining Partner"],
@@ -1389,10 +1564,10 @@ function Explore(props: {
   onFavorite: (zone: string) => void;
 }) {
   return (
-    <section className="workspace-grid">
+    <section className={`workspace-grid explore-layout ${props.loadedSite && props.viewerState === "ready" ? "is-viewing" : ""}`}>
       <div className="zone-browser">
         <div className="zone-toolbar">
-          <button type="button" aria-label="Indietro">Indietro</button>
+          <button type="button" aria-label="Indietro" onClick={() => props.onSearch(props.query)}>Risultati</button>
           <button type="button" aria-label="Avanti">Avanti</button>
           <button type="button" aria-label="Ricarica" onClick={() => props.onOpen(props.address)}>Ricarica</button>
           <input
@@ -1416,9 +1591,71 @@ function Explore(props: {
           )}
         </div>
       </div>
-      <SearchResults results={props.searchResults} onOpen={props.onOpen} />
+      {props.loadedSite && props.viewerState === "ready" ? null : <SearchResults results={props.searchResults} onOpen={props.onOpen} />}
     </section>
   );
+}
+
+function VeloraCloud(props: { files: CloudFile[]; quota: CloudQuota | null; message: string; busy: boolean; session: AccountSession | null; onRefresh: () => void; onUpload: (file: File | null) => void; onDownload: (file: CloudFile) => void; onDelete: (id: string) => void }) {
+  const usedPercent = props.quota ? Math.min(100, Math.round((props.quota.usedBytes / Math.max(1, props.quota.quotaBytes)) * 100)) : 0;
+  return (
+    <section className="dev-workspace cloud-workspace">
+      <header className="workspace-heading">
+        <span className="eyebrow">VELORA CLOUD</span>
+        <h1>Spazio personale beta</h1>
+        <p>Ogni account registrato ha 25 MB di spazio test. Il NAS fallback è predisposto per replica contenuti e backup di rete.</p>
+      </header>
+      <div className="workspace-grid cloud-grid">
+        <article className="page-card">
+          <h2>Quota</h2>
+          <div className="quota-bar"><span style={{ width: `${usedPercent}%` }} /></div>
+          <p><strong>{formatBytes(props.quota?.usedBytes ?? 0)}</strong> usati su {props.quota?.quotaLabel ?? "25 MB"}</p>
+          <p className="safe-detail">{props.message}</p>
+          <div className="button-row">
+            <label className={`upload-button ${props.busy || !props.session ? "disabled" : ""}`}>
+              Carica file
+              <input type="file" disabled={props.busy || !props.session} onChange={(event) => props.onUpload(event.currentTarget.files?.[0] ?? null)} />
+            </label>
+            <button type="button" onClick={props.onRefresh} disabled={!props.session || props.busy}>Aggiorna</button>
+          </div>
+        </article>
+        <article className="page-card">
+          <h2>File</h2>
+          {props.files.length ? props.files.map((file) => (
+            <div className="cloud-file" key={file.id}>
+              <div>
+                <strong>{file.name}</strong>
+                <small>{formatBytes(file.size_bytes)} · SHA-256 {file.sha256.slice(0, 12)}...</small>
+              </div>
+              <div className="button-row">
+                <button type="button" onClick={() => props.onDownload(file)} disabled={props.busy}>Scarica</button>
+                <button type="button" onClick={() => props.onDelete(file.id)} disabled={props.busy}>Elimina</button>
+              </div>
+            </div>
+          )) : <p>Nessun file caricato.</p>}
+        </article>
+      </div>
+    </section>
+  );
+}
+
+function OceanoUpload(props: { draft: { title: string; summary: string; body: string; contentType: string; sourceUrl: string; tags: string }; setDraft: (draft: any) => void; submissions: OceanoSubmission[]; message: string; session: AccountSession | null; onSubmit: () => void; onRefresh: () => void }) {
+  return <section className="dev-workspace oceano-upload">
+    <header className="workspace-heading"><span className="eyebrow">OCEANO CREATOR</span><h1>Carica contenuti su Oceano</h1><p>Invia articoli, guide e risorse. Ogni contenuto passa dalla revisione admin prima di entrare nell'indice pubblico.</p></header>
+    <div className="dev-layout">
+      <article className="page-card upload-form"><h2>Nuovo contenuto</h2>
+        <ol className="flow-list"><li>Compila</li><li>Invia</li><li>Revisione admin</li><li>Pubblicazione in Oceano</li></ol>
+        <label>Titolo<input value={props.draft.title} maxLength={140} onChange={(e) => props.setDraft({ ...props.draft, title: e.target.value })} /></label>
+        <label>Riepilogo<textarea value={props.draft.summary} maxLength={500} onChange={(e) => props.setDraft({ ...props.draft, summary: e.target.value })} /></label>
+        <label>Tipo<select value={props.draft.contentType} onChange={(e) => props.setDraft({ ...props.draft, contentType: e.target.value })}><option>ARTICLE</option><option>GUIDE</option><option>RESOURCE</option><option>NEWS</option></select></label>
+        <label>Contenuto<textarea className="content-editor" value={props.draft.body} maxLength={100000} onChange={(e) => props.setDraft({ ...props.draft, body: e.target.value })} placeholder="Scrivi qui il contenuto completo..." /></label>
+        <label>Fonte opzionale<input value={props.draft.sourceUrl} onChange={(e) => props.setDraft({ ...props.draft, sourceUrl: e.target.value })} placeholder="https://..." /></label>
+        <label>Tag<input value={props.draft.tags} onChange={(e) => props.setDraft({ ...props.draft, tags: e.target.value })} placeholder="tecnologia, guida, comunità" /></label>
+        <div className="button-row"><button disabled={!props.session || props.draft.title.trim().length < 3 || props.draft.summary.trim().length < 10 || props.draft.body.trim().length < 30} onClick={props.onSubmit}>Invia in revisione</button><button className="secondary" onClick={props.onRefresh}>Aggiorna stato</button></div><p className="safe-detail">{props.message}</p>
+      </article>
+      <article className="page-card"><h2>I tuoi invii</h2>{props.submissions.length ? props.submissions.map((item) => <article className="submission-row" key={item.id}><div><strong>{item.title}</strong><p>{item.summary}</p></div><span className={`submission-status ${item.status.toLowerCase()}`}>{item.status.replaceAll('_', ' ')}</span>{item.admin_note ? <small>Nota admin: {item.admin_note}</small> : null}</article>) : <p>Nessun contenuto inviato.</p>}</article>
+    </div>
+  </section>;
 }
 
 function ViewerStateCard({ state, message }: { state: ViewerState; message: string }) {
@@ -1539,6 +1776,28 @@ function SiteCard({ site, onOpen }: { site: SearchCard; onOpen: (zone: string) =
       <button type="button" onClick={() => onOpen(site.zone)}>Apri</button>
     </article>
   );
+}
+
+function renderOceanoDocument(content: { title: string; summary: string; body: string; content_type: string; source_url?: string | null; published_at?: string }) {
+  const escape = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+  const paragraphs = escape(content.body).split(/\n{2,}/).map((paragraph) => `<p>${paragraph.replaceAll("\n", "<br>")}</p>`).join("");
+  const source = content.source_url ? `<a href="${escape(content.source_url)}" target="_blank" rel="noreferrer">Consulta la fonte</a>` : "";
+  return `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(content.title)}</title><style>body{margin:0;background:#f7f8fb;color:#18202d;font:17px/1.75 system-ui,sans-serif}main{max-width:920px;margin:auto;padding:clamp(28px,7vw,88px) clamp(20px,6vw,72px);min-height:100vh;box-sizing:border-box;background:#fff}header{border-bottom:1px solid #dce3ec;padding-bottom:28px;margin-bottom:34px}.kind{color:#536bf6;font-weight:800;letter-spacing:.12em;font-size:12px}h1{font-size:clamp(36px,7vw,68px);line-height:1.05;margin:12px 0 20px;color:#101522}.summary{font-size:21px;color:#536071}article p{margin:0 0 1.4em}a{display:inline-block;margin-top:32px;color:#4059e8;font-weight:700}</style></head><body><main><header><span class="kind">OCEANO · ${escape(content.content_type)}</span><h1>${escape(content.title)}</h1><p class="summary">${escape(content.summary)}</p></header><article>${paragraphs}</article>${source}</main></body></html>`;
+}
+
+function fileToBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Lettura file non riuscita"));
+    reader.onload = () => resolve(String(reader.result ?? "").split(",")[1] ?? "");
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatBytes(value: number) {
+  if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+  if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${value} B`;
 }
 
 function VeloraTools(props: {

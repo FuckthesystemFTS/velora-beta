@@ -129,6 +129,15 @@ export async function registerRoutes(app: FastifyInstance) {
   });
   app.get("/api/v1/releases/changelog", async () => ({ version: "0.1.0-beta", channel: "beta", items: releaseChangelog() }));
   app.get("/api/v1/tools", async () => ({ groups: veloraToolGroups(), tools: veloraToolCatalog() }));
+  app.get("/api/v1/guide", async () => ({ sections: veloraGuideCatalog() }));
+  app.get("/api/v1/guide/:slug", async (request, reply) => {
+    const slug = routeParam(request.params, "slug").toLowerCase();
+    const section = veloraGuideCatalog().find((item) => item.slug === slug || item.address === `guide.${slug}`);
+    if (!section) {
+      return reply.notFound("guide section not found");
+    }
+    return { section };
+  });
   app.get(`/downloads/windows/${betaInstallerName}`, async (_request, reply) => sendBetaDownload(betaInstallerName, reply));
   app.get(`/downloads/windows/${betaChecksumName}`, async (_request, reply) => sendBetaDownload(betaChecksumName, reply));
   app.get(`/downloads/macos/${macosAarch64Name}`, async (_request, reply) => sendMacosDownload(macosAarch64Name, reply));
@@ -752,7 +761,9 @@ export async function registerRoutes(app: FastifyInstance) {
     if (!query) {
       return reply.badRequest("q is required");
     }
-    return { query, results: await repository.searchDocuments(query) };
+    const guideResults = searchVeloraGuide(query);
+    const documents = await repository.searchDocuments(query);
+    return { query, results: [...guideResults, ...documents].slice(0, 35) };
   });
   app.get("/api/v1/oceano/status", async () => repository.getOceanoStatus());
   app.post("/api/v1/oceano/submissions", async (request, reply) => {
@@ -783,13 +794,92 @@ export async function registerRoutes(app: FastifyInstance) {
     return { submissions: result.rows };
   });
   app.get("/api/v1/oceano/content/:address", async (request, reply) => {
+    const address = routeParam(request.params, "address").toLowerCase();
     const result = await requirePool().query(
       `SELECT address,title,summary,body,content_type,source_url,tags,published_at
        FROM oceano_content_submissions WHERE address=$1 AND status='PUBLISHED' LIMIT 1`,
-      [routeParam(request.params, "address")]
+      [address]
     );
-    if (!result.rows[0]) return reply.notFound("oceano content not found");
-    return { content: result.rows[0] };
+    if (result.rows[0]) return { content: result.rows[0] };
+
+    const indexed = await requirePool().query(
+      `SELECT address,title,description AS summary,searchable_text AS body,category AS content_type,content_cid,updated_at AS published_at
+       FROM search_documents
+       WHERE lower(address)=$1 AND category='OCEANO'
+       LIMIT 1`,
+      [address]
+    );
+    if (!indexed.rows[0]) return reply.notFound("oceano content not found");
+    return { content: indexed.rows[0] };
+  });
+  app.get("/api/v1/cloud/quota", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) return;
+    return cloudQuotaForUser(userId);
+  });
+  app.get("/api/v1/cloud/files", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) return;
+    const result = await requirePool().query(
+      `SELECT id,name,mime_type,size_bytes,sha256,created_at,updated_at
+       FROM velora_cloud_files
+       WHERE user_id=$1 AND deleted_at IS NULL
+       ORDER BY created_at DESC
+       LIMIT 200`,
+      [userId]
+    );
+    return { files: result.rows, quota: await cloudQuotaForUser(userId) };
+  });
+  app.post("/api/v1/cloud/files", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) return;
+    const body = request.body as { name?: string; mimeType?: string; contentBase64?: string };
+    const name = sanitizeCloudFileName(String(body?.name ?? ""));
+    const contentBase64 = String(body?.contentBase64 ?? "").replace(/^data:[^;]+;base64,/, "");
+    if (!name || !/^[A-Za-z0-9._ -]{1,120}$/.test(name)) {
+      return reply.badRequest("Nome file non valido");
+    }
+    if (!/^[A-Za-z0-9+/=]*$/.test(contentBase64)) {
+      return reply.badRequest("Contenuto file non valido");
+    }
+    const bytes = Buffer.from(contentBase64, "base64");
+    if (!bytes.length) {
+      return reply.badRequest("File vuoto");
+    }
+    const quota = await cloudQuotaForUser(userId);
+    if (quota.usedBytes + bytes.length > quota.quotaBytes) {
+      return reply.code(413).send({ code: "CLOUD_QUOTA_EXCEEDED", message: "Spazio Cloud beta esaurito", quota });
+    }
+    const id = randomUUID();
+    const sha256 = hashValue(bytes.toString("base64"));
+    const result = await requirePool().query(
+      `INSERT INTO velora_cloud_files (id,user_id,name,mime_type,size_bytes,sha256,content_base64)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       RETURNING id,name,mime_type,size_bytes,sha256,created_at,updated_at`,
+      [id, userId, name, String(body?.mimeType ?? "application/octet-stream").slice(0, 120), bytes.length, sha256, contentBase64]
+    );
+    return reply.code(201).send({ file: result.rows[0], quota: await cloudQuotaForUser(userId) });
+  });
+  app.get("/api/v1/cloud/files/:id/download", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) return;
+    const result = await requirePool().query(
+      `SELECT name,mime_type,content_base64,size_bytes FROM velora_cloud_files WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL LIMIT 1`,
+      [routeParam(request.params, "id"), userId]
+    );
+    if (!result.rows[0]) return reply.notFound("cloud file not found");
+    const row = result.rows[0];
+    const bytes = Buffer.from(String(row.content_base64), "base64");
+    reply.header("Content-Length", String(row.size_bytes));
+    reply.header("Content-Disposition", `attachment; filename="${basename(String(row.name))}"`);
+    reply.type(String(row.mime_type ?? "application/octet-stream"));
+    return reply.send(bytes);
+  });
+  app.delete("/api/v1/cloud/files/:id", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) return;
+    await requirePool().query("UPDATE velora_cloud_files SET deleted_at=NOW(), updated_at=NOW() WHERE id=$1 AND user_id=$2", [routeParam(request.params, "id"), userId]);
+    return { ok: true, quota: await cloudQuotaForUser(userId) };
   });
   app.get("/api/v1/releases/latest", async () => ({ version: "0.1.0-beta", channel: "beta" }));
 
@@ -3409,6 +3499,89 @@ function formatAtomicAmount(value: string, coin: string) {
 
 function sanitizeError(value: string) {
   return value.replace(/[A-Za-z0-9]{24,}/g, (match) => `${match.slice(0, 6)}...${match.slice(-4)}`).slice(0, 240);
+}
+
+const cloudQuotaBytes = 25 * 1024 * 1024;
+
+async function cloudQuotaForUser(userId: string) {
+  const result = await requirePool().query(
+    `SELECT COALESCE(SUM(size_bytes),0)::int AS used_bytes
+     FROM velora_cloud_files
+     WHERE user_id=$1 AND deleted_at IS NULL`,
+    [userId]
+  );
+  const usedBytes = Number(result.rows[0]?.used_bytes ?? 0);
+  return {
+    quotaBytes: cloudQuotaBytes,
+    usedBytes,
+    remainingBytes: Math.max(0, cloudQuotaBytes - usedBytes),
+    quotaLabel: "25 MB",
+    storage: "Velora Cloud beta",
+    nasFallback: "predisposto"
+  };
+}
+
+function sanitizeCloudFileName(value: string) {
+  return basename(value.replaceAll("\\", "/")).trim().replace(/[^\w .-]/g, "_").slice(0, 120);
+}
+
+function veloraGuideCatalog() {
+  return [
+    guide("start", "Primi passi Velora", "Installa Velora, crea account, verifica lo stato connessione e apri la prima zona.", ["download", "account", "home", "esplora"]),
+    guide("account", "Account e identita", "Registrazione, login, key token di recupero, profilo, device e limiti account.", ["registrazione", "login", "identita", "recupero"]),
+    guide("search", "Cercare e aprire siti", "Usa Esplora per trovare zone, contenuti Oceano, guide e strumenti. Apri i risultati con il pulsante Apri.", ["motore", "ricerca", "zone", "oceano"]),
+    guide("publisher", "Pubblicare un sito", "Seleziona cartella, controlla manifest, prepara pacchetto, pubblica e verifica indicizzazione.", ["pubblica", "manifest", "zona", "sito"]),
+    guide("login", "Login Velora nei siti", "I siti pubblicati possono usare la sessione Velora per evitare account paralleli.", ["sdk", "login", "sessione"]),
+    guide("mail", "VeloMail", "Invia e ricevi messaggi tra account Velora con archivio persistente.", ["mail", "messaggi"]),
+    guide("forum", "Forum e chat", "Scrivi nel forum globale, aggiorna i messaggi e segnala abusi se necessario.", ["chat", "forum", "segnalazioni"]),
+    guide("mining", "Mining collettivo", "Attiva mining solo con consenso, controlla worker, hashrate, share e soglia payout manuale.", ["mining", "worker", "payout", "hashrate"]),
+    guide("cloud", "Velora Cloud beta", "Ogni account registrato ha 25 MB di spazio test per file personali sincronizzabili con rete e NAS fallback.", ["cloud", "nas", "file", "storage"]),
+    guide("nodes", "Nodi e NAS fallback", "Il nodo desktop e il NAS aiutano disponibilita contenuti, replica e resilienza della rete.", ["nodi", "nas", "replica"]),
+    guide("tools", "Velora Tools", "Usa strumenti per wallet, mining monitor, validator, traduzione, TTS, sicurezza e creator studio.", ["tool", "tts", "traduttore", "validator"]),
+    guide("safety", "Sicurezza e privacy", "Velora non chiede seed, chiavi private o password wallet. Controlla sempre hash e download ufficiali.", ["sicurezza", "privacy", "wallet", "hash"])
+  ];
+}
+
+function guide(slug: string, title: string, body: string, tags: string[]) {
+  const address = `guide.${slug}`;
+  return {
+    slug,
+    address,
+    category: "GUIDA",
+    title,
+    description: body,
+    body,
+    tags,
+    publisher: "Velora",
+    family_safe: true,
+    trust_level: 100,
+    availability: 1,
+    updated_at: new Date("2026-07-17T00:00:00.000Z").toISOString()
+  };
+}
+
+function searchVeloraGuide(query: string) {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  return veloraGuideCatalog()
+    .filter((item) => {
+      const haystack = `${item.address} ${item.title} ${item.description} ${item.tags.join(" ")}`.toLowerCase();
+      return words.every((word) => haystack.includes(word));
+    })
+    .map((item) => ({
+      address: item.address,
+      category: item.category,
+      slug: item.slug,
+      title: item.title,
+      description: item.description,
+      publisher: item.publisher,
+      age_rating: "family",
+      family_safe: true,
+      trust_level: item.trust_level,
+      content_cid: null,
+      release_version: "guide",
+      availability: 1,
+      updated_at: item.updated_at
+    }));
 }
 
 async function appendOperationalAudit(adminId: string, action: string, targetType: string, targetId: string, reason: string) {

@@ -1,0 +1,14 @@
+﻿{
+  "agentName": "velora-nas-fallback-agent",
+  "version": "0.1.0-beta",
+  "mode": "fallback-storage-only",
+  "defaultEnabled": false,
+  "requiresExplicitEnrollment": true,
+  "veloraApiUrl": "https://velora-beta-20260629-9a9196313b42.herokuapp.com",
+  "storageRoot": "/volume1/Velora/velora-nas-fallback/data",
+  "maxStorageGb": 2000,
+  "cloudQuotaBytesPerUser": 26214400,
+  "heartbeatSeconds": 60,
+  "allowedWorkloads": ["content-object-replica", "release-package-backup", "static-asset-cache"],
+  "forbiddenCapabilities": ["remote-shell", "open-proxy", "vpn-exit", "arbitrary-command", "mail-decryption", "wallet-custody", "mining"]
+}
