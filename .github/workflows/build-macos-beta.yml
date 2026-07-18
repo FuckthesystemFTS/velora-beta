@@ -65,9 +65,10 @@ jobs:
         shell: bash
         env:
           MINER_ASSET: ${{ matrix.miner_asset }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          release_json="$(curl --fail --silent --show-error --location -H 'Accept: application/vnd.github+json' https://api.github.com/repos/MoneroOcean/xmrig/releases/latest)"
+          release_json="$(curl --fail --silent --show-error --location -H 'Accept: application/vnd.github+json' -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/repos/MoneroOcean/xmrig/releases/latest)"
           download_url="$(printf '%s' "$release_json" | jq -r --arg asset "$MINER_ASSET" '.assets[] | select(.name | contains($asset)) | .browser_download_url' | head -1)"
           test -n "$download_url"
           work_dir="$(mktemp -d)"
