@@ -38,8 +38,12 @@ type SearchCard = {
 
 type OceanoSubmission = { id: string; address?: string | null; title: string; summary: string; content_type: string; status: string; admin_note?: string | null; submitted_at: string; published_at?: string | null };
 
-type CloudFile = { id: string; name: string; mime_type: string; size_bytes: number; sha256: string; created_at: string; updated_at: string };
+type CloudFile = { id: string; name: string; mime_type: string; size_bytes: number; sha256: string; guardian_status?: string; multisig_required?: boolean; created_at: string; updated_at: string };
 type CloudQuota = { quotaBytes: number; usedBytes: number; remainingBytes: number; quotaLabel: string; storage: string; nasFallback: string };
+type CloudProtection = {
+  guardian?: { status: string; breachedLevels: number; totalLevels: number; cloud?: { layers: number; multisigAvailable: boolean } };
+  cloud?: { encryption: string; layers: number; multisig?: { id: string; cosigner_username: string; status: string } | null; pendingActions?: Array<{ id: string; action: string; target_file_id: string; status: string; cosigner_username: string }> };
+};
 
 type ToolGroup = "Velora Core" | "Vita Quotidiana" | "Sicurezza" | "Creator Studio";
 
@@ -383,6 +387,8 @@ function App() {
   const [cloudQuota, setCloudQuota] = React.useState<CloudQuota | null>(null);
   const [cloudMessage, setCloudMessage] = React.useState("Cloud beta pronto: 25 MB per account registrato.");
   const [cloudBusy, setCloudBusy] = React.useState(false);
+  const [cloudProtection, setCloudProtection] = React.useState<CloudProtection | null>(null);
+  const [cloudCosigner, setCloudCosigner] = React.useState("");
   const siteApi = createVeloraSiteApi(apiBaseUrl);
 
   function setMiningForm(form: MiningForm) {
@@ -838,6 +844,10 @@ function App() {
       const response = await fetch(`${apiBaseUrl}/api/v1/cloud/files`, { headers: authHeaders(freshSession) });
       if (!response.ok) throw new Error(await response.text());
       const payload = await response.json() as { files: CloudFile[]; quota: CloudQuota };
+      const protectionResponse = await fetch(`${apiBaseUrl}/api/v1/cloud/protection`, { headers: authHeaders(freshSession) });
+      if (protectionResponse.ok) {
+        setCloudProtection(await protectionResponse.json() as CloudProtection);
+      }
       setCloudFiles(payload.files ?? []);
       setCloudQuota(payload.quota);
       setCloudMessage("Cloud beta sincronizzato.");
@@ -910,6 +920,58 @@ function App() {
       setCloudMessage(`${file.name} scaricato.`);
     } catch (error) {
       setCloudMessage(error instanceof Error ? error.message : "Download non riuscito.");
+    }
+  }
+
+  async function requestCloudMultisig() {
+    if (!session) {
+      setCloudMessage("Accedi a Velora per attivare la multifirma.");
+      return;
+    }
+    try {
+      const freshSession = await ensureFreshSession();
+      const response = await fetch(`${apiBaseUrl}/api/v1/cloud/multisig/request`, {
+        method: "POST",
+        headers: { "content-type": "application/json", ...authHeaders(freshSession) },
+        body: JSON.stringify({ cosignerUsername: cloudCosigner })
+      });
+      const payload = await response.json().catch(() => null) as { message?: string } | null;
+      if (!response.ok) throw new Error(payload?.message ?? "Multifirma non attivata.");
+      setCloudMessage(payload?.message ?? "Richiesta multifirma inviata.");
+      await loadCloud(freshSession);
+    } catch (error) {
+      setCloudMessage(error instanceof Error ? error.message : "Multifirma non attivata.");
+    }
+  }
+
+  async function approveCloudMultisig(policyId?: string, actionId?: string) {
+    if (!session) return;
+    try {
+      const freshSession = await ensureFreshSession();
+      const response = await fetch(`${apiBaseUrl}/api/v1/cloud/multisig/approve`, {
+        method: "POST",
+        headers: { "content-type": "application/json", ...authHeaders(freshSession) },
+        body: JSON.stringify({ policyId, actionId })
+      });
+      const payload = await response.json().catch(() => null) as { message?: string } | null;
+      if (!response.ok) throw new Error(payload?.message ?? "Approvazione non riuscita.");
+      setCloudMessage(payload?.message ?? "Approvazione registrata.");
+      await loadCloud(freshSession);
+    } catch (error) {
+      setCloudMessage(error instanceof Error ? error.message : "Approvazione non riuscita.");
+    }
+  }
+
+  async function revokeCloudMultisig() {
+    if (!session) return;
+    try {
+      const freshSession = await ensureFreshSession();
+      const response = await fetch(`${apiBaseUrl}/api/v1/cloud/multisig/revoke`, { method: "POST", headers: authHeaders(freshSession) });
+      if (!response.ok) throw new Error("Revoca non riuscita.");
+      setCloudMessage("Multifirma Cloud revocata.");
+      await loadCloud(freshSession);
+    } catch (error) {
+      setCloudMessage(error instanceof Error ? error.message : "Revoca non riuscita.");
     }
   }
 
@@ -1332,7 +1394,7 @@ function App() {
             onCheckUpdates={() => void checkForUpdates()}
           />
         ) : null}
-        {workspace === "cloud" ? <VeloraCloud files={cloudFiles} quota={cloudQuota} message={cloudMessage} busy={cloudBusy} session={session} onRefresh={() => void loadCloud()} onUpload={(file) => void uploadCloudFile(file)} onDownload={(file) => void downloadCloudFile(file)} onDelete={(id) => void deleteCloudFile(id)} /> : null}
+        {workspace === "cloud" ? <VeloraCloud files={cloudFiles} quota={cloudQuota} protection={cloudProtection} cosigner={cloudCosigner} setCosigner={setCloudCosigner} message={cloudMessage} busy={cloudBusy} session={session} onRefresh={() => void loadCloud()} onUpload={(file) => void uploadCloudFile(file)} onDownload={(file) => void downloadCloudFile(file)} onDelete={(id) => void deleteCloudFile(id)} onRequestMultisig={() => void requestCloudMultisig()} onApproveMultisig={(policyId, actionId) => void approveCloudMultisig(policyId, actionId)} onRevokeMultisig={() => void revokeCloudMultisig()} /> : null}
         {workspace === "oceano-upload" ? <OceanoUpload draft={oceanoDraft} setDraft={setOceanoDraft} submissions={oceanoSubmissions} message={oceanoUploadMessage} session={session} onSubmit={() => void submitOceanoContent()} onRefresh={() => void loadOceanoSubmissions()} /> : null}
         {workspace === "mail" ? (
           <VeloMail
@@ -1596,8 +1658,10 @@ function Explore(props: {
   );
 }
 
-function VeloraCloud(props: { files: CloudFile[]; quota: CloudQuota | null; message: string; busy: boolean; session: AccountSession | null; onRefresh: () => void; onUpload: (file: File | null) => void; onDownload: (file: CloudFile) => void; onDelete: (id: string) => void }) {
+function VeloraCloud(props: { files: CloudFile[]; quota: CloudQuota | null; protection: CloudProtection | null; cosigner: string; setCosigner: (value: string) => void; message: string; busy: boolean; session: AccountSession | null; onRefresh: () => void; onUpload: (file: File | null) => void; onDownload: (file: CloudFile) => void; onDelete: (id: string) => void; onRequestMultisig: () => void; onApproveMultisig: (policyId?: string, actionId?: string) => void; onRevokeMultisig: () => void }) {
   const usedPercent = props.quota ? Math.min(100, Math.round((props.quota.usedBytes / Math.max(1, props.quota.quotaBytes)) * 100)) : 0;
+  const multisig = props.protection?.cloud?.multisig;
+  const pendingActions = props.protection?.cloud?.pendingActions ?? [];
   return (
     <section className="dev-workspace cloud-workspace">
       <header className="workspace-heading">
@@ -1618,6 +1682,24 @@ function VeloraCloud(props: { files: CloudFile[]; quota: CloudQuota | null; mess
             </label>
             <button type="button" onClick={props.onRefresh} disabled={!props.session || props.busy}>Aggiorna</button>
           </div>
+        </article>
+        <article className="page-card">
+          <h2>Guardian</h2>
+          <p><strong>{props.protection?.guardian?.status ?? "In attesa"}</strong></p>
+          <p className="safe-detail">Cifratura Cloud: {props.protection?.cloud?.layers ?? 10} livelli concatenati.</p>
+          <p className="safe-detail">Multifirma: {multisig ? `${multisig.status} con ${multisig.cosigner_username}` : "non attiva"}</p>
+          <label>Secondo account Velora
+            <input value={props.cosigner} onChange={(event) => props.setCosigner(event.target.value)} placeholder="utente Velora" disabled={!props.session || props.busy} />
+          </label>
+          <div className="button-row">
+            <button type="button" onClick={props.onRequestMultisig} disabled={!props.session || props.busy || props.cosigner.trim().length < 3}>Richiedi multifirma</button>
+            {multisig?.status === "PENDING" ? <button type="button" onClick={() => props.onApproveMultisig(multisig.id)} disabled={!props.session || props.busy}>Approva</button> : null}
+            {multisig ? <button type="button" onClick={props.onRevokeMultisig} disabled={!props.session || props.busy}>Revoca</button> : null}
+          </div>
+          {pendingActions.length ? <div className="pending-actions">
+            <h3>Azioni da confermare</h3>
+            {pendingActions.map((action) => <button key={action.id} type="button" onClick={() => props.onApproveMultisig(undefined, action.id)}>{action.action} {action.target_file_id.slice(0, 8)}</button>)}
+          </div> : null}
         </article>
         <article className="page-card">
           <h2>File</h2>

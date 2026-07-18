@@ -9,7 +9,7 @@ import { navigationCategories, signedAdminCommandSchema, zoneCheckSchema, zoneRe
 import { validateVeloraSite } from "@velora/shared/velora-site-node";
 import { config } from "./config.js";
 import { buildLocalRelease, persistReleaseEvent, persistReleaseSnapshot } from "./content-store.js";
-import { hashPassword, hashValue, verifySignedCommand } from "./crypto.js";
+import { hashPassword, hashValue, openChainedPayload, sealChainedPayload, verifySignedCommand } from "./crypto.js";
 import { requirePool } from "./db.js";
 import { repository } from "./repository.js";
 import { betaLogicalNodeCluster } from "./beta-logical-node-cluster.js";
@@ -58,6 +58,7 @@ export async function registerRoutes(app: FastifyInstance) {
     const clientId = String(request.headers["x-forwarded-for"] ?? request.ip ?? "local").split(",")[0]?.trim() ?? "local";
     const limited = await hitRateLimit(hashValue(`${clientId}:${pathname.startsWith("/api/") ? pathname : "public"}`), pathname.startsWith("/api/") ? 240 : 600);
     if (limited) {
+      await registerGuardianSignal({ level: 1, signal: "RATE_LIMIT", source: "EDGE", targetType: "REQUEST", targetId: pathname, detail: "Rate limit superato" }).catch(() => undefined);
       reply.code(429).send({ code: "RATE_LIMIT", message: "Troppe richieste. Riprova tra poco." });
     }
   });
@@ -134,6 +135,7 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get("/api/v1/releases/changelog", async () => ({ version: "0.1.0-beta", channel: "beta", items: releaseChangelog() }));
   app.get("/api/v1/tools", async () => ({ groups: veloraToolGroups(), tools: veloraToolCatalog() }));
   app.get("/api/v1/guide", async () => ({ sections: veloraGuideCatalog() }));
+  app.get("/api/v1/guardian/status", async () => publicGuardianStatus());
   app.get("/api/v1/guide/:slug", async (request, reply) => {
     const slug = routeParam(request.params, "slug").toLowerCase();
     const section = veloraGuideCatalog().find((item) => item.slug === slug || item.address === `guide.${slug}`);
@@ -823,11 +825,39 @@ export async function registerRoutes(app: FastifyInstance) {
     if (!userId) return;
     return cloudQuotaForUser(userId);
   });
+  app.get("/api/v1/cloud/protection", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) return;
+    return cloudProtectionState(userId);
+  });
+  app.post("/api/v1/cloud/multisig/request", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) return;
+    if (await guardianBlocksSensitiveData()) return guardianEmergencyReply(reply);
+    const body = request.body as { cosignerUsername?: string };
+    const cosignerUsername = String(body?.cosignerUsername ?? "").trim();
+    if (!cosignerUsername || cosignerUsername.length < 3) {
+      return reply.badRequest("Secondo account non valido");
+    }
+    return requestCloudMultisig(userId, cosignerUsername);
+  });
+  app.post("/api/v1/cloud/multisig/approve", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) return;
+    if (await guardianBlocksSensitiveData()) return guardianEmergencyReply(reply);
+    const body = request.body as { policyId?: string; actionId?: string };
+    return approveCloudMultisig(userId, String(body?.policyId ?? ""), String(body?.actionId ?? ""));
+  });
+  app.post("/api/v1/cloud/multisig/revoke", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) return;
+    return revokeCloudMultisig(userId);
+  });
   app.get("/api/v1/cloud/files", async (request, reply) => {
     const userId = await requireSessionUserId(request, reply);
     if (!userId) return;
     const result = await requirePool().query(
-      `SELECT id,name,mime_type,size_bytes,sha256,created_at,updated_at
+      `SELECT id,name,mime_type,size_bytes,sha256,guardian_status,multisig_required,created_at,updated_at
        FROM velora_cloud_files
        WHERE user_id=$1 AND deleted_at IS NULL
        ORDER BY created_at DESC
@@ -839,6 +869,7 @@ export async function registerRoutes(app: FastifyInstance) {
   app.post("/api/v1/cloud/files", async (request, reply) => {
     const userId = await requireSessionUserId(request, reply);
     if (!userId) return;
+    if (await guardianBlocksSensitiveData()) return guardianEmergencyReply(reply);
     const body = request.body as { name?: string; mimeType?: string; contentBase64?: string };
     const name = sanitizeCloudFileName(String(body?.name ?? ""));
     const contentBase64 = String(body?.contentBase64 ?? "").replace(/^data:[^;]+;base64,/, "");
@@ -858,24 +889,35 @@ export async function registerRoutes(app: FastifyInstance) {
     }
     const id = randomUUID();
     const sha256 = hashValue(bytes.toString("base64"));
+    const activePolicy = await activeCloudMultisigPolicy(userId);
+    const envelope = sealChainedPayload(bytes, config.cloudEncryptionSecret, `cloud:${userId}:${id}`);
     const result = await requirePool().query(
-      `INSERT INTO velora_cloud_files (id,user_id,name,mime_type,size_bytes,sha256,content_base64)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)
-       RETURNING id,name,mime_type,size_bytes,sha256,created_at,updated_at`,
-      [id, userId, name, String(body?.mimeType ?? "application/octet-stream").slice(0, 120), bytes.length, sha256, contentBase64]
+      `INSERT INTO velora_cloud_files (
+        id,user_id,name,mime_type,size_bytes,sha256,content_base64,content_envelope,
+        protection_scheme,guardian_status,multisig_required,multisig_policy_id
+      )
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'VELORA_CHAINED_REDUNDANT_V1','PROTECTED',$9,$10)
+       RETURNING id,name,mime_type,size_bytes,sha256,guardian_status,multisig_required,created_at,updated_at`,
+      [id, userId, name, String(body?.mimeType ?? "application/octet-stream").slice(0, 120), bytes.length, sha256, "", JSON.stringify(envelope), Boolean(activePolicy), activePolicy?.id ?? null]
     );
     return reply.code(201).send({ file: result.rows[0], quota: await cloudQuotaForUser(userId) });
   });
   app.get("/api/v1/cloud/files/:id/download", async (request, reply) => {
     const userId = await requireSessionUserId(request, reply);
     if (!userId) return;
+    if (await guardianBlocksSensitiveData()) return guardianEmergencyReply(reply);
+    const fileId = routeParam(request.params, "id");
+    const approval = await ensureCloudMultisigAction(userId, fileId, "DOWNLOAD");
+    if (!approval.allowed) {
+      return reply.code(423).send(approval);
+    }
     const result = await requirePool().query(
-      `SELECT name,mime_type,content_base64,size_bytes FROM velora_cloud_files WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL LIMIT 1`,
-      [routeParam(request.params, "id"), userId]
+      `SELECT id,name,mime_type,content_base64,content_envelope,protection_scheme,size_bytes FROM velora_cloud_files WHERE id=$1 AND user_id=$2 AND deleted_at IS NULL LIMIT 1`,
+      [fileId, userId]
     );
     if (!result.rows[0]) return reply.notFound("cloud file not found");
     const row = result.rows[0];
-    const bytes = Buffer.from(String(row.content_base64), "base64");
+    const bytes = openCloudFileBytes(userId, row);
     reply.header("Content-Length", String(row.size_bytes));
     reply.header("Content-Disposition", `attachment; filename="${basename(String(row.name))}"`);
     reply.type(String(row.mime_type ?? "application/octet-stream"));
@@ -884,7 +926,13 @@ export async function registerRoutes(app: FastifyInstance) {
   app.delete("/api/v1/cloud/files/:id", async (request, reply) => {
     const userId = await requireSessionUserId(request, reply);
     if (!userId) return;
-    await requirePool().query("UPDATE velora_cloud_files SET deleted_at=NOW(), updated_at=NOW() WHERE id=$1 AND user_id=$2", [routeParam(request.params, "id"), userId]);
+    if (await guardianBlocksSensitiveData()) return guardianEmergencyReply(reply);
+    const fileId = routeParam(request.params, "id");
+    const approval = await ensureCloudMultisigAction(userId, fileId, "DELETE");
+    if (!approval.allowed) {
+      return reply.code(423).send(approval);
+    }
+    await requirePool().query("UPDATE velora_cloud_files SET deleted_at=NOW(), updated_at=NOW() WHERE id=$1 AND user_id=$2", [fileId, userId]);
     return { ok: true, quota: await cloudQuotaForUser(userId) };
   });
   app.get("/api/v1/releases/latest", async () => ({ version: "0.1.0-beta", channel: "beta" }));
@@ -1173,6 +1221,42 @@ export async function registerRoutes(app: FastifyInstance) {
         urlPresent: Boolean(process.env.VELORA_UPTIME_MONITOR_URL)
       }
     };
+  });
+  app.get("/api/admin/guardian", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    return adminGuardianStatus();
+  });
+  app.post("/api/admin/guardian/signal", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) {
+      return;
+    }
+    const body = request.body as { level?: number; signal?: string; targetType?: string; targetId?: string; detail?: string };
+    return registerGuardianSignal({
+      level: Number(body?.level ?? 1),
+      signal: String(body?.signal ?? "ADMIN_SIGNAL"),
+      source: "ADMIN",
+      actorAdminId: admin.adminId,
+      targetType: String(body?.targetType ?? "SYSTEM"),
+      targetId: body?.targetId ? String(body.targetId) : undefined,
+      detail: String(body?.detail ?? "")
+    });
+  });
+  app.post("/api/admin/guardian/reset", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) {
+      return;
+    }
+    await requirePool().query(
+      `UPDATE guardian_security_state
+       SET breached_levels = 0, emergency_mode = FALSE, last_signal = $1, last_signal_at = NOW(), updated_at = NOW()
+       WHERE id = 'global'`,
+      [`RESET_BY_ADMIN:${admin.adminId}`]
+    );
+    await appendGuardianEvent({ level: 1, signal: "RESET", source: "ADMIN", actorAdminId: admin.adminId, targetType: "SYSTEM", detail: "Guardian reset admin" });
+    return adminGuardianStatus();
   });
   app.get("/api/v1/control/zone-requests", async (request, reply) => {
     if (!(await requireAdminSession(request, reply))) {
@@ -2478,6 +2562,10 @@ function adminPage() {
         <div id="audit"></div>
       </section>
       <section class="wide">
+        <h2>Velora Guardian</h2>
+        <div id="guardian"></div>
+      </section>
+      <section class="wide">
         <h2>Health admin</h2>
         <div id="adminHealth"></div>
       </section>
@@ -2547,6 +2635,7 @@ function adminPage() {
       loadOceanoReviews();
       loadReports();
       loadAudit();
+      loadGuardian();
       loadAdminHealth();
     }
     async function loadOverview() {
@@ -2660,6 +2749,29 @@ function adminPage() {
         document.getElementById('audit').innerHTML = '<h3>Audit firmato</h3>' + table(data.audit || [], [['created_at','Data'],['admin_id','Admin'],['action','Azione'],['target_type','Target'],['target_id','ID'],['reason','Motivo']]) + '<h3>Eventi operativi</h3>' + table(data.operational || [], [['created_at','Data'],['event_type','Evento'],['target_type','Target'],['summary','Sintesi'],['severity','Livello']]);
       } catch (error) { showError('audit', error); }
     }
+    async function loadGuardian() {
+      try {
+        const data = await getJson('/api/admin/guardian');
+        document.getElementById('guardian').innerHTML =
+          '<div class="cards"><div class="card"><b>Stato</b><span>' + escapeHtml(data.status?.emergencyMode ? 'Emergenza' : 'Protetto') + '</span></div><div class="card"><b>Livelli</b><span>' + escapeHtml(String(data.status?.breachedLevels || 0)) + '/10</span></div><div class="card"><b>Multifirma</b><span>' + escapeHtml(String((data.cloudMultisig || []).length)) + '</span></div></div>' +
+          '<h3>Livelli protezione</h3><p class="status">' + escapeHtml((data.levels || []).join(' / ')) + '</p>' +
+          '<h3>Eventi Guardian</h3>' + table(data.events || [], [['created_at','Data'],['level','Livello'],['signal','Segnale'],['source','Fonte'],['target_type','Target'],['severity','Stato']]) +
+          '<h3>Multifirma Cloud</h3>' + table(data.cloudMultisig || [], [['requested_at','Data'],['owner','Owner'],['cosigner_username','Seconda firma'],['status','Stato'],['approved_at','Attiva']]) +
+          '<h3>Azione manuale</h3><input id="guardianLevel" placeholder="Livello 1-10"><input id="guardianSignal" placeholder="Segnale"><input id="guardianDetail" placeholder="Nota"><button class="primary" onclick="guardianSignal()">Registra segnale</button><button onclick="guardianReset()">Reset Guardian</button>';
+      } catch (error) { showError('guardian', error); }
+    }
+    async function guardianSignal() {
+      const level = Number(document.getElementById('guardianLevel').value || '1');
+      const signal = document.getElementById('guardianSignal').value.trim() || 'ADMIN_SIGNAL';
+      const detail = document.getElementById('guardianDetail').value.trim();
+      await postJson('/api/admin/guardian/signal', { level, signal, detail });
+      await loadGuardian();
+    }
+    async function guardianReset() {
+      if (!confirm('Confermi reset Guardian?')) return;
+      await postJson('/api/admin/guardian/reset', {});
+      await loadGuardian();
+    }
     async function loadAdminHealth() {
       try {
         const data = await getJson('/api/admin/health');
@@ -2766,6 +2878,16 @@ async function publicPage(page: string) {
       <a class="ghost" href="${moneroWalletUrl}" rel="noopener noreferrer">Wallet Monero ufficiale</a>
       <a class="ghost" href="${zephyrWalletUrl}" rel="noopener noreferrer">Wallet Zephyr ufficiale</a>
       <p>Durante la beta puoi richiedere payout manuale dal tuo account quando la quota viene verificata nel pannello admin</p>
+    </section>` : page === "security" ? `
+    <section class="panel">
+      <h1>Velora Guardian</h1>
+      <p>Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio</p>
+      <div class="cards">
+        <article><b>10 livelli</b><p>Ogni livello riduce la superficie di attacco e registra segnali per l'admin</p></article>
+        <article><b>Cloud protetto</b><p>I nuovi file vengono custoditi in forma cifrata e verificata</p></article>
+        <article><b>Multifirma</b><p>Puoi richiedere una seconda firma con un altro account Velora per operazioni cloud sensibili</p></article>
+      </div>
+      <a class="cta" href="/download">Aggiorna Velora</a>
     </section>` : page === "publishers" ? `
     <section class="panel">
       <h1>Pubblica nell'Upper Web</h1>
@@ -2796,7 +2918,7 @@ async function publicPage(page: string) {
     <section class="cards">
       <article><b>Upper Web</b><p>Zone verificate, ricerca interna e identita Velora.</p></article>
       <article><b>Publisher</b><p>Pubblica siti nativi Velora con SDK e review.</p></article>
-      <article><b>Sicurezza</b><p>Permessi, manifest e contenuti verificati.</p></article>
+      <article><b>Guardian</b><p>Cloud cifrato, multifirma e protezione dati automatica.</p></article>
     </section>`;
   return `<!doctype html>
 <html lang="it">
@@ -3550,6 +3672,219 @@ async function cloudQuotaForUser(userId: string) {
 
 function sanitizeCloudFileName(value: string) {
   return basename(value.replaceAll("\\", "/")).trim().replace(/[^\w .-]/g, "_").slice(0, 120);
+}
+
+async function publicGuardianStatus() {
+  const state = await guardianState();
+  return {
+    name: "Velora Guardian",
+    status: state.emergencyMode ? "PROTEZIONE_DATI_ATTIVA" : "PROTETTO",
+    breachedLevels: state.breachedLevels,
+    totalLevels: 10,
+    cloud: { chainedEncryption: true, layers: 10, multisigAvailable: true }
+  };
+}
+
+async function adminGuardianStatus() {
+  const pool = requirePool();
+  const state = await guardianState();
+  const [events, policies] = await Promise.all([
+    pool.query("SELECT level, signal, source, target_type, target_id, severity, sanitized_detail, created_at FROM guardian_security_events ORDER BY created_at DESC LIMIT 100").catch(() => ({ rows: [] })),
+    pool.query(
+      `SELECT p.id, u.username AS owner, p.cosigner_username, p.status, p.requested_at, p.approved_at
+       FROM cloud_multisig_policies p
+       JOIN users u ON u.id = p.owner_user_id
+       ORDER BY p.requested_at DESC LIMIT 100`
+    ).catch(() => ({ rows: [] }))
+  ]);
+  return { status: state, levels: guardianLevels(), events: events.rows, cloudMultisig: policies.rows };
+}
+
+async function guardianState() {
+  if (!config.guardianEnabled) {
+    return { enabled: false, breachedLevels: 0, emergencyMode: false, lastSignal: null, lastSignalAt: null };
+  }
+  try {
+    const result = await requirePool().query("SELECT breached_levels, emergency_mode, last_signal, last_signal_at FROM guardian_security_state WHERE id = 'global'");
+    const row = result.rows[0];
+    return {
+      enabled: true,
+      breachedLevels: Number(row?.breached_levels ?? 0),
+      emergencyMode: Boolean(row?.emergency_mode),
+      lastSignal: row?.last_signal ?? null,
+      lastSignalAt: row?.last_signal_at ?? null
+    };
+  } catch {
+    return { enabled: true, breachedLevels: 0, emergencyMode: false, lastSignal: "MIGRATION_PENDING", lastSignalAt: null };
+  }
+}
+
+async function guardianBlocksSensitiveData() {
+  const state = await guardianState();
+  return Boolean(state.enabled && (state.emergencyMode || state.breachedLevels >= config.guardianEmergencyLevel));
+}
+
+function guardianEmergencyReply(reply: FastifyReply) {
+  return reply.code(423).send({ code: "VELORA_GUARDIAN_EMERGENCY", message: "Protezione dati attiva. Scambio dati sensibili sospeso fino a verifica admin." });
+}
+
+async function registerGuardianSignal(input: { level: number; signal: string; source: string; actorUserId?: string; actorAdminId?: string; targetType: string; targetId?: string; detail?: string }) {
+  const level = Math.max(1, Math.min(10, Math.trunc(input.level || 1)));
+  await appendGuardianEvent({ ...input, level });
+  const nextBreached = Math.max(level, (await guardianState()).breachedLevels);
+  const emergency = nextBreached >= config.guardianEmergencyLevel;
+  await requirePool().query(
+    `INSERT INTO guardian_security_state (id, breached_levels, emergency_mode, last_signal, last_signal_at, updated_at)
+     VALUES ('global', $1, $2, $3, NOW(), NOW())
+     ON CONFLICT (id) DO UPDATE SET
+       breached_levels = GREATEST(guardian_security_state.breached_levels, EXCLUDED.breached_levels),
+       emergency_mode = guardian_security_state.emergency_mode OR EXCLUDED.emergency_mode,
+       last_signal = EXCLUDED.last_signal,
+       last_signal_at = EXCLUDED.last_signal_at,
+       updated_at = NOW()`,
+    [nextBreached, emergency, sanitizeSignal(input.signal)]
+  );
+  return adminGuardianStatus();
+}
+
+async function appendGuardianEvent(input: { level: number; signal: string; source: string; actorUserId?: string; actorAdminId?: string; targetType: string; targetId?: string; detail?: string }) {
+  try {
+    await requirePool().query(
+      `INSERT INTO guardian_security_events (id, level, signal, source, actor_user_id, actor_admin_id, target_type, target_id, severity, sanitized_detail)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      [
+        randomUUID(),
+        Math.max(1, Math.min(10, Math.trunc(input.level))),
+        sanitizeSignal(input.signal),
+        sanitizeSignal(input.source),
+        input.actorUserId ?? null,
+        input.actorAdminId ?? null,
+        sanitizeSignal(input.targetType),
+        input.targetId ? String(input.targetId).slice(0, 120) : null,
+        input.level >= config.guardianEmergencyLevel ? "CRITICAL" : input.level >= 5 ? "WARNING" : "NOTICE",
+        sanitizeError(String(input.detail ?? ""))
+      ]
+    );
+  } catch {
+    return;
+  }
+}
+
+function guardianLevels() {
+  return ["Sessione", "Input", "Permessi", "Device", "Cifratura", "Integrita", "Multifirma", "Audit", "Blocco dati", "Emergenza"];
+}
+
+async function cloudProtectionState(userId: string) {
+  const [guardian, policy, pending] = await Promise.all([publicGuardianStatus(), activeOrPendingCloudMultisigPolicy(userId), pendingCloudMultisigActions(userId)]);
+  return { guardian, cloud: { encryption: "VELORA_CHAINED_REDUNDANT_V1", layers: 10, multisig: policy, pendingActions: pending } };
+}
+
+async function requestCloudMultisig(userId: string, cosignerUsername: string) {
+  const cosigner = await repository.findUserByUsername(cosignerUsername);
+  if (!cosigner || cosigner.id === userId) {
+    throw new Error("CLOUD_MULTISIG_COSIGNER_INVALID");
+  }
+  const result = await requirePool().query(
+    `INSERT INTO cloud_multisig_policies (id, owner_user_id, cosigner_user_id, cosigner_username, status)
+     VALUES ($1,$2,$3,$4,'PENDING')
+     ON CONFLICT (owner_user_id) WHERE status IN ('PENDING','ACTIVE')
+     DO UPDATE SET cosigner_user_id = EXCLUDED.cosigner_user_id, cosigner_username = EXCLUDED.cosigner_username, status = 'PENDING', updated_at = NOW()
+     RETURNING id, cosigner_username, status, requested_at`,
+    [randomUUID(), userId, cosigner.id, cosigner.username]
+  );
+  await notifyUser(cosigner.id, "CLOUD_MULTISIG_REQUEST", "Richiesta protezione Cloud", "Un account Velora ti ha scelto come seconda firma.");
+  return { policy: result.rows[0], message: "Richiesta inviata al secondo account Velora." };
+}
+
+async function approveCloudMultisig(userId: string, policyId: string, actionId: string) {
+  if (actionId) {
+    const result = await requirePool().query(
+      `UPDATE cloud_multisig_approvals a
+       SET status='APPROVED', approved_by_user_id=$1, approved_at=NOW()
+       FROM cloud_multisig_policies p
+       WHERE a.policy_id=p.id AND a.id=$2 AND p.cosigner_user_id=$1 AND a.status='PENDING' AND a.expires_at > NOW()
+       RETURNING a.id, a.action, a.status, a.target_file_id`,
+      [userId, actionId]
+    );
+    if (!result.rows[0]) throw new Error("CLOUD_MULTISIG_ACTION_NOT_FOUND");
+    return { action: result.rows[0], message: "Azione approvata." };
+  }
+  const result = await requirePool().query(
+    `UPDATE cloud_multisig_policies SET status='ACTIVE', approved_at=NOW(), updated_at=NOW()
+     WHERE id=$1 AND cosigner_user_id=$2 AND status='PENDING'
+     RETURNING id, cosigner_username, status, approved_at`,
+    [policyId, userId]
+  );
+  if (!result.rows[0]) throw new Error("CLOUD_MULTISIG_POLICY_NOT_FOUND");
+  return { policy: result.rows[0], message: "Multifirma Cloud attiva." };
+}
+
+async function revokeCloudMultisig(userId: string) {
+  const result = await requirePool().query(
+    "UPDATE cloud_multisig_policies SET status='REVOKED', revoked_at=NOW(), updated_at=NOW() WHERE owner_user_id=$1 AND status IN ('PENDING','ACTIVE') RETURNING id",
+    [userId]
+  );
+  return { revoked: Boolean(result.rows[0]) };
+}
+
+async function activeCloudMultisigPolicy(userId: string) {
+  const result = await requirePool().query("SELECT id, cosigner_username, status FROM cloud_multisig_policies WHERE owner_user_id=$1 AND status='ACTIVE' LIMIT 1", [userId]);
+  return result.rows[0];
+}
+
+async function activeOrPendingCloudMultisigPolicy(userId: string) {
+  const result = await requirePool().query("SELECT id, cosigner_username, status, requested_at, approved_at FROM cloud_multisig_policies WHERE owner_user_id=$1 AND status IN ('PENDING','ACTIVE') ORDER BY requested_at DESC LIMIT 1", [userId]);
+  return result.rows[0] ?? null;
+}
+
+async function pendingCloudMultisigActions(userId: string) {
+  const result = await requirePool().query(
+    `SELECT a.id, a.action, a.target_file_id, a.status, a.requested_at, a.expires_at, p.cosigner_username
+     FROM cloud_multisig_approvals a JOIN cloud_multisig_policies p ON p.id = a.policy_id
+     WHERE p.owner_user_id=$1 AND a.status='PENDING' AND a.expires_at > NOW()
+     ORDER BY a.requested_at DESC LIMIT 50`,
+    [userId]
+  );
+  return result.rows;
+}
+
+async function ensureCloudMultisigAction(userId: string, fileId: string, action: string) {
+  const policy = await activeCloudMultisigPolicy(userId);
+  if (!policy) return { allowed: true };
+  const approved = await requirePool().query(
+    `SELECT id FROM cloud_multisig_approvals
+     WHERE policy_id=$1 AND target_file_id=$2 AND action=$3 AND status='APPROVED' AND approved_at > NOW() - INTERVAL '15 minutes'
+     LIMIT 1`,
+    [policy.id, fileId, action]
+  );
+  if (approved.rows[0]) return { allowed: true, approvedByMultisig: true };
+  const pendingId = randomUUID();
+  await requirePool().query(
+    `INSERT INTO cloud_multisig_approvals (id, policy_id, action, target_file_id, requested_by_user_id)
+     SELECT $1,$2,$3,$4,$5
+     WHERE NOT EXISTS (
+       SELECT 1 FROM cloud_multisig_approvals WHERE policy_id=$2 AND target_file_id=$4 AND action=$3 AND status='PENDING' AND expires_at > NOW()
+     )`,
+    [pendingId, policy.id, action, fileId, userId]
+  );
+  const existing = await requirePool().query(
+    `SELECT id, action, status, expires_at FROM cloud_multisig_approvals
+     WHERE policy_id=$1 AND target_file_id=$2 AND action=$3 AND status='PENDING' AND expires_at > NOW()
+     ORDER BY requested_at DESC LIMIT 1`,
+    [policy.id, fileId, action]
+  );
+  return { allowed: false, code: "CLOUD_MULTISIG_APPROVAL_REQUIRED", message: "Serve conferma del secondo account Velora.", action: existing.rows[0], cosignerUsername: policy.cosigner_username };
+}
+
+function openCloudFileBytes(userId: string, row: any) {
+  if (row.protection_scheme === "VELORA_CHAINED_REDUNDANT_V1" && row.content_envelope) {
+    return openChainedPayload(typeof row.content_envelope === "string" ? JSON.parse(row.content_envelope) : row.content_envelope, config.cloudEncryptionSecret, `cloud:${userId}:${row.id}`);
+  }
+  return Buffer.from(String(row.content_base64), "base64");
+}
+
+function sanitizeSignal(value: string) {
+  return value.toUpperCase().replace(/[^A-Z0-9_:-]/g, "_").slice(0, 80);
 }
 
 function veloraGuideCatalog() {

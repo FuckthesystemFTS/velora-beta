@@ -60,5 +60,8 @@ export const config = {
   miningBoostBoxHeartbeatGraceSeconds: Number(process.env.MINING_BOOST_BOX_HEARTBEAT_GRACE_SECONDS ?? 180),
   miningCollectiveStatsEnabled: (process.env.MINING_COLLECTIVE_STATS_ENABLED ?? "true") === "true",
   miningCollectiveStatsPublic: (process.env.MINING_COLLECTIVE_STATS_PUBLIC ?? "false") === "true",
-  miningCollectiveStatsRefreshSeconds: Number(process.env.MINING_COLLECTIVE_STATS_REFRESH_SECONDS ?? 60)
+  miningCollectiveStatsRefreshSeconds: Number(process.env.MINING_COLLECTIVE_STATS_REFRESH_SECONDS ?? 60),
+  guardianEnabled: process.env.VELORA_GUARDIAN_ENABLED !== "false",
+  guardianEmergencyLevel: Number(process.env.VELORA_GUARDIAN_EMERGENCY_LEVEL ?? 9),
+  cloudEncryptionSecret: process.env.VELORA_CLOUD_ENCRYPTION_SECRET ?? process.env.ACCESS_TOKEN_SECRET ?? process.env.MEMBERSHIP_SIGNING_PRIVATE_KEY_BASE64 ?? "development-cloud-secret"
 };
