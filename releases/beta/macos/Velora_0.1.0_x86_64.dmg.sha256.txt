@@ -1,0 +1,1 @@
+837401e914ca922bec3795188897807960a3b841737f83c86cabcc986ebae773  releases/beta/macos/latest/Velora_0.1.0_x86_64.dmg

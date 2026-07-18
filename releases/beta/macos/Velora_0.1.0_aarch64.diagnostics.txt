@@ -1,0 +1,61 @@
+Bundle: /var/folders/pd/2_nlvl1s4k121pdk4d5_2c8m0000gn/T/tmp.5eFU2o4079/Velora.app
+{
+  "CFBundleDevelopmentRegion" => "English"
+  "CFBundleDisplayName" => "Velora"
+  "CFBundleExecutable" => "velora-desktop"
+  "CFBundleIconFile" => "icon.icns"
+  "CFBundleIdentifier" => "com.velora.desktop"
+  "CFBundleInfoDictionaryVersion" => "6.0"
+  "CFBundleName" => "Velora"
+  "CFBundlePackageType" => "APPL"
+  "CFBundleShortVersionString" => "0.1.0"
+  "CFBundleVersion" => "0.1.0"
+  "CSResourcesFileMapped" => 1
+  "LSMinimumSystemVersion" => "12.0"
+  "LSRequiresCarbon" => 1
+  "NSHighResolutionCapable" => 1
+}
+/var/folders/pd/2_nlvl1s4k121pdk4d5_2c8m0000gn/T/tmp.5eFU2o4079/Velora.app/Contents/MacOS/velora-desktop: Mach-O 64-bit executable arm64
+Non-fat file: /var/folders/pd/2_nlvl1s4k121pdk4d5_2c8m0000gn/T/tmp.5eFU2o4079/Velora.app/Contents/MacOS/velora-desktop is architecture: arm64
+/var/folders/pd/2_nlvl1s4k121pdk4d5_2c8m0000gn/T/tmp.5eFU2o4079/Velora.app/Contents/Resources/miner/xmrig: Mach-O 64-bit executable arm64
+Non-fat file: /var/folders/pd/2_nlvl1s4k121pdk4d5_2c8m0000gn/T/tmp.5eFU2o4079/Velora.app/Contents/Resources/miner/xmrig is architecture: arm64
+/var/folders/pd/2_nlvl1s4k121pdk4d5_2c8m0000gn/T/tmp.5eFU2o4079/Velora.app/Contents/MacOS/velora-desktop:
+	/System/Library/Frameworks/WebKit.framework/Versions/A/WebKit (compatibility version 1.0.0, current version 621.2.5)
+	/System/Library/Frameworks/ApplicationServices.framework/Versions/A/ApplicationServices (compatibility version 1.0.0, current version 65.0.0)
+	/System/Library/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics (compatibility version 64.0.0, current version 1889.5.3)
+	/System/Library/Frameworks/Carbon.framework/Versions/A/Carbon (compatibility version 2.0.0, current version 170.0.0)
+	/System/Library/Frameworks/CoreVideo.framework/Versions/A/CoreVideo (compatibility version 1.2.0, current version 1.5.0)
+	/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation (compatibility version 150.0.0, current version 3502.1.255)
+	/System/Library/Frameworks/AppKit.framework/Versions/C/AppKit (compatibility version 45.0.0, current version 2575.60.5)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1351.0.0)
+	/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation (compatibility version 300.0.0, current version 3502.1.255)
+	/usr/lib/libobjc.A.dylib (compatibility version 1.0.0, current version 228.0.0)
+	/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)
+	/System/Library/Frameworks/ColorSync.framework/Versions/A/ColorSync (compatibility version 1.0.0, current version 3777.4.1)
+	/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices (compatibility version 1.0.0, current version 1226.0.0)
+Executable=/private/var/folders/pd/2_nlvl1s4k121pdk4d5_2c8m0000gn/T/tmp.5eFU2o4079/Velora.app/Contents/MacOS/velora-desktop
+Identifier=com.velora.desktop
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20400 size=123371 flags=0x2(adhoc) hashes=3849+3 location=embedded
+VersionPlatform=1
+VersionMin=786432
+VersionSDK=984320
+Hash type=sha256 size=32
+CandidateCDHash sha256=b3ad4037b6e8dd8b3241e9c2657896ea93e3c309
+CandidateCDHashFull sha256=b3ad4037b6e8dd8b3241e9c2657896ea93e3c309438d1538c5aa2992ce0f6550
+Hash choices=sha256
+CMSDigest=b3ad4037b6e8dd8b3241e9c2657896ea93e3c309438d1538c5aa2992ce0f6550
+CMSDigestType=2
+Executable Segment base=0
+Executable Segment limit=11091968
+Executable Segment flags=0x1
+Page size=4096
+CDHash=b3ad4037b6e8dd8b3241e9c2657896ea93e3c309
+Signature=adhoc
+Info.plist entries=14
+TeamIdentifier=not set
+Sealed Resources version=2 rules=13 files=3
+Internal requirements count=0 size=12
+/var/folders/pd/2_nlvl1s4k121pdk4d5_2c8m0000gn/T/tmp.5eFU2o4079/Velora.app: valid on disk
+/var/folders/pd/2_nlvl1s4k121pdk4d5_2c8m0000gn/T/tmp.5eFU2o4079/Velora.app: satisfies its Designated Requirement
+/var/folders/pd/2_nlvl1s4k121pdk4d5_2c8m0000gn/T/tmp.5eFU2o4079/Velora.app: rejected

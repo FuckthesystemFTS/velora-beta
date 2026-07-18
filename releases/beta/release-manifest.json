@@ -1,7 +1,7 @@
 {
     "version":  "0.1.0-beta",
     "channel":  "beta",
-    "releasedAt":  "2026-07-17T18:00:00.0928187Z",
+    "releasedAt":  "2026-07-18T08:42:59.8015725Z",
     "platforms":  {
                       "windows-x64":  {
                                           "available":  true,
@@ -26,17 +26,17 @@
                                             "notarized":  false,
                                             "filename":  "Velora_0.1.0_aarch64.dmg",
                                             "downloadUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/downloads/macos/Velora_0.1.0_aarch64.dmg",
-                                            "size":  7248131,
-                                            "sha256":  "0B19F8F0255237DE7D24CEEA8FB821BB5B50E60B05807D249540BBB0DEF15CD7"
+                                            "size":  10343818,
+                                            "sha256":  "4316E66C935F15F3DBA3596F68F73F2C4D4AA54E2501379CA6352884C4957391"
                                         },
                       "macos-x86_64":  {
-                                           "available":  false,
+                                           "available":  true,
                                            "signed":  false,
                                            "notarized":  false,
-                                           "filename":  "",
-                                           "downloadUrl":  "",
-                                           "size":  0,
-                                           "sha256":  ""
+                                           "filename":  "Velora_0.1.0_x86_64.dmg",
+                                           "downloadUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/downloads/macos/Velora_0.1.0_x86_64.dmg",
+                                           "size":  10865545,
+                                           "sha256":  "837401E914CA922BEC3795188897807960A3B841737F83C86CABCC986EBAE773"
                                        }
                   }
 }

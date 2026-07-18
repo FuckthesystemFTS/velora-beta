@@ -45,6 +45,7 @@ const miningPayoutThresholdAtomicByCoin: Record<string, bigint> = {
   XMR: 50_000_000_000n,
   ZEPH: 50_000_000_000n
 };
+const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#101a24"/><path d="M18 14h10l4 24 4-24h10L37 50H27L18 14Z" fill="#e0bd5b"/></svg>`;
 
 export async function registerRoutes(app: FastifyInstance) {
   await app.register(cors, { origin: true, credentials: true });
@@ -62,6 +63,7 @@ export async function registerRoutes(app: FastifyInstance) {
   });
 
   app.get("/", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("home")));
+  app.get("/favicon.ico", async (_request, reply) => reply.type("image/svg+xml; charset=utf-8").send(faviconSvg));
   app.get("/download", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("download")));
   app.get("/admin", async (_request, reply) => reply.type("text/html; charset=utf-8").send(adminPage()));
   app.get("/what-is-velora", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("what-is-velora")));
