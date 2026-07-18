@@ -194,16 +194,38 @@ jobs:
           main_executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$plist")"
           main_path="$app/Contents/MacOS/$main_executable"
           miner_path="$app/Contents/Resources/miner/xmrig"
-          plutil -lint "$plist"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$plist")" = 'com.velora.desktop'
-          test "$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$plist")" = '12.0'
-          test -x "$main_path"
-          test -x "$miner_path"
+          fail() {
+            echo "macOS verification failed: $1" >&2
+            exit 1
+          }
+
+          plutil -lint "$plist" || fail "Info.plist is invalid"
+          bundle_identifier="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$plist")"
+          minimum_system_version="$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$plist")"
+          echo "Bundle identifier: $bundle_identifier"
+          echo "Minimum macOS version: $minimum_system_version"
+          echo "Main executable: $main_path"
+          echo "Integrated miner: $miner_path"
+          [ "$bundle_identifier" = 'com.velora.desktop' ] || fail "unexpected bundle identifier $bundle_identifier"
+          [ "$minimum_system_version" = '12.0' ] || fail "unexpected minimum macOS version $minimum_system_version"
+          [ -x "$main_path" ] || fail "main executable is missing or not executable"
+          [ -x "$miner_path" ] || fail "integrated miner is missing or not executable"
           expected_miner_hash="$(cat "$app/Contents/Resources/miner/xmrig.sha256")"
-          test "$(shasum -a 256 "$miner_path" | awk '{print $1}')" = "$expected_miner_hash"
-          file "$main_path" | grep -q "$ARTIFACT_ARCH\|arm64\|x86_64"
-          file "$miner_path" | grep -q "$ARTIFACT_ARCH\|arm64\|x86_64"
-          codesign --verify --strict --verbose=4 "$app"
+          actual_miner_hash="$(shasum -a 256 "$miner_path" | awk '{print $1}')"
+          echo "Expected miner SHA-256: $expected_miner_hash"
+          echo "Actual miner SHA-256: $actual_miner_hash"
+          [ "$actual_miner_hash" = "$expected_miner_hash" ] || fail "integrated miner hash mismatch"
+          expected_mach_arch="x86_64"
+          if [ "$ARTIFACT_ARCH" = "aarch64" ]; then
+            expected_mach_arch="arm64"
+          fi
+          main_file="$(file "$main_path")"
+          miner_file="$(file "$miner_path")"
+          echo "$main_file"
+          echo "$miner_file"
+          printf '%s' "$main_file" | grep -q "$expected_mach_arch" || fail "main executable is not $expected_mach_arch"
+          printf '%s' "$miner_file" | grep -q "$expected_mach_arch" || fail "integrated miner is not $expected_mach_arch"
+          codesign --verify --strict --verbose=4 "$app" || fail "codesign verification failed"
           {
             echo "Bundle: $app"
             plutil -p "$plist"
