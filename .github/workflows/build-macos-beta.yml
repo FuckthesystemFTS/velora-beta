@@ -147,9 +147,11 @@ jobs:
             fi
           done < <(find "$app/Contents" -type f -perm -111 | sort)
 
-          find "$app/Contents/Frameworks" -depth -type d -name '*.framework' 2>/dev/null | while IFS= read -r framework; do
-            codesign --force --sign - "$framework"
-          done
+          if [ -d "$app/Contents/Frameworks" ]; then
+            while IFS= read -r framework; do
+              codesign --force --sign - "$framework"
+            done < <(find "$app/Contents/Frameworks" -depth -type d -name '*.framework')
+          fi
           codesign --force --sign - "$main_path"
           codesign --force --sign - "$app"
           codesign --verify --strict --verbose=4 "$app"
