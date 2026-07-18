@@ -1,15 +1,15 @@
-{
+﻿{
     "version":  "0.1.0-beta",
     "channel":  "beta",
-    "releasedAt":  "2026-07-18T08:42:59.8015725Z",
+    "releasedAt":  "2026-07-18T14:56:09.9512406Z",
     "platforms":  {
                       "windows-x64":  {
                                           "available":  true,
                                           "signed":  false,
                                           "filename":  "Velora_0.1.0_x64_en-US.msi",
                                           "downloadUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/downloads/windows/Velora_0.1.0_x64_en-US.msi",
-                                          "size":  5079040,
-                                          "sha256":  "F973E697EE0B3B8EF110E01E59E4ABCD93BBE06704BEAF96151B5B0B04D5CD8A"
+                                          "size":  5083136,
+                                          "sha256":  "4D97A1E557BA3664C39C66A47B8C153B3EEA08CD3BE23E31DB7BC20E02146FBF"
                                       },
                       "macos-universal":  {
                                               "available":  false,
@@ -26,8 +26,8 @@
                                             "notarized":  false,
                                             "filename":  "Velora_0.1.0_aarch64.dmg",
                                             "downloadUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/downloads/macos/Velora_0.1.0_aarch64.dmg",
-                                            "size":  10343818,
-                                            "sha256":  "4316E66C935F15F3DBA3596F68F73F2C4D4AA54E2501379CA6352884C4957391"
+                                            "size":  10344426,
+                                            "sha256":  "3EA9AD9CE1A8DE6ABC4B2210CE640033C402D55B5F322A172F3AD286C77F06B4"
                                         },
                       "macos-x86_64":  {
                                            "available":  true,
@@ -35,8 +35,8 @@
                                            "notarized":  false,
                                            "filename":  "Velora_0.1.0_x86_64.dmg",
                                            "downloadUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/downloads/macos/Velora_0.1.0_x86_64.dmg",
-                                           "size":  10865545,
-                                           "sha256":  "837401E914CA922BEC3795188897807960A3B841737F83C86CABCC986EBAE773"
+                                           "size":  10865752,
+                                           "sha256":  "A75B9D7A18B5DF884715FB834CB050BC7D5943196C2684BD64E959A52BEFD457"
                                        }
                   }
 }
