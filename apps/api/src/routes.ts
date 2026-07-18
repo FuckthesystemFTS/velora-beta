@@ -38,6 +38,8 @@ const betaInstallerName = "Velora_0.1.0_x64_en-US.msi";
 const betaChecksumName = `${betaInstallerName}.sha256.txt`;
 const macosAarch64Name = "Velora_0.1.0_aarch64.dmg";
 const macosAarch64ChecksumName = `${macosAarch64Name}.sha256.txt`;
+const macosX64Name = "Velora_0.1.0_x86_64.dmg";
+const macosX64ChecksumName = `${macosX64Name}.sha256.txt`;
 const nasFallbackName = "velora-nas-fallback-agent-0.1.0-beta.zip";
 const miningPayoutThresholdAtomicByCoin: Record<string, bigint> = {
   XMR: 50_000_000_000n,
@@ -59,12 +61,12 @@ export async function registerRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("home")));
-  app.get("/download", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("download")));
+  app.get("/", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("home")));
+  app.get("/download", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("download")));
   app.get("/admin", async (_request, reply) => reply.type("text/html; charset=utf-8").send(adminPage()));
-  app.get("/what-is-velora", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("what-is-velora")));
-  app.get("/security", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("security")));
-  app.get("/publishers", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("publishers")));
+  app.get("/what-is-velora", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("what-is-velora")));
+  app.get("/security", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("security")));
+  app.get("/publishers", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("publishers")));
   app.get("/publishers/guide", async (_request, reply) => {
     for (const guide of publisherGuideCandidates) {
       try {
@@ -75,12 +77,12 @@ export async function registerRoutes(app: FastifyInstance) {
     }
     return reply.notFound("publisher guide not found");
   });
-  app.get("/developers", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("developers")));
-  app.get("/pricing", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("pricing")));
-  app.get("/faq", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("faq")));
-  app.get("/status", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("status")));
-  app.get("/legal/privacy", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("privacy")));
-  app.get("/legal/terms", async (_request, reply) => reply.type("text/html; charset=utf-8").send(publicPage("terms")));
+  app.get("/developers", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("developers")));
+  app.get("/pricing", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("pricing")));
+  app.get("/faq", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("faq")));
+  app.get("/status", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("status")));
+  app.get("/legal/privacy", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("privacy")));
+  app.get("/legal/terms", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("terms")));
   app.get("/z/:address", async (request, reply) => {
     const address = routeParam(request.params, "address");
     const fallback = await findPublicZone(address);
@@ -142,6 +144,8 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get(`/downloads/windows/${betaChecksumName}`, async (_request, reply) => sendBetaDownload(betaChecksumName, reply));
   app.get(`/downloads/macos/${macosAarch64Name}`, async (_request, reply) => sendMacosDownload(macosAarch64Name, reply));
   app.get(`/downloads/macos/${macosAarch64ChecksumName}`, async (_request, reply) => sendMacosDownload(macosAarch64ChecksumName, reply));
+  app.get(`/downloads/macos/${macosX64Name}`, async (_request, reply) => sendMacosDownload(macosX64Name, reply));
+  app.get(`/downloads/macos/${macosX64ChecksumName}`, async (_request, reply) => sendMacosDownload(macosX64ChecksumName, reply));
   app.get(`/downloads/nas/${nasFallbackName}`, async (_request, reply) => sendNasFallbackDownload(nasFallbackName, reply));
   app.get("/downloads/windows/:file", async (request, reply) => {
     const file = routeParam(request.params, "file");
@@ -161,7 +165,7 @@ export async function registerRoutes(app: FastifyInstance) {
   });
   app.get("/downloads/macos/:file", async (request, reply) => {
     const file = routeParam(request.params, "file");
-    if (![macosAarch64Name, macosAarch64ChecksumName].includes(file)) {
+    if (![macosAarch64Name, macosAarch64ChecksumName, macosX64Name, macosX64ChecksumName].includes(file)) {
       return reply.notFound("download not found");
     }
 
@@ -2666,7 +2670,7 @@ function adminPage() {
 </html>`;
 }
 
-function publicPage(page: string) {
+async function publicPage(page: string) {
   const title = {
     home: "VELORA - L'Upper Web",
     download: "Scarica Velora",
@@ -2684,13 +2688,19 @@ function publicPage(page: string) {
   const checksumUrl = "/downloads/windows/Velora_0.1.0_x64_en-US.msi.sha256.txt";
   const macosDownloadUrl = "/downloads/macos/Velora_0.1.0_aarch64.dmg";
   const macosChecksumUrl = "/downloads/macos/Velora_0.1.0_aarch64.dmg.sha256.txt";
+  const macosIntelDownloadUrl = "/downloads/macos/Velora_0.1.0_x86_64.dmg";
+  const macosIntelChecksumUrl = "/downloads/macos/Velora_0.1.0_x86_64.dmg.sha256.txt";
+  const releaseManifest = await readReleaseManifestSafe();
+  const releasedAt = releaseManifest?.releasedAt ? new Date(releaseManifest.releasedAt).toLocaleDateString("it-IT") : "in aggiornamento";
+  const macArm = releaseManifest?.platforms?.["macos-aarch64"] ?? {};
+  const macIntel = releaseManifest?.platforms?.["macos-x86_64"] ?? {};
   const nasFallbackUrl = "/downloads/nas/velora-nas-fallback-agent-0.1.0-beta.zip";
   const moneroWalletUrl = "https://www.getmonero.org/downloads/";
   const zephyrWalletUrl = "https://zephyrprotocol.com/";
   const body = page === "download" ? `
     <section class="panel">
       <h1>Scarica Velora Beta</h1>
-      <p>Beta pubblica pronta per Windows x64<br>macOS Apple Silicon e disponibile come beta tecnica non notarizzata: se macOS mostra "Velora e danneggiato", segui le istruzioni sotto</p>
+      <p>Beta pubblica per Windows x64, Mac Apple Silicon e Mac Intel</p>
       <section class="cards">
         <article>
           <b>Windows</b>
@@ -2699,10 +2709,16 @@ function publicPage(page: string) {
           <a class="ghost" href="${checksumUrl}">Verifica SHA-256</a>
         </article>
         <article>
-          <b>macOS</b>
-          <p>DMG Apple Silicon beta tecnica non firmata Apple</p>
-          <a class="cta" href="${macosDownloadUrl}">Scarica per macOS</a>
+          <b>Mac Apple Silicon</b>
+          <p>Per Mac con chip Apple M1, M2, M3, M4 o successivi</p>
+          <a class="cta" href="${macosDownloadUrl}">Scarica per Mac Apple Silicon</a>
           <a class="ghost" href="${macosChecksumUrl}">Verifica SHA-256</a>
+        </article>
+        <article>
+          <b>Mac Intel</b>
+          <p>Per Mac che mostra Processore Intel in Informazioni su questo Mac</p>
+          <a class="cta" href="${macosIntelDownloadUrl}">Scarica per Mac Intel</a>
+          <a class="ghost" href="${macosIntelChecksumUrl}">Verifica SHA-256</a>
         </article>
         <article>
           <b>Nodo NAS fallback</b>
@@ -2712,9 +2728,10 @@ function publicPage(page: string) {
       </section>
       <dl>
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
-        <dt>Stato release</dt><dd>Windows x64 operativo<br>macOS Apple Silicon beta tecnica con firma ad-hoc<br>Manifest aggiornamenti: /release-manifest.json<br>API aggiornatore desktop: /api/v1/releases/check</dd>
-        <dt>Windows</dt><dd>Velora_0.1.0_x64_en-US.msi - A8AFE6D0BC8D674FE8E84E95BE74365A27D654539DBA7B5249A3AE9EC226B282</dd>
-        <dt>macOS</dt><dd>Velora_0.1.0_aarch64.dmg - C726CB7B1CCE7028A904C076427636CCAF65406289C0F2B5EAC81B5605D3B634</dd>
+        <dt>Data build</dt><dd>${escapeHtml(releasedAt)}</dd>
+        <dt>Stato Mac</dt><dd>Beta con firma ad hoc, non ancora notarizzata da Apple</dd>
+        <dt>Apple Silicon</dt><dd>${escapeHtml(String(macArm.size ?? 0))} byte<br>${escapeHtml(String(macArm.sha256 ?? "hash in aggiornamento"))}</dd>
+        <dt>Intel</dt><dd>${escapeHtml(String(macIntel.size ?? 0))} byte<br>${escapeHtml(String(macIntel.sha256 ?? "hash in aggiornamento"))}</dd>
       </dl>
       <h2>Changelog beta</h2>
       <ul>
@@ -2722,16 +2739,24 @@ function publicPage(page: string) {
       </ul>
     </section>
     <section class="panel">
-      <h2>macOS: messaggio "app danneggiata"</h2>
-      <p>Il DMG beta non e ancora firmato e notarizzato da Apple. Su macOS questo puo apparire come app danneggiata anche quando il file e integro</p>
-      <p>Procedura beta:</p>
-      <pre>1. Scarica il DMG
-2. Apri il DMG e trascina Velora in Applicazioni
-3. Apri Terminale
-4. Esegui:
-xattr -dr com.apple.quarantine /Applications/Velora.app
-5. Apri Velora da Applicazioni con tasto destro, Apri</pre>
-      <p>Per una distribuzione macOS senza questo passaggio servono certificato Apple Developer ID e notarizzazione Apple nella pipeline GitHub</p>
+      <h2>Installazione su Mac</h2>
+      <p>Velora e attualmente distribuita come Beta non ancora notarizzata da Apple<br>macOS mostrera quindi un avviso al primo avvio<br>Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente</p>
+      <ol>
+        <li>Scarica Velora per il tuo Mac</li>
+        <li>Apri il file DMG</li>
+        <li>Trascina Velora nella cartella Applicazioni</li>
+        <li>Prova ad aprire Velora</li>
+        <li>Quando macOS la blocca, premi Fine</li>
+        <li>Apri Impostazioni di Sistema</li>
+        <li>Vai in Privacy e Sicurezza</li>
+        <li>Scorri fino al messaggio relativo a Velora</li>
+        <li>Premi Apri comunque</li>
+        <li>Conferma Apri</li>
+      </ol>
+      <p>Per scegliere la versione apri menu Apple, Informazioni su questo Mac e controlla se compare Chip Apple oppure Processore Intel</p>
+      <details><summary class="ghost">Velora non si apre dopo Apri comunque</summary>
+        <ol><li>Verifica di aver spostato Velora in Applicazioni</li><li>Verifica di aver scaricato la build corretta</li><li>Riavvia il Mac una sola volta</li><li>Prova ad aprire nuovamente Velora</li><li>Invia all'assistenza il file Library/Logs/Velora/startup.log</li></ol>
+      </details>
     </section>
     <section class="panel">
       <h2>Wallet Mining Partner</h2>

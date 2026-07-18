@@ -4,7 +4,10 @@ use rfd::FileDialog;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::fs;
+#[cfg(target_os = "macos")]
+use sha2::{Digest, Sha256};
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use tauri::{AppHandle, Manager};
@@ -257,7 +260,10 @@ fn get_or_create_node_identity(app: AppHandle) -> Result<NodeIdentity, VeloraErr
     let mut private_key = [0_u8; 32];
     rand::thread_rng().fill_bytes(&mut private_key);
     let public_key = blake3::hash(&private_key).to_hex().to_string();
-    let peer_id = format!("velora-{}", &blake3::hash(public_key.as_bytes()).to_hex()[..24]);
+    let peer_id = format!(
+        "velora-{}",
+        &blake3::hash(public_key.as_bytes()).to_hex()[..24]
+    );
     let private_key_sealed = base64::engine::general_purpose::STANDARD.encode(private_key);
 
     conn.execute(
@@ -265,7 +271,10 @@ fn get_or_create_node_identity(app: AppHandle) -> Result<NodeIdentity, VeloraErr
         params![peer_id, public_key, private_key_sealed],
     )?;
 
-    Ok(NodeIdentity { peer_id, public_key })
+    Ok(NodeIdentity {
+        peer_id,
+        public_key,
+    })
 }
 
 #[tauri::command]
@@ -274,7 +283,12 @@ fn mining_status(app: AppHandle) -> Result<MiningLocalStatus, VeloraError> {
     let miner_path = mining_executable_path(&app)?;
     let pid_path = dir.join("xmrig.pid");
     let log_path = dir.join("xmrig.log");
-    let ready = miner_path.exists();
+    let miner_check = if miner_path.exists() {
+        verify_bundled_miner(&app, &miner_path)
+    } else {
+        Err("MAC-MINER-004: miner integrato non trovato".to_string())
+    };
+    let ready = miner_check.is_ok();
     let running = read_running_pid(&pid_path).is_some();
     let stale_pid = pid_path.exists() && !running;
     if stale_pid {
@@ -295,17 +309,29 @@ fn mining_status(app: AppHandle) -> Result<MiningLocalStatus, VeloraError> {
             } else {
                 "Miner locale pronto".to_string()
             }
+        } else if cfg!(target_os = "macos") {
+            miner_check
+                .err()
+                .unwrap_or_else(|| "MAC-MINER-004: miner integrato non disponibile".to_string())
         } else {
-            "Inserisci il miner XMRig ufficiale nella cartella indicata. Velora non scarica miner in automatico.".to_string()
+            "Miner non disponibile nella cartella Velora".to_string()
         },
     })
 }
 
 #[tauri::command]
-fn start_mining(app: AppHandle, input: StartMiningRequest) -> Result<MiningLocalStatus, VeloraError> {
+fn start_mining(
+    app: AppHandle,
+    input: StartMiningRequest,
+) -> Result<MiningLocalStatus, VeloraError> {
     let dir = mining_dir(&app)?;
     let miner_path = mining_executable_path(&app)?;
-    if !miner_path.exists() {
+    let miner_check = if miner_path.exists() {
+        verify_bundled_miner(&app, &miner_path)
+    } else {
+        Err("MAC-MINER-004: miner integrato non trovato".to_string())
+    };
+    if let Err(error) = miner_check {
         return Ok(MiningLocalStatus {
             ready: false,
             running: false,
@@ -313,7 +339,7 @@ fn start_mining(app: AppHandle, input: StartMiningRequest) -> Result<MiningLocal
             pid_path: dir.join("xmrig.pid").to_string_lossy().to_string(),
             log_path: dir.join("xmrig.log").to_string_lossy().to_string(),
             max_threads: max_mining_threads(),
-            message: "Miner non trovato. Scarica XMRig ufficiale, estrailo e metti l'eseguibile nella cartella indicata.".to_string(),
+            message: error,
         });
     }
     let pid_path = dir.join("xmrig.pid");
@@ -337,7 +363,10 @@ fn start_mining(app: AppHandle, input: StartMiningRequest) -> Result<MiningLocal
         args.push("-t".to_string());
         args.push(usize::from(threads).clamp(1, max_threads).to_string());
     }
-    let log_file = fs::OpenOptions::new().create(true).append(true).open(dir.join("xmrig.log"))?;
+    let log_file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(dir.join("xmrig.log"))?;
     let err_file = log_file.try_clone()?;
     let child = Command::new(&miner_path)
         .args(args)
@@ -356,7 +385,9 @@ fn stop_mining(app: AppHandle) -> Result<MiningLocalStatus, VeloraError> {
     let pid_path = dir.join("xmrig.pid");
     if let Some(pid) = read_running_pid(&pid_path) {
         #[cfg(target_os = "windows")]
-        let _ = Command::new("taskkill").args(["/PID", &pid.to_string(), "/T", "/F"]).status();
+        let _ = Command::new("taskkill")
+            .args(["/PID", &pid.to_string(), "/T", "/F"])
+            .status();
         #[cfg(not(target_os = "windows"))]
         let _ = Command::new("kill").arg(pid.to_string()).status();
     }
@@ -365,17 +396,25 @@ fn stop_mining(app: AppHandle) -> Result<MiningLocalStatus, VeloraError> {
 }
 
 #[tauri::command]
-async fn enroll_device(app: AppHandle, input: EnrollRequest) -> Result<serde_json::Value, VeloraError> {
+async fn enroll_device(
+    app: AppHandle,
+    input: EnrollRequest,
+) -> Result<serde_json::Value, VeloraError> {
     let identity = get_or_create_node_identity(app)?;
     let payload = DeviceEnrollPayload {
         peer_id: identity.peer_id,
         public_key: identity.public_key,
-        device_name: input.device_name.unwrap_or_else(|| "Velora beta desktop".to_string()),
+        device_name: input
+            .device_name
+            .unwrap_or_else(|| "Velora beta desktop".to_string()),
     };
 
     let client = reqwest::Client::new();
     let response = client
-        .post(format!("{}/api/v1/devices/enroll", input.api_base_url.trim_end_matches('/')))
+        .post(format!(
+            "{}/api/v1/devices/enroll",
+            input.api_base_url.trim_end_matches('/')
+        ))
         .header("x-user-id", input.user_id)
         .json(&payload)
         .send()
@@ -386,7 +425,10 @@ async fn enroll_device(app: AppHandle, input: EnrollRequest) -> Result<serde_jso
 }
 
 #[tauri::command]
-fn cache_packaged_release(app: AppHandle, input: CachedReleaseInput) -> Result<serde_json::Value, VeloraError> {
+fn cache_packaged_release(
+    app: AppHandle,
+    input: CachedReleaseInput,
+) -> Result<serde_json::Value, VeloraError> {
     let db_path = local_db_path(&app)?;
     let conn = Connection::open(db_path)?;
     conn.execute_batch(include_str!("../schema/local.sql"))?;
@@ -449,7 +491,10 @@ fn cache_packaged_release(app: AppHandle, input: CachedReleaseInput) -> Result<s
 }
 
 #[tauri::command]
-fn cache_search_results(app: AppHandle, results: Vec<SearchDocumentInput>) -> Result<serde_json::Value, VeloraError> {
+fn cache_search_results(
+    app: AppHandle,
+    results: Vec<SearchDocumentInput>,
+) -> Result<serde_json::Value, VeloraError> {
     let db_path = local_db_path(&app)?;
     let conn = Connection::open(db_path)?;
     conn.execute_batch(include_str!("../schema/local.sql"))?;
@@ -490,7 +535,10 @@ fn cache_search_results(app: AppHandle, results: Vec<SearchDocumentInput>) -> Re
             ],
         )?;
 
-        conn.execute("DELETE FROM site_fts WHERE address = ?1", params![result.address])?;
+        conn.execute(
+            "DELETE FROM site_fts WHERE address = ?1",
+            params![result.address],
+        )?;
         conn.execute(
             "INSERT INTO site_fts (
               address, category, slug, title, description, keywords, publisher, language, tags, age_rating, trust_level
@@ -510,7 +558,9 @@ fn cache_search_results(app: AppHandle, results: Vec<SearchDocumentInput>) -> Re
 }
 
 #[tauri::command]
-fn validate_local_release(input: LocalReleaseRequest) -> Result<LocalValidationResult, VeloraError> {
+fn validate_local_release(
+    input: LocalReleaseRequest,
+) -> Result<LocalValidationResult, VeloraError> {
     validate_site_path(Path::new(&input.site_path))
 }
 
@@ -519,15 +569,25 @@ fn package_local_release(input: LocalReleaseRequest) -> Result<LocalPackageRespo
     let site_root = PathBuf::from(&input.site_path);
     let validation = validate_site_path(&site_root)?;
     if !validation.valid {
-        return Err(VeloraError::SiteNotFound("release is not valid".to_string()));
+        return Err(VeloraError::SiteNotFound(
+            "release is not valid".to_string(),
+        ));
     }
 
     let manifest_path = site_root.join("velora.json");
     let manifest_text = fs::read_to_string(&manifest_path)?;
     let manifest_json: serde_json::Value = serde_json::from_str(&manifest_text)?;
-    let address = manifest_json["address"].as_str().unwrap_or("shop.demo").to_string();
-    let version = manifest_json["version"].as_str().unwrap_or("0.1.0").to_string();
-    let publisher_public_key = input.publisher_public_key.unwrap_or_else(|| "local-publisher".to_string());
+    let address = manifest_json["address"]
+        .as_str()
+        .unwrap_or("shop.demo")
+        .to_string();
+    let version = manifest_json["version"]
+        .as_str()
+        .unwrap_or("0.1.0")
+        .to_string();
+    let publisher_public_key = input
+        .publisher_public_key
+        .unwrap_or_else(|| "local-publisher".to_string());
     let files = collect_site_files(&site_root)?;
     let mut release_files = Vec::new();
     let mut chunks = Vec::new();
@@ -556,9 +616,17 @@ fn package_local_release(input: LocalReleaseRequest) -> Result<LocalPackageRespo
     }
 
     let manifest_hash = blake3::hash(manifest_text.as_bytes()).to_hex().to_string();
-    let package_hash = blake3::hash(package_material.as_bytes()).to_hex().to_string();
-    let content_cid = blake3::hash(format!("{address}:{package_hash}").as_bytes()).to_hex().to_string();
-    let signature = blake3::hash(format!("{publisher_public_key}:{address}:{version}:{package_hash}").as_bytes()).to_hex().to_string();
+    let package_hash = blake3::hash(package_material.as_bytes())
+        .to_hex()
+        .to_string();
+    let content_cid = blake3::hash(format!("{address}:{package_hash}").as_bytes())
+        .to_hex()
+        .to_string();
+    let signature = blake3::hash(
+        format!("{publisher_public_key}:{address}:{version}:{package_hash}").as_bytes(),
+    )
+    .to_hex()
+    .to_string();
 
     Ok(LocalPackageResponse {
         address,
@@ -603,7 +671,10 @@ fn open_site_folder(path: String) -> Result<(), VeloraError> {
 }
 
 #[tauri::command]
-fn load_site_document(app: AppHandle, input: LoadSiteRequest) -> Result<LoadedSiteDocument, VeloraError> {
+fn load_site_document(
+    app: AppHandle,
+    input: LoadSiteRequest,
+) -> Result<LoadedSiteDocument, VeloraError> {
     let address = input.address.trim().to_lowercase();
     let site_root = resolve_site_root(&app, &address, input.site_path.as_deref())?;
     let index_path = site_root.join("index.html");
@@ -623,7 +694,11 @@ fn load_site_document(app: AppHandle, input: LoadSiteRequest) -> Result<LoadedSi
     })
 }
 
-fn resolve_site_root(app: &AppHandle, address: &str, requested_path: Option<&str>) -> Result<PathBuf, VeloraError> {
+fn resolve_site_root(
+    app: &AppHandle,
+    address: &str,
+    requested_path: Option<&str>,
+) -> Result<PathBuf, VeloraError> {
     if let Some(path) = requested_path {
         let root = PathBuf::from(path);
         if root.join("index.html").is_file() {
@@ -731,7 +806,12 @@ fn inject_velora_site_bridge(html: &str) -> String {
     format!("{html}{bridge}")
 }
 
-fn inline_demo_asset(html: &str, site_root: &Path, file_name: &str, kind: &str) -> Result<String, VeloraError> {
+fn inline_demo_asset(
+    html: &str,
+    site_root: &Path,
+    file_name: &str,
+    kind: &str,
+) -> Result<String, VeloraError> {
     let asset_path = site_root.join(file_name);
     if !asset_path.is_file() {
         return Ok(html.to_string());
@@ -778,10 +858,11 @@ fn validate_site_path(site_root: &Path) -> Result<LocalValidationResult, VeloraE
     let included_files = collect_site_files(site_root)?;
     let manifest_path = site_root.join("velora.json");
     let manifest_json = if manifest_path.is_file() {
-        serde_json::from_str::<serde_json::Value>(&fs::read_to_string(&manifest_path)?).unwrap_or_else(|_| {
-            errors.push("Manifest velora.json non valido.".to_string());
-            json!({})
-        })
+        serde_json::from_str::<serde_json::Value>(&fs::read_to_string(&manifest_path)?)
+            .unwrap_or_else(|_| {
+                errors.push("Manifest velora.json non valido.".to_string());
+                json!({})
+            })
     } else {
         errors.push("Manca velora.json.".to_string());
         json!({})
@@ -790,7 +871,13 @@ fn validate_site_path(site_root: &Path) -> Result<LocalValidationResult, VeloraE
     if !site_root.join("index.html").is_file() {
         errors.push("Manca index.html.".to_string());
     }
-    if manifest_json["address"].as_str().unwrap_or("").split('.').count() != 2 {
+    if manifest_json["address"]
+        .as_str()
+        .unwrap_or("")
+        .split('.')
+        .count()
+        != 2
+    {
         errors.push("Indirizzo Velora non valido nel manifest.".to_string());
     }
     if manifest_json["title"].as_str().unwrap_or("").is_empty() {
@@ -803,7 +890,13 @@ fn validate_site_path(site_root: &Path) -> Result<LocalValidationResult, VeloraE
     let mut total_size = 0_i64;
     for file in &included_files {
         total_size += fs::metadata(site_root.join(file))?.len() as i64;
-        if file.ends_with(".exe") || file.ends_with(".dll") || file.ends_with(".msi") || file.ends_with(".bat") || file.ends_with(".cmd") || file.ends_with(".ps1") {
+        if file.ends_with(".exe")
+            || file.ends_with(".dll")
+            || file.ends_with(".msi")
+            || file.ends_with(".bat")
+            || file.ends_with(".cmd")
+            || file.ends_with(".ps1")
+        {
             excluded_files.push(file.clone());
         }
     }
@@ -814,16 +907,26 @@ fn validate_site_path(site_root: &Path) -> Result<LocalValidationResult, VeloraE
         errors,
         warnings,
         excluded_files,
-        included_files: included_files.into_iter().filter(|file| !file.ends_with(".exe") && !file.ends_with(".dll") && !file.ends_with(".msi")).collect(),
+        included_files: included_files
+            .into_iter()
+            .filter(|file| {
+                !file.ends_with(".exe") && !file.ends_with(".dll") && !file.ends_with(".msi")
+            })
+            .collect(),
         total_files: included_count,
         total_size,
-        requested_permissions: manifest_json.get("permissions").cloned().unwrap_or_else(|| json!({
-            "externalNetwork": false,
-            "clipboardRead": false,
-            "clipboardWrite": false,
-            "notifications": false,
-            "fileDownload": false
-        })),
+        requested_permissions: manifest_json
+            .get("permissions")
+            .cloned()
+            .unwrap_or_else(|| {
+                json!({
+                    "externalNetwork": false,
+                    "clipboardRead": false,
+                    "clipboardWrite": false,
+                    "notifications": false,
+                    "fileDownload": false
+                })
+            }),
     })
 }
 
@@ -834,18 +937,27 @@ fn collect_site_files(site_root: &Path) -> Result<Vec<String>, VeloraError> {
     Ok(files)
 }
 
-fn collect_site_files_inner(root: &Path, current: &Path, files: &mut Vec<String>) -> Result<(), VeloraError> {
+fn collect_site_files_inner(
+    root: &Path,
+    current: &Path,
+    files: &mut Vec<String>,
+) -> Result<(), VeloraError> {
     for entry in fs::read_dir(current)? {
         let entry = entry?;
         let path = entry.path();
         let name = entry.file_name().to_string_lossy().to_string();
-        if name == ".git" || name == "node_modules" || name == "target" || name.starts_with(".env") {
+        if name == ".git" || name == "node_modules" || name == "target" || name.starts_with(".env")
+        {
             continue;
         }
         if path.is_dir() {
             collect_site_files_inner(root, &path, files)?;
         } else {
-            let relative = path.strip_prefix(root).unwrap_or(&path).to_string_lossy().replace('\\', "/");
+            let relative = path
+                .strip_prefix(root)
+                .unwrap_or(&path)
+                .to_string_lossy()
+                .replace('\\', "/");
             files.push(relative);
         }
     }
@@ -853,26 +965,105 @@ fn collect_site_files_inner(root: &Path, current: &Path, files: &mut Vec<String>
 }
 
 fn local_db_path(app: &AppHandle) -> Result<PathBuf, VeloraError> {
-    let dir = app.path().app_data_dir().map_err(|_| VeloraError::AppDataUnavailable)?;
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|_| VeloraError::AppDataUnavailable)?;
     fs::create_dir_all(&dir)?;
     Ok(dir.join("velora.local.sqlite"))
 }
 
 fn mining_dir(app: &AppHandle) -> Result<PathBuf, VeloraError> {
-    let dir = app.path().app_data_dir().map_err(|_| VeloraError::AppDataUnavailable)?.join("miner");
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|_| VeloraError::AppDataUnavailable)?
+        .join("miner");
     fs::create_dir_all(&dir)?;
     Ok(dir)
 }
 
 fn mining_executable_path(app: &AppHandle) -> Result<PathBuf, VeloraError> {
-    let dir = mining_dir(app)?;
     #[cfg(target_os = "windows")]
     {
+        let dir = mining_dir(app)?;
         Ok(dir.join("xmrig.exe"))
     }
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "macos")]
     {
-        Ok(dir.join("xmrig"))
+        let resource_dir = app
+            .path()
+            .resource_dir()
+            .map_err(|_| VeloraError::AppDataUnavailable)?;
+        Ok(resource_dir.join("miner").join("xmrig"))
+    }
+    #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+    {
+        Ok(mining_dir(app)?.join("xmrig"))
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn verify_bundled_miner(app: &AppHandle, miner_path: &Path) -> Result<(), String> {
+    let resource_dir = app
+        .path()
+        .resource_dir()
+        .map_err(|_| "MAC-RESOURCE-009: risorse dell'app non disponibili".to_string())?;
+    let expected = fs::read_to_string(resource_dir.join("miner").join("xmrig.sha256"))
+        .map_err(|_| "MAC-BUNDLE-003: hash interno del miner mancante".to_string())?;
+    let bytes = fs::read(miner_path)
+        .map_err(|_| "MAC-MINER-004: miner integrato non leggibile".to_string())?;
+    let actual = format!("{:x}", Sha256::digest(&bytes));
+    let expected = expected.trim();
+    if actual != expected {
+        return Err("MAC-MINER-004: verifica di integrita del miner fallita".to_string());
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "macos"))]
+fn verify_bundled_miner(_app: &AppHandle, _miner_path: &Path) -> Result<(), String> {
+    Ok(())
+}
+
+fn startup_log_path() -> Option<PathBuf> {
+    #[cfg(target_os = "macos")]
+    {
+        let home = std::env::var_os("HOME")?;
+        Some(
+            PathBuf::from(home)
+                .join("Library")
+                .join("Logs")
+                .join("Velora")
+                .join("startup.log"),
+        )
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let base = std::env::var_os("LOCALAPPDATA")
+            .unwrap_or_else(|| std::env::temp_dir().into_os_string());
+        Some(
+            PathBuf::from(base)
+                .join("Velora")
+                .join("logs")
+                .join("startup.log"),
+        )
+    }
+}
+
+fn append_startup_log(message: &str) {
+    let Some(path) = startup_log_path() else {
+        return;
+    };
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(path) {
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|value| value.as_secs())
+            .unwrap_or_default();
+        let _ = writeln!(file, "{timestamp} {message}");
     }
 }
 
@@ -884,7 +1075,11 @@ fn max_mining_threads() -> usize {
 }
 
 fn read_running_pid(pid_path: &Path) -> Option<u32> {
-    let pid = fs::read_to_string(pid_path).ok()?.trim().parse::<u32>().ok()?;
+    let pid = fs::read_to_string(pid_path)
+        .ok()?
+        .trim()
+        .parse::<u32>()
+        .ok()?;
     #[cfg(target_os = "windows")]
     {
         let output = Command::new("tasklist")
@@ -896,12 +1091,41 @@ fn read_running_pid(pid_path: &Path) -> Option<u32> {
     }
     #[cfg(not(target_os = "windows"))]
     {
-        Command::new("kill").args(["-0", &pid.to_string()]).status().ok()?.success().then_some(pid)
+        Command::new("kill")
+            .args(["-0", &pid.to_string()])
+            .status()
+            .ok()?
+            .success()
+            .then_some(pid)
     }
 }
 
 pub fn run() {
-    tauri::Builder::default()
+    append_startup_log(&format!(
+        "Velora {} start os={} arch={} executable={}",
+        env!("CARGO_PKG_VERSION"),
+        std::env::consts::OS,
+        std::env::consts::ARCH,
+        std::env::current_exe()
+            .map(|path| path.display().to_string())
+            .unwrap_or_else(|_| "unknown".to_string())
+    ));
+    let result = tauri::Builder::default()
+        .setup(|app| {
+            append_startup_log("Tauri initialized; main window creation requested");
+            let handle = app.handle();
+            match mining_executable_path(handle) {
+                Ok(path) if path.exists() => match verify_bundled_miner(handle, &path) {
+                    Ok(()) => append_startup_log("Integrated miner found and integrity verified"),
+                    Err(error) => append_startup_log(&error),
+                },
+                Ok(_) => append_startup_log(
+                    "MAC-MINER-004: integrated miner not found; interface remains available",
+                ),
+                Err(error) => append_startup_log(&format!("MAC-RESOURCE-009: {error}")),
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             init_local_store,
             get_or_create_node_identity,
@@ -917,6 +1141,11 @@ pub fn run() {
             start_mining,
             stop_mining
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running Velora");
+        .run(tauri::generate_context!());
+    if let Err(error) = result {
+        append_startup_log(&format!("MAC-START-001: {error}"));
+        eprintln!("Velora startup error: {error}");
+    } else {
+        append_startup_log("Velora closed normally");
+    }
 }

