@@ -152,6 +152,7 @@ jobs:
               codesign --force --sign - "$framework"
             done < <(find "$app/Contents/Frameworks" -depth -type d -name '*.framework')
           fi
+          shasum -a 256 "$app/Contents/Resources/miner/xmrig" | awk '{print $1}' > "$app/Contents/Resources/miner/xmrig.sha256"
           codesign --force --sign - "$main_path"
           codesign --force --sign - "$app"
           codesign --verify --strict --verbose=4 "$app"
