@@ -1,4 +1,4 @@
-﻿import { createReadStream } from "node:fs";
+import { createReadStream } from "node:fs";
 import { randomBytes, randomUUID } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { basename, resolve } from "node:path";
@@ -74,8 +74,12 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get("/favicon.ico", async (_request, reply) => reply.type("image/svg+xml; charset=utf-8").send(faviconSvg));
   app.get("/app.webmanifest", async (_request, reply) => reply.type("application/manifest+json; charset=utf-8").send(mobileWebManifest()));
   app.get("/mobile-sw.js", async (_request, reply) => reply.type("application/javascript; charset=utf-8").send(mobileServiceWorker()));
+  app.get("/apple.webmanifest", async (_request, reply) => reply.type("application/manifest+json; charset=utf-8").send(appleWebManifest()));
+  app.get("/apple-sw.js", async (_request, reply) => reply.type("application/javascript; charset=utf-8").send(appleServiceWorker()));
   app.get("/download", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("download")));
   app.get("/mobile", async (_request, reply) => reply.type("text/html; charset=utf-8").send(mobilePage()));
+  app.get("/apple", async (_request, reply) => reply.type("text/html; charset=utf-8").send(applePortalPage("home")));
+  app.get("/apple/:section", async (request, reply) => reply.type("text/html; charset=utf-8").send(applePortalPage(routeParam(request.params, "section"))));
   app.get("/admin", async (_request, reply) => reply.type("text/html; charset=utf-8").send(adminPage()));
   app.get("/what-is-velora", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("what-is-velora")));
   app.get("/security", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("security")));
@@ -1410,6 +1414,39 @@ export async function registerRoutes(app: FastifyInstance) {
     );
     await pool.query("UPDATE contributor_nodes SET last_heartbeat_at = NOW(), updated_at = NOW() WHERE id = $1", [node.rows[0].id]);
     return { ok: true };
+  });
+
+  app.get("/api/v1/execution/targets", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    return executionTargets(userId);
+  });
+
+  app.get("/api/v1/execution/operations", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const result = await requirePool().query(
+      `SELECT id, operation, target_type, target_id, requested_state, accepted_state, status, error_message, timeout_at, accepted_at, started_at, completed_at, failed_at, created_at, updated_at
+       FROM remote_execution_operations
+       WHERE user_id=$1
+       ORDER BY created_at DESC
+       LIMIT 100`,
+      [userId]
+    );
+    return { operations: result.rows };
+  });
+
+  app.post("/api/v1/execution/operations", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const body = request.body as { operation?: string; targetType?: string; targetId?: string; requestedState?: string; payload?: Record<string, unknown>; idempotencyKey?: string };
+    return createExecutionOperation(userId, body, reply);
   });
 
   app.get("/api/v1/credits", async (request, reply) => {
@@ -2891,6 +2928,207 @@ self.addEventListener('fetch', event => {
 `;
 }
 
+function appleWebManifest() {
+  return JSON.stringify({
+    name: "Velora Portal for Apple",
+    short_name: "Velora",
+    description: "Portale Apple-first per usare Velora da Mac, iPhone e iPad.",
+    start_url: "/apple",
+    scope: "/",
+    display: "standalone",
+    background_color: "#06131f",
+    theme_color: "#e8c469",
+    orientation: "any",
+    categories: ["productivity", "utilities", "social"],
+    icons: [
+      { src: "/favicon.ico", sizes: "64x64", type: "image/svg+xml", purpose: "any maskable" }
+    ],
+    shortcuts: [
+      { name: "Search", url: "/apple/search" },
+      { name: "Cloud", url: "/apple/cloud" },
+      { name: "Mining", url: "/apple/mining" },
+      { name: "Tools", url: "/apple/tools" }
+    ],
+    screenshots: [
+      { src: "/favicon.ico", sizes: "64x64", type: "image/svg+xml", form_factor: "narrow" },
+      { src: "/favicon.ico", sizes: "64x64", type: "image/svg+xml", form_factor: "wide" }
+    ]
+  });
+}
+
+function appleServiceWorker() {
+  return `
+const CACHE = 'velora-apple-v1';
+const CORE = ['/apple','/apple/home','/apple/search','/apple/tools','/apple/help','/apple.webmanifest','/favicon.ico'];
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
+  self.skipWaiting();
+});
+self.addEventListener('activate', event => {
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE && key.startsWith('velora-apple-')).map(key => caches.delete(key)))).then(() => self.clients.claim()));
+});
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/downloads/')) return;
+  event.respondWith(fetch(request).then(response => {
+    const copy = response.clone();
+    caches.open(CACHE).then(cache => cache.put(request, copy)).catch(() => undefined);
+    return response;
+  }).catch(() => caches.match(request).then(response => response || caches.match('/apple'))));
+});
+`;
+}
+
+function applePortalPage(section: string) {
+  const initialSection = normalizeAppleSection(section);
+  return `<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#e8c469">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Velora">
+  <link rel="manifest" href="/apple.webmanifest">
+  <title>Velora Portal for Apple</title>
+  <style>
+    :root{color-scheme:dark;--bg:#06131f;--panel:#10273b;--panel2:#071a2a;--line:#294963;--gold:#e8c469;--ink:#f5f8fb;--muted:#a9bdd0;--green:#2de0a0;--red:#ff9b8d;--blue:#5cc8ff}
+    :root.light{color-scheme:light;--bg:#eef6fb;--panel:#ffffff;--panel2:#f3f8fc;--line:#c7d8e7;--ink:#0b1823;--muted:#526879;--gold:#a77917;--green:#087d57;--red:#b64030;--blue:#116d9e}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;min-height:100vh;background:radial-gradient(circle at 16% 0,rgba(92,200,255,.24),transparent 34%),linear-gradient(180deg,var(--bg),#03101a 80%);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body.light{background:linear-gradient(180deg,#f4f9fd,#e7f1f8)}button,input,textarea,select{font:inherit}button{cursor:pointer}a{color:var(--blue);text-decoration:none}
+    .app{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;padding:18px;border-right:1px solid var(--line);background:rgba(6,19,31,.78);backdrop-filter:blur(20px)}.light .sidebar{background:rgba(255,255,255,.78)}
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:18px}.logo{width:42px;height:42px;border:1px solid var(--gold);border-radius:14px;display:grid;place-items:center;color:var(--gold);font-weight:1000}.brand b{letter-spacing:.08em}.brand span{display:block;color:var(--muted);font-size:12px}
+    .nav{display:grid;gap:7px}.nav button,.bottom button,.toolbar button,.primary,.ghost{border:1px solid var(--line);border-radius:15px;background:rgba(255,255,255,.04);color:var(--ink);padding:11px 12px;text-align:left}.nav button.active,.primary{background:linear-gradient(135deg,var(--gold),#f7df91);color:#06131f;border-color:transparent;font-weight:900}.bottom{position:absolute;left:18px;right:18px;bottom:18px;display:grid;gap:8px}
+    .main{min-width:0}.toolbar{position:sticky;top:0;z-index:4;display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:10px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);background:rgba(6,19,31,.75);backdrop-filter:blur(18px)}.light .toolbar{background:rgba(255,255,255,.75)}
+    .searchbox,input,textarea,select{width:100%;border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,.18);color:var(--ink);padding:12px 14px}.light .searchbox,.light input,.light textarea,.light select{background:#fff}textarea{min-height:110px;resize:vertical}
+    .content{padding:18px;max-width:1500px;margin:auto}.hero,.panel{border:1px solid var(--line);border-radius:28px;background:linear-gradient(150deg,rgba(16,39,59,.92),rgba(7,26,42,.88));box-shadow:0 18px 70px rgba(0,0,0,.22)}.light .hero,.light .panel{background:linear-gradient(150deg,#fff,#f6fbff);box-shadow:0 18px 50px rgba(44,78,104,.12)}
+    .hero{padding:26px;margin-bottom:16px}.kicker{color:var(--gold);font-size:12px;font-weight:1000;letter-spacing:.15em;text-transform:uppercase}h1{font-size:clamp(36px,6vw,72px);line-height:.92;margin:10px 0 14px}h2{margin:0 0 12px;font-size:23px}h3{margin:16px 0 8px}p{margin:0 0 10px;color:var(--muted);line-height:1.45}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}.span-3{grid-column:span 3}.span-4{grid-column:span 4}.span-6{grid-column:span 6}.span-8{grid-column:span 8}.span-12{grid-column:1/-1}.panel{padding:16px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.card,.item{border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(255,255,255,.045);padding:13px}.light .card,.light .item{background:#fff}.card b{display:block;color:var(--gold);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.card span{font-size:22px;font-weight:1000}.list{display:grid;gap:10px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.muted{color:var(--muted)}.ok{color:var(--green)}.bad{color:var(--red)}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;word-break:break-all}
+    .module{display:none}.module.active{display:block}.mail-layout{display:grid;grid-template-columns:180px minmax(220px,320px) minmax(0,1fr);gap:12px}.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}.drop{border:1px dashed var(--line);border-radius:18px;padding:18px;text-align:center}
+    .mobile-tabs{display:none;position:fixed;left:10px;right:10px;bottom:10px;z-index:20;background:rgba(6,19,31,.92);border:1px solid var(--line);border-radius:24px;padding:8px;grid-template-columns:repeat(5,1fr);gap:6px;backdrop-filter:blur(18px)}.mobile-tabs button{border:0;border-radius:16px;padding:10px 4px;background:transparent;color:var(--ink);font-size:12px}.mobile-tabs button.active{background:var(--gold);color:#06131f;font-weight:900}
+    :focus-visible{outline:3px solid var(--blue);outline-offset:2px}@media(prefers-reduced-motion:no-preference){.panel,.hero{animation:rise .28s ease both}@keyframes rise{from{opacity:.4;transform:translateY(8px)}to{opacity:1;transform:none}}}
+    @media(max-width:980px){.app{grid-template-columns:1fr}.sidebar{display:none}.toolbar{grid-template-columns:1fr auto auto}.content{padding-bottom:92px}.grid,.mail-layout,.split{display:block}.panel{margin-bottom:14px}.span-3,.span-4,.span-6,.span-8,.span-12{grid-column:auto}.mobile-tabs{display:grid}h1{font-size:40px}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><div class="logo">V</div><div><b>VELORA</b><span>Portal for Apple</span></div></div>
+      <nav class="nav" id="sideNav"></nav>
+      <div class="bottom"><button onclick="installHelp()">Installa</button><button onclick="logout()">Esci</button></div>
+    </aside>
+    <section class="main">
+      <header class="toolbar">
+        <input id="globalSearch" class="searchbox" placeholder="Cerca Velora o inserisci una zona" aria-label="Ricerca globale">
+        <button onclick="runGlobalSearch()">Cerca</button>
+        <button onclick="toggleTheme()">Tema</button>
+        <button onclick="showModule('settings')" id="profileButton">Profilo</button>
+      </header>
+      <main class="content">
+        <section class="hero">
+          <div class="kicker">Apple-first</div>
+          <h1>Velora senza DMG</h1>
+          <p>Usa Velora da Safari su Mac, iPhone e iPad. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS condividono gli stessi dati del client desktop.</p>
+          <p id="sessionState">Accesso non effettuato</p>
+        </section>
+        ${appleModulesHtml(initialSection)}
+      </main>
+    </section>
+  </div>
+  <nav class="mobile-tabs" id="mobileNav"></nav>
+  <script>
+    const initialSection = ${JSON.stringify(initialSection)};
+    const tokenKey='velora.apple.token';
+    const refreshKey='velora.apple.refresh';
+    const userKey='velora.apple.user';
+    let currentSection='${initialSection}';
+    let selectedMessageId='';
+    let currentForumSlug='global-chat';
+    let deferredInstall=null;
+    const modules=[
+      ['home','Home'],['browser','Browser'],['search','Search'],['mail','VeloMail'],['cloud','Cloud'],['publisher','Publisher'],['tools','Tools'],['forum','Forum'],['mining','Mining'],['nodes','Nodi'],['nas','NAS'],['oceano','Oceano'],['help','Guida'],['settings','Impostazioni'],['admin','Admin']
+    ];
+    function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+    function token(){return localStorage.getItem(tokenKey)||''}
+    function headers(json=false){const h=token()?{Authorization:'Bearer '+token()}:{};return json?{...h,'content-type':'application/json'}:h}
+    async function api(path,options={}){const res=await fetch(path,options);const text=await res.text();let data=text;try{data=text?JSON.parse(text):{}}catch{}if(!res.ok)throw new Error(typeof data==='object'&&data.message?data.message:text||String(res.status));return data}
+    function card(k,v){return '<div class="card"><b>'+esc(k)+'</b><span>'+esc(v)+'</span></div>'}
+    function item(t,b){return '<div class="item"><b>'+esc(t)+'</b><p>'+esc(b||'')+'</p></div>'}
+    function renderNav(){const html=modules.map(([id,label])=>'<button class="'+(id===currentSection?'active':'')+'" onclick="showModule(\\''+id+'\\')">'+label+'</button>').join('');sideNav.innerHTML=html;mobileNav.innerHTML=modules.filter(x=>['home','search','cloud','mining','tools'].includes(x[0])).map(([id,label])=>'<button class="'+(id===currentSection?'active':'')+'" onclick="showModule(\\''+id+'\\')">'+label+'</button>').join('')}
+    function showModule(id){currentSection=id;document.querySelectorAll('.module').forEach(el=>el.classList.toggle('active',el.id==='m-'+id));history.replaceState(null,'','/apple/'+id);renderNav();loadModule(id)}
+    function saveSession(data){localStorage.setItem(tokenKey,data.accessToken||data.token||'');if(data.refreshToken)localStorage.setItem(refreshKey,data.refreshToken);localStorage.setItem(userKey,JSON.stringify(data.user||{}))}
+    function sessionUser(){try{return JSON.parse(localStorage.getItem(userKey)||'{}')}catch{return {}}}
+    function setSessionState(){const u=sessionUser();sessionState.textContent=token()?'Connesso come '+(u.username||'utente Velora'):'Accesso non effettuato';profileButton.textContent=token()?(u.username||'Profilo'):'Profilo'}
+    async function register(){try{const data=await api('/api/v1/auth/register',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:authUser.value,password:authPass.value})});saveSession(data);authMsg.textContent='Account creato';setSessionState();loadModule(currentSection)}catch(e){authMsg.textContent=e.message}}
+    async function login(){try{const data=await api('/api/v1/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:authUser.value,password:authPass.value})});saveSession(data);authMsg.textContent='Accesso effettuato';setSessionState();loadModule(currentSection)}catch(e){authMsg.textContent=e.message}}
+    async function refreshSession(){const refreshToken=localStorage.getItem(refreshKey);if(!refreshToken)return;try{const data=await api('/api/v1/auth/refresh',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({refreshToken})});saveSession({...data,user:sessionUser()});setSessionState()}catch{}}
+    function logout(){localStorage.removeItem(tokenKey);localStorage.removeItem(refreshKey);localStorage.removeItem(userKey);setSessionState();showModule('home')}
+    function toggleTheme(){document.documentElement.classList.toggle('light');document.body.classList.toggle('light');localStorage.setItem('velora.apple.theme',document.documentElement.classList.contains('light')?'light':'dark')}
+    function installHelp(){const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;const isApple=/Mac|iPhone|iPad|iPod/.test(navigator.platform)||navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent);const isSafari=/Safari/.test(navigator.userAgent)&&!/Chrome|CriOS|Edg|Firefox|FxiOS/.test(navigator.userAgent);if(standalone)alert('Velora e gia aperta come app.');else if(isApple&&isSafari&&/iPhone|iPad|iPod/.test(navigator.userAgent))alert('Tocca Condividi e poi Aggiungi alla schermata Home.');else if(isApple&&isSafari)alert('Da Safari su Mac apri File e scegli Aggiungi al Dock.');else alert('Apri questa pagina in Safari per installare Velora nel Dock o nella schermata Home.');}
+    window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e});
+    if('serviceWorker'in navigator)navigator.serviceWorker.register('/apple-sw.js').catch(()=>undefined);
+    async function runGlobalSearch(){showModule('search');searchQuery.value=globalSearch.value;await loadSearch()}
+    async function loadHome(){try{const [health,guardian,manifest]=await Promise.all([api('/health'),api('/api/v1/guardian/status'),api('/release-manifest.json')]);homeCards.innerHTML=card('Rete',health.ok?'Online':'Verifica')+card('Guardian',guardian.status||'Protetto')+card('Versione',manifest.version||'Beta')+card('PWA','Installabile');}catch(e){homeCards.innerHTML=item('Stato',e.message)}}
+    async function loadSearch(){try{const q=searchQuery.value||globalSearch.value||'velora';const data=await api('/api/v1/search?q='+encodeURIComponent(q));const html=(data.results||[]).map(r=>'<div class="item"><b>'+esc(r.title||r.address)+'</b><p>'+esc(r.description||r.summary||'')+'</p><button onclick="openZone(\\''+esc(r.address||r.zone||'')+'\\')">Apri</button></div>').join('')||item('Search','Nessun risultato');searchResults.innerHTML=html;if(document.getElementById('oceanoResults'))oceanoResults.innerHTML=html;}catch(e){const html=item('Search',e.message);searchResults.innerHTML=html;if(document.getElementById('oceanoResults'))oceanoResults.innerHTML=html;}}
+    function openZone(address){browserAddress.value=address;showModule('browser');browserFrame.src='/zone/'+encodeURIComponent(address)}
+    async function loadMail(){if(!token())return mailList.innerHTML=item('VeloMail','Accedi per leggere la posta');try{const [account,inbox]=await Promise.all([api('/api/v1/mail/account',{headers:headers()}),api('/api/v1/mail/inbox',{headers:headers()})]);mailAccount.textContent=account.address||'';mailList.innerHTML=(inbox.messages||[]).map(m=>'<button onclick="openMail(\\''+m.id+'\\')">'+esc(m.subject||'Messaggio')+'</button>').join('')||'<p>Nessun messaggio</p>'}catch(e){mailList.innerHTML=item('VeloMail',e.message)}}
+    async function openMail(id){try{selectedMessageId=id;const m=await api('/api/v1/mail/messages/'+id,{headers:headers()});mailOpen.innerHTML='<h3>'+esc(m.subject||'Messaggio')+'</h3><p class="mono">'+esc(m.from_address||m.from||'')+'</p><p>'+esc(m.body||m.body_ciphertext||'Messaggio cifrato')+'</p>'}catch(e){mailOpen.innerHTML=item('Errore',e.message)}}
+    async function sendMail(){try{await api('/api/v1/mail/send',{method:'POST',headers:headers(true),body:JSON.stringify({to:mailTo.value.split(',').map(x=>x.trim()).filter(Boolean),subject:mailSubject.value,body:mailBody.value,subjectCiphertext:mailSubject.value,bodyCiphertext:mailBody.value,encryptedByClient:true})});mailComposerMsg.textContent='Invio completato';loadMail()}catch(e){mailComposerMsg.textContent=e.message}}
+    async function loadCloud(){if(!token())return cloudFiles.innerHTML=item('Cloud','Accedi per usare Cloud');try{const data=await api('/api/v1/cloud/files',{headers:headers()});cloudQuota.textContent=(data.quota?.quotaLabel||'25 MB')+' - usati '+(data.quota?.usedBytes||0)+' byte';cloudFiles.innerHTML=(data.files||[]).map(f=>'<div class="item"><b>'+esc(f.name)+'</b><p>'+esc(f.guardian_status||'PROTECTED')+' - '+f.size_bytes+' byte</p><button onclick="downloadCloud(\\''+f.id+'\\',\\''+esc(f.name)+'\\')">Download</button></div>').join('')||item('Cloud','Nessun file')}catch(e){cloudFiles.innerHTML=item('Cloud',e.message)}}
+    async function uploadCloud(){const files=[...cloudInput.files];for(const file of files){const b64=await fileToBase64(file);await api('/api/v1/cloud/files',{method:'POST',headers:headers(true),body:JSON.stringify({name:file.name,mimeType:file.type||'application/octet-stream',contentBase64:b64})})}loadCloud()}
+    function fileToBase64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]||'');r.onerror=reject;r.readAsDataURL(file)})}
+    async function downloadCloud(id,name){const data=await fetch('/api/v1/cloud/files/'+id+'/download',{headers:headers()}).then(r=>r.text());const blob=new Blob([data]);const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href)}
+    async function loadTools(){try{const data=await api('/api/v1/tools');toolList.innerHTML=(data.tools||[]).map(t=>'<div class="item"><b>'+esc(t.name)+'</b><p>'+esc(t.description)+'</p><button onclick="runTool(\\''+esc(t.action||t.zone||t.name)+'\\')">Esegui</button></div>').join('')}catch(e){toolList.innerHTML=item('Tools',e.message)}}
+    async function runTool(action){const text=toolInput.value;let out='';if(action.includes('tts')){speechSynthesis.speak(new SpeechSynthesisUtterance(text));out='Lettura avviata'}else if(action.includes('hash')){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));out=[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase()}else if(action.includes('wallet')){out=/^(4|8)[1-9A-HJ-NP-Za-km-z]{90,110}$|^Z[a-zA-Z0-9]{70,120}$/.test(text.trim())?'Wallet valido':'Wallet non riconosciuto'}else out='Strumento eseguito nel portale quando supportato dal browser';toolOutput.textContent=out}
+    async function loadForum(){if(!token())return forumMessages.innerHTML=item('Forum','Accedi per usare il forum');try{const sections=await api('/api/v1/forum/sections',{headers:headers()});currentForumSlug=(sections.sections||[])[0]?.slug||currentForumSlug;const data=await api('/api/v1/forum/sections/'+encodeURIComponent(currentForumSlug)+'/messages',{headers:headers()});forumMessages.innerHTML=(data.messages||[]).map(m=>item(m.username||'Velora',m.body||m.message||'')).join('')||item('Forum','Nessun messaggio')}catch(e){forumMessages.innerHTML=item('Forum',e.message)}}
+    async function sendForum(){try{await api('/api/v1/forum/sections/'+encodeURIComponent(currentForumSlug)+'/messages',{method:'POST',headers:headers(true),body:JSON.stringify({body:forumDraft.value})});forumDraft.value='';loadForum()}catch(e){alert(e.message)}}
+    async function loadMining(){if(!token())return miningBox.innerHTML=item('Mining','Accedi per vedere mining');try{const [progress,targets,history]=await Promise.all([api('/api/v1/mining/progress',{headers:headers()}),api('/api/v1/execution/targets',{headers:headers()}),api('/api/v1/mining/history',{headers:headers()})]);targetSelect.innerHTML=(targets.targets||[]).filter(t=>(t.capabilities||[]).includes('MINING_START')).map(t=>'<option value="'+esc(t.type+':'+t.id)+'">'+esc(t.label+' - '+t.status)+'</option>').join('');miningBox.innerHTML=(progress.workers||[]).map(w=>item(w.worker_id||'worker','Share ok '+(w.accepted_pool_shares||0)+' - payout '+(w.pending_label||'-')+' - soglia '+(w.payout_threshold_label||'-'))).join('')||item('Mining','Nessun worker');miningHistory.innerHTML=(history.payoutRequests||[]).map(p=>item(p.status,p.coin+' '+(p.payout_tx_hash||''))).join('')}catch(e){miningBox.innerHTML=item('Mining',e.message)}}
+    async function execMining(op){const [type,id]=(targetSelect.value||'SERVER:').split(':');try{await api('/api/v1/execution/operations',{method:'POST',headers:headers(true),body:JSON.stringify({operation:op,targetType:type||'SERVER',targetId:id,requestedState:op,payload:{profile:miningProfile.value,coin:miningCoin.value},idempotencyKey:op+'-'+Date.now()})});loadMining()}catch(e){alert(e.message)}}
+    async function loadNodes(){if(!token()){const html=item('Nodi','Accedi per vedere i nodi');nodesBox.innerHTML=html;if(document.getElementById('nasBox'))nasBox.innerHTML=html;return}try{const data=await api('/api/v1/execution/targets',{headers:headers()});const targets=data.targets||[];nodesBox.innerHTML=targets.map(t=>item(t.label,t.type+' - '+t.status+' - '+(t.online?'online':'offline'))).join('')||item('Nodi','Nessun nodo');if(document.getElementById('nasBox')){const nas=targets.filter(t=>t.type==='NAS');nasBox.innerHTML=nas.map(t=>item(t.label,(t.online?'online':'offline')+' - '+(t.storageAvailableBytesLabel||'spazio in verifica')+' - ultimo contatto '+(t.lastSeenAt||'-'))).join('')||item('NAS','Nessun NAS associato all account');}opsBox.innerHTML=(data.operations||[]).map(o=>item(o.operation,o.status+' - '+(o.target_type||''))).join('')||item('Operazioni','Nessuna operazione recente')}catch(e){nodesBox.innerHTML=item('Nodi',e.message);if(document.getElementById('nasBox'))nasBox.innerHTML=item('NAS',e.message)}}
+    async function loadPublisher(){publisherStatus.textContent='Usa validazione e pubblicazione collegate alle API Velora. Operazioni pesanti passano dal controller remoto.'}
+    async function loadAdmin(){adminFrame.src='/admin'}
+    function loadModule(id){if(id==='home')loadHome();if(id==='search'||id==='oceano')loadSearch();if(id==='mail')loadMail();if(id==='cloud')loadCloud();if(id==='tools')loadTools();if(id==='forum')loadForum();if(id==='mining')loadMining();if(id==='nodes'||id==='nas')loadNodes();if(id==='publisher')loadPublisher();if(id==='admin')loadAdmin();}
+    document.addEventListener('keydown',e=>{if(!e.metaKey)return;if(e.key.toLowerCase()==='k'){e.preventDefault();globalSearch.focus()}if(e.key.toLowerCase()==='l'){e.preventDefault();globalSearch.focus()}if(e.key.toLowerCase()==='r'){e.preventDefault();loadModule(currentSection)}if(e.key.toLowerCase()==='t'){e.preventDefault();showModule('browser')}})
+    if(localStorage.getItem('velora.apple.theme')==='light')toggleTheme();renderNav();setSessionState();refreshSession();showModule(initialSection);
+  </script>
+</body>
+</html>`;
+}
+
+function normalizeAppleSection(section: string) {
+  const normalized = String(section || "home").toLowerCase().replace(/[^a-z0-9-]/g, "");
+  return ["home","browser","search","mail","cloud","publisher","tools","forum","mining","nodes","nas","oceano","help","settings","admin"].includes(normalized) ? normalized : "home";
+}
+
+function appleModulesHtml(initialSection: string) {
+  const active = (id: string) => id === initialSection ? " active" : "";
+  return `
+    <section id="m-home" class="module${active("home")}">
+      <div class="grid">
+        <div class="panel span-8"><h2>Primo accesso</h2><div class="row"><input id="authUser" placeholder="Username"><input id="authPass" type="password" placeholder="Password"></div><div class="row"><button class="primary" onclick="login()">Accedi</button><button onclick="register()">Registrati</button></div><p id="authMsg"></p></div>
+        <div class="panel span-4"><h2>Installa</h2><p>Mac: Safari, File, Aggiungi al Dock.</p><p>iPhone e iPad: Condividi, Aggiungi alla schermata Home.</p><button onclick="installHelp()">Guida installazione</button></div>
+        <div class="panel span-12"><h2>Dashboard</h2><div id="homeCards" class="cards"></div></div>
+      </div>
+    </section>
+    <section id="m-search" class="module${active("search")}"><div class="panel"><h2>Search</h2><div class="row"><input id="searchQuery" placeholder="Cerca zone, Oceano, tools, guide"><button class="primary" onclick="loadSearch()">Cerca</button></div><div id="searchResults" class="list"></div></div></section>
+    <section id="m-browser" class="module${active("browser")}"><div class="panel"><h2>Browser Velora</h2><div class="row"><input id="browserAddress" placeholder="happy.meter"><button onclick="openZone(browserAddress.value)">Apri zona</button></div><iframe id="browserFrame" title="Velora Browser" style="width:100%;height:70vh;border:1px solid var(--line);border-radius:20px;background:#fff"></iframe></div></section>
+    <section id="m-mail" class="module${active("mail")}"><div class="mail-layout"><div class="panel"><h2>Cartelle</h2><p id="mailAccount"></p><button onclick="loadMail()">Inbox</button></div><div class="panel"><h2>Messaggi</h2><div id="mailList" class="list"></div></div><div class="panel"><h2>VeloMail</h2><div id="mailOpen"></div><h3>Componi</h3><input id="mailTo" placeholder="destinatario@velora"><input id="mailSubject" placeholder="Oggetto"><textarea id="mailBody" placeholder="Messaggio"></textarea><button class="primary" onclick="sendMail()">Invia</button><p id="mailComposerMsg"></p></div></div></section>
+    <section id="m-cloud" class="module${active("cloud")}"><div class="split"><div class="panel"><h2>Velora Cloud</h2><p id="cloudQuota"></p><div class="drop"><input id="cloudInput" type="file" multiple><button class="primary" onclick="uploadCloud()">Carica</button></div></div><div class="panel"><h2>File</h2><div id="cloudFiles" class="list"></div></div></div></section>
+    <section id="m-publisher" class="module${active("publisher")}"><div class="split"><div class="panel"><h2>Publisher Studio</h2><textarea id="publisherDraft" placeholder="Manifest, note o contenuto"></textarea><button onclick="loadPublisher()">Prepara</button><button class="primary" onclick="api('/api/v1/execution/operations',{method:'POST',headers:headers(true),body:JSON.stringify({operation:'PUBLISH_VALIDATE',targetType:'SERVER',idempotencyKey:'publish-'+Date.now(),payload:{source:'apple-portal'}})}).then(()=>publisherStatus.textContent='Validazione in coda')">Valida</button><p id="publisherStatus"></p></div><div class="panel"><h2>Anteprima</h2><p>Carica, valida, pubblica e apri zone usando le API Velora e i dispositivi associati.</p></div></div></section>
+    <section id="m-tools" class="module${active("tools")}"><div class="split"><div class="panel"><h2>Velora Tools</h2><textarea id="toolInput" placeholder="Testo, wallet, link o contenuto"></textarea><pre id="toolOutput"></pre></div><div class="panel"><h2>40 strumenti</h2><div id="toolList" class="list"></div></div></div></section>
+    <section id="m-forum" class="module${active("forum")}"><div class="panel"><h2>Forum e chat</h2><textarea id="forumDraft" placeholder="Scrivi nel forum"></textarea><button class="primary" onclick="sendForum()">Invia</button><button onclick="loadForum()">Aggiorna</button><div id="forumMessages" class="list"></div></div></section>
+    <section id="m-mining" class="module${active("mining")}"><div class="grid"><div class="panel span-4"><h2>Comando remoto</h2><select id="targetSelect"></select><select id="miningCoin"><option>XMR</option><option>ZEPH</option></select><select id="miningProfile"><option>ECO</option><option>BILANCIATO</option><option>POTENZA</option></select><div class="three"><button onclick="execMining('MINING_START')">Avvia</button><button onclick="execMining('MINING_PAUSE')">Pausa</button><button onclick="execMining('MINING_STOP')">Stop</button></div></div><div class="panel span-8"><h2>Mining dashboard</h2><div id="miningBox" class="list"></div><h3>Storico payout</h3><div id="miningHistory" class="list"></div></div></div></section>
+    <section id="m-nodes" class="module${active("nodes")}"><div class="split"><div class="panel"><h2>Nodi</h2><button onclick="loadNodes()">Aggiorna</button><div id="nodesBox" class="list"></div></div><div class="panel"><h2>Operazioni</h2><div id="opsBox" class="list"></div></div></div></section>
+    <section id="m-nas" class="module${active("nas")}"><div class="panel"><h2>NAS</h2><p>Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.</p><button onclick="loadNodes()">Controlla NAS</button><div id="nasBox" class="list"></div></div></section>
+    <section id="m-oceano" class="module${active("oceano")}"><div class="panel"><h2>Oceano</h2><p>Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.</p><div class="row"><input id="oceanoQuery" placeholder="Cerca in Oceano" oninput="searchQuery.value=this.value"><button onclick="loadSearch()">Cerca</button></div><div id="oceanoResults"></div></div></section>
+    <section id="m-help" class="module${active("help")}"><div class="panel"><h2>Guida</h2><div class="cards"><div class="card"><b>Mac</b><span>Dock</span><p>Safari, File, Aggiungi al Dock.</p></div><div class="card"><b>iPhone</b><span>Home</span><p>Condividi, Aggiungi alla schermata Home.</p></div><div class="card"><b>Offline</b><span>Shell</span><p>La shell e la guida restano disponibili. Dati live richiedono rete.</p></div></div></div></section>
+    <section id="m-settings" class="module${active("settings")}"><div class="panel"><h2>Impostazioni</h2><button onclick="toggleTheme()">Cambia tema</button><button onclick="Notification.requestPermission()">Consenti notifiche</button><button onclick="logout()">Logout</button></div></section>
+    <section id="m-admin" class="module${active("admin")}"><div class="panel"><h2>Admin autorizzato</h2><iframe id="adminFrame" title="Velora Admin" style="width:100%;height:75vh;border:1px solid var(--line);border-radius:20px"></iframe></div></section>
+  `;
+}
+
 function mobilePage() {
   return `<!doctype html>
 <html lang="it">
@@ -3069,7 +3307,7 @@ async function publicPage(page: string) {
   const macosChecksumUrl = "/downloads/macos/Velora_0.1.0_aarch64.dmg.sha256.txt";
   const macosIntelDownloadUrl = "/downloads/macos/Velora_0.1.0_x86_64.dmg";
   const macosIntelChecksumUrl = "/downloads/macos/Velora_0.1.0_x86_64.dmg.sha256.txt";
-  const mobileUrl = "/mobile";
+  const mobileUrl = "/apple";
   const mobilePackageUrl = `/downloads/mobile/${mobilePwaName}`;
   const mobileChecksumUrl = `/downloads/mobile/${mobilePwaChecksumName}`;
   const releaseManifest = await readReleaseManifestSafe();
@@ -3086,9 +3324,9 @@ async function publicPage(page: string) {
       <p>Beta pubblica per Windows, macOS, iOS e Android</p>
       <section class="cards">
         <article>
-          <b>Mobile iOS e Android</b>
-          <p>Velora Mobile installabile da browser con account, tool, Cloud, forum, mining monitor e nodi</p>
-          <a class="cta" href="${mobileUrl}">Apri Velora Mobile</a>
+          <b>Velora Portal for Apple</b>
+          <p>Funziona direttamente da Safari su Mac, iPhone e iPad. Nessun DMG necessario</p>
+          <a class="cta" href="${mobileUrl}">Apri Velora su Apple</a>
           <a class="ghost" href="${mobilePackageUrl}">Scarica pacchetto PWA</a>
           <a class="ghost" href="${mobileChecksumUrl}">Verifica SHA-256</a>
         </article>
@@ -3120,7 +3358,7 @@ async function publicPage(page: string) {
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
         <dt>Data build</dt><dd>${escapeHtml(releasedAt)}</dd>
         <dt>Stato Mac</dt><dd>Beta con firma ad hoc, non ancora notarizzata da Apple</dd>
-        <dt>Mobile</dt><dd>${escapeHtml(String(mobile.size ?? 0))} byte<br>${escapeHtml(String(mobile.sha256 ?? "hash in aggiornamento"))}</dd>
+        <dt>Apple Portal</dt><dd>Mac, iPhone e iPad via Safari<br>${escapeHtml(String(mobile.sha256 ?? "hash in aggiornamento"))}</dd>
         <dt>Apple Silicon</dt><dd>${escapeHtml(String(macArm.size ?? 0))} byte<br>${escapeHtml(String(macArm.sha256 ?? "hash in aggiornamento"))}</dd>
         <dt>Intel</dt><dd>${escapeHtml(String(macIntel.size ?? 0))} byte<br>${escapeHtml(String(macIntel.sha256 ?? "hash in aggiornamento"))}</dd>
       </dl>
@@ -3189,7 +3427,7 @@ async function publicPage(page: string) {
       <span>VELORA - L'UPPER WEB</span>
       <h1>Sopra Internet, il futuro e ora</h1>
       <p>Sicuro<br>Veloce<br>Semplice<br>Per tutti</p>
-      <div><a class="cta" href="/download">Scarica Velora Beta</a><a class="ghost" href="/what-is-velora">Scopri l'Upper Web</a></div>
+      <div><a class="cta" href="/apple">Apri Velora su Apple</a><a class="ghost" href="/download">Scarica Velora Beta</a></div>
       <strong>Velora non sostituisce Internet<br>Lo eleva</strong>
     </section>
     <section class="cards">
@@ -3226,7 +3464,7 @@ async function publicPage(page: string) {
   </style>
 </head>
 <body>
-  <header><nav><a href="/">VELORA</a><a href="/download">Download</a><a href="/what-is-velora">Upper Web</a><a href="/security">Sicurezza</a><a href="/publishers">Publisher</a><a href="/publishers/guide">Guida</a><a href="/developers">Developers</a><a href="/pricing">Pricing</a><a href="/status">Status</a></nav></header>
+  <header><nav><a href="/">VELORA</a><a href="/download">Download</a><a href="/apple">Apple Portal</a><a href="/what-is-velora">Upper Web</a><a href="/security">Sicurezza</a><a href="/publishers">Publisher</a><a href="/publishers/guide">Guida</a><a href="/developers">Developers</a><a href="/pricing">Pricing</a><a href="/status">Status</a></nav></header>
   <main>${body}</main>
   <footer>Sei pronto per Velora? Non vedo l'ora.</footer>
 </body>
@@ -3435,6 +3673,131 @@ async function getContributionProfile(userId: string) {
     credits: credits.rows,
     mining: mining.rows.map(mapMiningWorker)
   };
+}
+
+const executionOperations = [
+  "MINING_START",
+  "MINING_STOP",
+  "MINING_PAUSE",
+  "MINING_SET_PROFILE",
+  "MINING_SET_COIN",
+  "MINING_ENABLE_AUTO_SWITCH",
+  "NODE_START",
+  "NODE_STOP",
+  "NAS_SYNC",
+  "CLOUD_UPLOAD",
+  "CLOUD_COPY",
+  "CLOUD_DELETE",
+  "PUBLISH_BUILD",
+  "PUBLISH_VALIDATE",
+  "PUBLISH_DEPLOY",
+  "SEARCH_REINDEX",
+  "TOOL_EXECUTE"
+];
+
+const executionTargetTypes = ["DESKTOP", "WINDOWS_PC", "LINUX_PC", "NAS", "VELORA_NODE", "BOOST_BOX", "SERVER"];
+
+async function executionTargets(userId: string) {
+  const pool = requirePool();
+  const [devices, nodes, miningDevices, operations] = await Promise.all([
+    pool.query("SELECT id, device_name, peer_id, status, updated_at FROM devices WHERE user_id=$1 ORDER BY updated_at DESC LIMIT 50", [userId]).catch(() => ({ rows: [] })),
+    pool.query("SELECT id, module, status, device_peer_id, resource_profile, last_heartbeat_at, updated_at FROM contributor_nodes WHERE user_id=$1 ORDER BY updated_at DESC LIMIT 50", [userId]).catch(() => ({ rows: [] })),
+    pool.query("SELECT id, device_peer_id, status, updated_at FROM mining_devices WHERE user_id=$1 ORDER BY updated_at DESC LIMIT 50", [userId]).catch(() => ({ rows: [] })),
+    pool.query("SELECT id, operation, target_type, target_id, status, accepted_at, completed_at, failed_at, error_message FROM remote_execution_operations WHERE user_id=$1 ORDER BY created_at DESC LIMIT 20", [userId]).catch(() => ({ rows: [] }))
+  ]);
+  const mappedDevices = devices.rows.map((row) => ({
+    id: String(row.id),
+    type: "DESKTOP",
+    label: row.device_name ? String(row.device_name) : "Velora Desktop",
+    peerId: row.peer_id ? String(row.peer_id) : "",
+    status: String(row.status ?? "UNKNOWN"),
+    online: String(row.status ?? "").toUpperCase() === "ACTIVE",
+    capabilities: ["CLOUD_UPLOAD", "PUBLISH_VALIDATE", "TOOL_EXECUTE"],
+    updatedAt: row.updated_at ?? null
+  }));
+  const mappedNodes = nodes.rows.map((row) => {
+    const module = String(row.module ?? "VELORA_NODE").toUpperCase();
+    const online = row.last_heartbeat_at ? Date.now() - new Date(row.last_heartbeat_at).getTime() < 10 * 60 * 1000 : false;
+    return {
+      id: String(row.id),
+      type: module.includes("HOSTING") ? "NAS" : "VELORA_NODE",
+      label: module.includes("HOSTING") ? "NAS Velora" : "Nodo Velora",
+      peerId: String(row.device_peer_id ?? ""),
+      status: online ? "ONLINE" : String(row.status ?? "UNKNOWN"),
+      online,
+      resourceProfile: String(row.resource_profile ?? "MINIMUM"),
+      capabilities: module.includes("HOSTING") ? ["NAS_SYNC", "CLOUD_UPLOAD", "PUBLISH_BUILD", "PUBLISH_DEPLOY"] : ["NODE_START", "NODE_STOP", "SEARCH_REINDEX", "TOOL_EXECUTE"],
+      lastHeartbeatAt: row.last_heartbeat_at ?? null,
+      updatedAt: row.updated_at ?? null
+    };
+  });
+  const mappedMining = miningDevices.rows.map((row) => ({
+    id: String(row.id),
+    type: "WINDOWS_PC",
+    label: "Dispositivo mining",
+    peerId: String(row.device_peer_id ?? ""),
+    status: String(row.status ?? "UNKNOWN"),
+    online: String(row.status ?? "").toUpperCase() === "ACTIVE",
+    capabilities: ["MINING_START", "MINING_STOP", "MINING_PAUSE", "MINING_SET_PROFILE", "MINING_SET_COIN", "MINING_ENABLE_AUTO_SWITCH"],
+    updatedAt: row.updated_at ?? null
+  }));
+  return {
+    targets: [...mappedDevices, ...mappedNodes, ...mappedMining],
+    operations: operations.rows,
+    allowedOperations: executionOperations,
+    note: "Il portale invia solo operazioni Velora tipizzate a dispositivi associati. Nessuna shell remota."
+  };
+}
+
+async function createExecutionOperation(userId: string, body: { operation?: string; targetType?: string; targetId?: string; requestedState?: string; payload?: Record<string, unknown>; idempotencyKey?: string }, reply: FastifyReply) {
+  const operation = normalizeChoice(body.operation, executionOperations, "");
+  const targetType = normalizeChoice(body.targetType, executionTargetTypes, "");
+  const idempotencyKey = String(body.idempotencyKey ?? "").trim();
+  if (!operation || !targetType || !idempotencyKey) {
+    return reply.badRequest("operation, targetType and idempotencyKey are required");
+  }
+  const targets = await executionTargets(userId);
+  const targetId = body.targetId ? String(body.targetId).trim() : "";
+  const target = targets.targets.find((item: any) => item.type === targetType && (!targetId || item.id === targetId || item.peerId === targetId));
+  const serverAllowed = targetType === "SERVER" && ["PUBLISH_VALIDATE", "SEARCH_REINDEX", "TOOL_EXECUTE"].includes(operation);
+  if (!target && !serverAllowed) {
+    return reply.notFound("execution target not found or not associated");
+  }
+  const capabilities = target?.capabilities ?? (serverAllowed ? ["PUBLISH_VALIDATE", "SEARCH_REINDEX", "TOOL_EXECUTE"] : []);
+  if (!capabilities.includes(operation)) {
+    return reply.badRequest("operation is not supported by selected target");
+  }
+  const status = target?.online || serverAllowed ? "QUEUED" : "WAITING_FOR_TARGET";
+  const payload = sanitizeExecutionPayload(body.payload ?? {});
+  const result = await requirePool().query(
+    `INSERT INTO remote_execution_operations (id,user_id,idempotency_key,operation,target_type,target_id,requested_state,accepted_state,status,payload_json)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,'ACCEPTED',$8,$9)
+     ON CONFLICT (user_id,idempotency_key) DO UPDATE SET updated_at=NOW()
+     RETURNING id, operation, target_type, target_id, requested_state, accepted_state, status, timeout_at, accepted_at, created_at, updated_at`,
+    [randomUUID(), userId, idempotencyKey, operation, targetType, targetId || target?.id || null, String(body.requestedState ?? operation), status, JSON.stringify(payload)]
+  );
+  await appendUserOperationalEvent(userId, "REMOTE_OPERATION_ACCEPTED", "EXECUTION_OPERATION", result.rows[0].id, `${operation} ${status}`, { operation, targetType, targetId: targetId || target?.id || null });
+  return { operation: result.rows[0], message: status === "QUEUED" ? "Operazione accettata e messa in coda." : "Operazione accettata. Partira quando il dispositivo torna online." };
+}
+
+function sanitizeExecutionPayload(payload: Record<string, unknown>) {
+  const safe: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(payload).slice(0, 30)) {
+    const normalizedKey = key.replace(/[^A-Za-z0-9_:-]/g, "").slice(0, 60);
+    if (!normalizedKey || /password|secret|seed|private|token/i.test(normalizedKey)) continue;
+    if (typeof value === "string") safe[normalizedKey] = value.slice(0, 500);
+    else if (typeof value === "number" || typeof value === "boolean") safe[normalizedKey] = value;
+    else if (value === null) safe[normalizedKey] = null;
+  }
+  return safe;
+}
+
+async function appendUserOperationalEvent(userId: string, eventType: string, targetType: string, targetId: string, summary: string, payload: Record<string, unknown> = {}) {
+  await requirePool().query(
+    `INSERT INTO operational_events (id, actor_user_id, event_type, target_type, target_id, summary, payload)
+     VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+    [randomUUID(), userId, eventType, targetType, targetId, summary.slice(0, 500), JSON.stringify(payload)]
+  ).catch(() => undefined);
 }
 
 function normalizeChoice(value: unknown, allowed: string[], fallback: string) {
