@@ -3009,6 +3009,7 @@ function mobilePage() {
   </nav>
   <script>
     let deferredInstall = null;
+    let currentForumSlug = 'global';
     const tokenKey = 'velora.mobile.token';
     const userKey = 'velora.mobile.user';
     window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); deferredInstall = event; document.getElementById('installBtn').style.display = 'block'; });
@@ -3040,8 +3041,8 @@ function mobilePage() {
     async function loadMining(){ if(!token()) return miningStatus.innerHTML=item('Mining','Accedi per vedere i dati'); try{ const data=await api('/api/v1/mining/progress',{headers:headers()}); miningStatus.innerHTML=(data.workers||[]).map(w=>item(w.worker_id||'worker', 'Coin '+w.coin+' - Share ok '+(w.accepted_pool_shares||0)+' - Payout '+(w.pending_label||'-')+' - Soglia '+(w.payout_threshold_label||'-'))).join('')||item('Mining','Nessun worker registrato'); }catch(e){ miningStatus.innerHTML=item('Mining',e.message); } }
     async function requestPayout(){ if(!token()) return; try{ await api('/api/v1/mining/payout-requests',{method:'POST',headers:headers(true),body:JSON.stringify({coin:payoutCoin.value,devicePeerId:payoutDevice.value,payoutWallet:payoutWallet.value,note:'Richiesta da Velora Mobile'})}); alert('Richiesta payout inviata'); loadMining(); }catch(e){ alert(e.message); } }
     async function loadNodes(){ if(!token()) return nodeList.innerHTML=item('Nodi','Accedi per vedere i nodi'); try{ const data=await api('/api/v1/contribution/profile',{headers:headers()}); nodeList.innerHTML=(data.nodes||[]).map(n=>item(n.module||'Nodo', (n.status||'-')+' - '+(n.devicePeerId||n.device_peer_id||'-')+' - ultimo contatto '+(n.lastHeartbeatAt||n.last_heartbeat_at||'-'))).join('')||item('Nodi','Nessun nodo collegato'); }catch(e){ nodeList.innerHTML=item('Nodi',e.message); } }
-    async function loadForum(){ if(!token()) return forumMessages.innerHTML=item('Forum','Accedi per leggere e scrivere'); try{ const data=await api('/api/v1/forum/sections/global/messages',{headers:headers()}); forumMessages.innerHTML=(data.messages||[]).slice(0,30).map(m=>item(m.username||'Velora',m.body||m.message||'')).join('')||item('Forum','Nessun messaggio'); }catch(e){ forumMessages.innerHTML=item('Forum',e.message); } }
-    async function sendForum(){ if(!token()) return; try{ await api('/api/v1/forum/sections/global/messages',{method:'POST',headers:headers(true),body:JSON.stringify({body:forumDraft.value})}); forumDraft.value=''; loadForum(); }catch(e){ alert(e.message); } }
+    async function loadForum(){ if(!token()) return forumMessages.innerHTML=item('Forum','Accedi per leggere e scrivere'); try{ const sections=await api('/api/v1/forum/sections',{headers:headers()}); currentForumSlug=(sections.sections||[])[0]?.slug||currentForumSlug; const data=await api('/api/v1/forum/sections/'+encodeURIComponent(currentForumSlug)+'/messages',{headers:headers()}); forumMessages.innerHTML=(data.messages||[]).slice(0,30).map(m=>item(m.username||'Velora',m.body||m.message||'')).join('')||item('Forum','Nessun messaggio'); }catch(e){ forumMessages.innerHTML=item('Forum',e.message); } }
+    async function sendForum(){ if(!token()) return; try{ await api('/api/v1/forum/sections/'+encodeURIComponent(currentForumSlug)+'/messages',{method:'POST',headers:headers(true),body:JSON.stringify({body:forumDraft.value})}); forumDraft.value=''; loadForum(); }catch(e){ alert(e.message); } }
     boot(); if(location.hash) showPage(location.hash.slice(1), document.querySelector('nav.mobile button'));
   </script>
 </body>
