@@ -1,7 +1,7 @@
 {
     "version":  "0.1.0-beta",
     "channel":  "beta",
-    "releasedAt":  "2026-07-18T14:56:09.9512406Z",
+    "releasedAt":  "2026-07-19T11:01:27.8325820Z",
     "platforms":  {
                       "windows-x64":  {
                                           "available":  true,
@@ -37,6 +37,16 @@
                                            "downloadUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/downloads/macos/Velora_0.1.0_x86_64.dmg",
                                            "size":  10865752,
                                            "sha256":  "A75B9D7A18B5DF884715FB834CB050BC7D5943196C2684BD64E959A52BEFD457"
-                                       }
+                                       },
+                      "mobile-pwa":  {
+                                         "available":  true,
+                                         "signed":  false,
+                                         "notarized":  false,
+                                         "filename":  "velora-mobile-pwa-0.1.0-beta.zip",
+                                         "launchUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/mobile",
+                                         "downloadUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/downloads/mobile/velora-mobile-pwa-0.1.0-beta.zip",
+                                         "size":  1034,
+                                         "sha256":  "86DF387965245B6EA942A7B5B6EFB36F5602EEEFE99B9E68E348B372D2D4CF2A"
+                                     }
                   }
 }

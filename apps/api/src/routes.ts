@@ -24,6 +24,11 @@ const macosDownloadRoots = [
   resolve("../releases/beta/macos"),
   resolve("../../releases/beta/macos")
 ];
+const mobileDownloadRoots = [
+  resolve("releases/beta/mobile"),
+  resolve("../releases/beta/mobile"),
+  resolve("../../releases/beta/mobile")
+];
 const nasFallbackRoots = [
   resolve("releases/nas-fallback-agent"),
   resolve("../releases/nas-fallback-agent"),
@@ -40,6 +45,8 @@ const macosAarch64Name = "Velora_0.1.0_aarch64.dmg";
 const macosAarch64ChecksumName = `${macosAarch64Name}.sha256.txt`;
 const macosX64Name = "Velora_0.1.0_x86_64.dmg";
 const macosX64ChecksumName = `${macosX64Name}.sha256.txt`;
+const mobilePwaName = "velora-mobile-pwa-0.1.0-beta.zip";
+const mobilePwaChecksumName = `${mobilePwaName}.sha256.txt`;
 const nasFallbackName = "velora-nas-fallback-agent-0.1.0-beta.zip";
 const miningPayoutThresholdAtomicByCoin: Record<string, bigint> = {
   XMR: 50_000_000_000n,
@@ -65,7 +72,10 @@ export async function registerRoutes(app: FastifyInstance) {
 
   app.get("/", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("home")));
   app.get("/favicon.ico", async (_request, reply) => reply.type("image/svg+xml; charset=utf-8").send(faviconSvg));
+  app.get("/app.webmanifest", async (_request, reply) => reply.type("application/manifest+json; charset=utf-8").send(mobileWebManifest()));
+  app.get("/mobile-sw.js", async (_request, reply) => reply.type("application/javascript; charset=utf-8").send(mobileServiceWorker()));
   app.get("/download", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("download")));
+  app.get("/mobile", async (_request, reply) => reply.type("text/html; charset=utf-8").send(mobilePage()));
   app.get("/admin", async (_request, reply) => reply.type("text/html; charset=utf-8").send(adminPage()));
   app.get("/what-is-velora", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("what-is-velora")));
   app.get("/security", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("security")));
@@ -150,6 +160,8 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get(`/downloads/macos/${macosAarch64ChecksumName}`, async (_request, reply) => sendMacosDownload(macosAarch64ChecksumName, reply));
   app.get(`/downloads/macos/${macosX64Name}`, async (_request, reply) => sendMacosDownload(macosX64Name, reply));
   app.get(`/downloads/macos/${macosX64ChecksumName}`, async (_request, reply) => sendMacosDownload(macosX64ChecksumName, reply));
+  app.get(`/downloads/mobile/${mobilePwaName}`, async (_request, reply) => sendMobileDownload(mobilePwaName, reply));
+  app.get(`/downloads/mobile/${mobilePwaChecksumName}`, async (_request, reply) => sendMobileDownload(mobilePwaChecksumName, reply));
   app.get(`/downloads/nas/${nasFallbackName}`, async (_request, reply) => sendNasFallbackDownload(nasFallbackName, reply));
   app.get("/downloads/windows/:file", async (request, reply) => {
     const file = routeParam(request.params, "file");
@@ -181,6 +193,20 @@ export async function registerRoutes(app: FastifyInstance) {
     reply.header("Content-Length", String(download.info.size));
     reply.header("Content-Disposition", `attachment; filename="${basename(download.path)}"`);
     reply.type(file.endsWith(".dmg") ? "application/octet-stream" : "text/plain; charset=utf-8");
+    return reply.send(createReadStream(download.path));
+  });
+  app.get("/downloads/mobile/:file", async (request, reply) => {
+    const file = routeParam(request.params, "file");
+    if (file.includes("/") || file.includes("\\") || file.includes("..")) {
+      return reply.notFound("download not found");
+    }
+    const download = await findMobileDownload(file);
+    if (!download) {
+      return reply.notFound("download not found");
+    }
+    reply.header("Content-Length", String(download.info.size));
+    reply.header("Content-Disposition", `attachment; filename="${basename(download.path)}"`);
+    reply.type(file.endsWith(".zip") ? "application/zip" : "text/plain; charset=utf-8");
     return reply.send(createReadStream(download.path));
   });
   app.get("/downloads/nas/:file", async (request, reply) => {
@@ -2446,6 +2472,32 @@ async function findMacosDownload(file: string) {
   return undefined;
 }
 
+async function sendMobileDownload(file: string, reply: FastifyReply) {
+  const download = await findMobileDownload(file);
+  if (!download) {
+    return reply.notFound("download not found");
+  }
+
+  reply.header("Content-Length", String(download.info.size));
+  reply.header("Content-Disposition", `attachment; filename="${basename(download.path)}"`);
+  reply.type(file.endsWith(".zip") ? "application/zip" : "text/plain; charset=utf-8");
+  return reply.send(createReadStream(download.path));
+}
+
+async function findMobileDownload(file: string) {
+  for (const root of mobileDownloadRoots) {
+    const path = resolve(root, file);
+    if (!path.startsWith(root)) {
+      continue;
+    }
+    const info = await stat(path).catch(() => undefined);
+    if (info?.isFile()) {
+      return { path, info };
+    }
+  }
+  return undefined;
+}
+
 async function sendNasFallbackDownload(file: string, reply: FastifyReply) {
   const download = await findNasFallbackDownload(file);
   if (!download) {
@@ -2516,6 +2568,10 @@ function adminPage() {
       <section class="wide">
         <h2>Panoramica</h2>
         <div class="cards" id="overview"></div>
+      </section>
+      <section class="wide">
+        <h2>Mobile e release</h2>
+        <div id="mobileRelease"></div>
       </section>
       <section>
         <h2>Richieste payout mining</h2>
@@ -2624,6 +2680,7 @@ function adminPage() {
         return;
       }
       loadOverview();
+      loadMobileRelease();
       loadPayouts();
       loadMining();
       loadBetaNodes();
@@ -2645,10 +2702,23 @@ function adminPage() {
           ['Zone pending', data.dashboard?.pendingZoneRequests || 0],
           ['Zone attive', data.dashboard?.activeZones || 0],
           ['Utenti', data.dashboard?.users || 0],
-          ['Payout richieste', (data.payoutRequests || []).reduce((sum,row)=>sum + Number(row.count || 0),0)]
+          ['Payout richieste', (data.payoutRequests || []).reduce((sum,row)=>sum + Number(row.count || 0),0)],
+          ['Nodi', (data.nodes || []).reduce((sum,row)=>sum + Number(row.count || 0),0)],
+          ['Segnalazioni', Number(data.reports?.count || 0)]
         ];
         document.getElementById('overview').innerHTML = cards.map((item) => '<div class="card"><b>' + item[0] + '</b><span>' + item[1] + '</span></div>').join('');
       } catch (error) { showError('overview', error); }
+    }
+    async function loadMobileRelease() {
+      try {
+        const [manifest, guardian] = await Promise.all([fetch('/release-manifest.json').then(r => r.json()), fetch('/api/v1/guardian/status').then(r => r.json())]);
+        const platforms = manifest.platforms || {};
+        const rows = Object.keys(platforms).map((key) => ({ platform: key, available: platforms[key].available, size: platforms[key].size, sha256: platforms[key].sha256, downloadUrl: platforms[key].downloadUrl }));
+        document.getElementById('mobileRelease').innerHTML =
+          '<div class="cards"><div class="card"><b>Versione</b><span>' + escapeHtml(manifest.version || '-') + '</span></div><div class="card"><b>Guardian</b><span>' + escapeHtml(guardian.status || '-') + '</span></div><div class="card"><b>Mobile</b><span>' + escapeHtml(platforms['mobile-pwa']?.available ? 'Attivo' : 'Verifica') + '</span></div><div class="card"><b>Canale</b><span>' + escapeHtml(manifest.channel || '-') + '</span></div></div>' +
+          table(rows, [['platform','Piattaforma'],['available','Disponibile'],['size','Byte'],['sha256','SHA-256'],['downloadUrl','Link']]) +
+          '<p><a class="primary" href="/mobile" target="_blank">Apri Velora Mobile</a> <a href="/download" target="_blank">Pagina download</a></p>';
+      } catch (error) { showError('mobileRelease', error); }
     }
     async function loadPayouts() {
       try {
@@ -2784,6 +2854,200 @@ function adminPage() {
 </html>`;
 }
 
+function mobileWebManifest() {
+  return JSON.stringify({
+    name: "Velora Mobile",
+    short_name: "Velora",
+    description: "Velora su mobile con account, strumenti, Cloud, forum, mining monitor e nodi.",
+    start_url: "/mobile",
+    scope: "/",
+    display: "standalone",
+    background_color: "#06131f",
+    theme_color: "#e8c469",
+    orientation: "portrait",
+    icons: [
+      { src: "/favicon.ico", sizes: "64x64", type: "image/svg+xml", purpose: "any maskable" }
+    ],
+    shortcuts: [
+      { name: "Cloud", url: "/mobile#cloud" },
+      { name: "Mining", url: "/mobile#mining" },
+      { name: "Tools", url: "/mobile#tools" }
+    ]
+  });
+}
+
+function mobileServiceWorker() {
+  return `
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open('velora-mobile-v1').then(cache => cache.addAll(['/mobile','/app.webmanifest','/favicon.ico'])));
+  self.skipWaiting();
+});
+self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+  event.respondWith(fetch(request).catch(() => caches.match(request).then(response => response || caches.match('/mobile'))));
+});
+`;
+}
+
+function mobilePage() {
+  return `<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#e8c469">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Velora">
+  <link rel="manifest" href="/app.webmanifest">
+  <title>Velora Mobile</title>
+  <style>
+    :root{--bg:#06131f;--panel:#10273b;--panel2:#071b2b;--line:#294963;--gold:#e8c469;--ink:#f5f8fb;--muted:#a9bdd0;--green:#2de0a0;--red:#ff9b8d}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;background:radial-gradient(circle at 20% 0,#214d67,transparent 35%),linear-gradient(180deg,#06131f,#04101a 70%);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+    header{position:sticky;top:0;z-index:5;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.1);background:rgba(6,19,31,.86);backdrop-filter:blur(18px);display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:10px}.logo{width:38px;height:38px;border:1px solid var(--gold);border-radius:13px;display:grid;place-items:center;color:var(--gold);font-weight:1000}.brand b{letter-spacing:.08em}.brand span{display:block;color:var(--muted);font-size:12px}
+    main{padding:16px 14px 96px;max-width:760px;margin:auto}.hero,.panel{border:1px solid var(--line);border-radius:26px;background:linear-gradient(160deg,rgba(16,39,59,.95),rgba(7,27,43,.9));box-shadow:0 18px 60px rgba(0,0,0,.28)}
+    .hero{padding:22px;margin-bottom:14px}.hero p{color:var(--muted);line-height:1.45}.kicker{color:var(--gold);font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}h1{font-size:34px;line-height:.96;margin:10px 0 12px}h2{margin:0 0 12px;font-size:21px}h3{margin:14px 0 8px}p{margin:0 0 10px}
+    .panel{padding:16px;margin:14px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(255,255,255,.045);padding:12px}.card b{display:block;color:var(--gold);font-size:12px;text-transform:uppercase;letter-spacing:.08em}.card span{font-size:18px;font-weight:900}
+    input,textarea,button,select{width:100%;border:1px solid var(--line);border-radius:16px;background:#06121d;color:var(--ink);padding:13px 14px;font:inherit}textarea{min-height:110px;resize:vertical}button{font-weight:900;background:linear-gradient(135deg,#264a64,#11263a);cursor:pointer}button.primary{background:linear-gradient(135deg,var(--gold),#f7df91);border:0;color:#07131e}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stack{display:grid;gap:10px}.muted{color:var(--muted)}.ok{color:var(--green)}.bad{color:var(--red)}.list{display:grid;gap:10px}.item{border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:12px;background:rgba(0,0,0,.13)}.item small{color:var(--muted)}
+    nav.mobile{position:fixed;left:10px;right:10px;bottom:10px;z-index:10;background:rgba(6,19,31,.92);border:1px solid var(--line);border-radius:24px;padding:8px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;backdrop-filter:blur(18px)}nav.mobile button{padding:10px 4px;border-radius:16px;font-size:12px}nav.mobile button.active{background:linear-gradient(135deg,var(--gold),#f6df95);color:#07131e}
+    section[data-page]{display:none}section[data-page].active{display:block}.install{display:none}.install.show{display:block}
+    @media(min-width:720px){h1{font-size:52px}.grid{grid-template-columns:repeat(4,1fr)}nav.mobile{max-width:760px;margin:auto}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><div class="logo">V</div><div><b>VELORA</b><span>Mobile beta</span></div></div>
+    <button id="installBtn" style="max-width:150px">Installa</button>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="kicker">Velora ovunque</div>
+      <h1>L'Upper Web entra nel telefono</h1>
+      <p>Accedi, usa i tool, controlla Cloud, forum, mining monitor, nodi e pubblicazioni da iOS e Android.</p>
+      <p id="sessionState" class="muted">Accesso non effettuato</p>
+    </section>
+
+    <section data-page="home" class="active">
+      <div class="panel stack">
+        <h2>Account Velora</h2>
+        <input id="username" placeholder="Username">
+        <input id="email" placeholder="Email per nuova registrazione">
+        <input id="password" type="password" placeholder="Password">
+        <div class="row"><button class="primary" onclick="login()">Entra</button><button onclick="register()">Crea account</button></div>
+        <button onclick="logout()">Esci</button>
+        <p id="authMsg" class="muted"></p>
+      </div>
+      <div class="panel">
+        <h2>Stato Velora</h2>
+        <div class="grid" id="homeCards"></div>
+      </div>
+    </section>
+
+    <section data-page="tools" id="tools">
+      <div class="panel stack">
+        <h2>Velora Tools</h2>
+        <textarea id="toolText" placeholder="Scrivi o incolla testo"></textarea>
+        <div class="row"><button onclick="speakTool()">TTS</button><button onclick="translateTool()">Traduci</button></div>
+        <div class="row"><button onclick="summarizeTool()">Riassumi</button><button onclick="hashTool()">SHA-256</button></div>
+        <div class="row"><button onclick="walletTool()">Wallet check</button><button onclick="privacyTool()">Privacy check</button></div>
+        <div id="toolOutput" class="item muted">Risultato pronto qui</div>
+      </div>
+      <div class="panel"><h2>Catalogo</h2><div id="toolList" class="list"></div></div>
+    </section>
+
+    <section data-page="cloud" id="cloud">
+      <div class="panel stack">
+        <h2>Velora Cloud</h2>
+        <input id="cloudFile" type="file">
+        <button class="primary" onclick="uploadCloud()">Carica file</button>
+        <div id="cloudStatus" class="muted">25 MB beta per account</div>
+        <div id="cloudFiles" class="list"></div>
+      </div>
+    </section>
+
+    <section data-page="mining" id="mining">
+      <div class="panel stack">
+        <h2>Mining collettivo</h2>
+        <p class="muted">Da mobile controlli worker, share, soglia e richieste payout. Il mining locale resta sul dispositivo desktop/NAS autorizzato.</p>
+        <button class="primary" onclick="loadMining()">Aggiorna mining</button>
+        <input id="payoutCoin" placeholder="Coin XMR o ZEPH" value="XMR">
+        <input id="payoutDevice" placeholder="Device peer ID">
+        <input id="payoutWallet" placeholder="Wallet payout pubblico">
+        <button onclick="requestPayout()">Richiedi payout manuale</button>
+        <div id="miningStatus" class="list"></div>
+      </div>
+    </section>
+
+    <section data-page="nodes" id="nodes">
+      <div class="panel stack">
+        <h2>Nodi</h2>
+        <p class="muted">Controlla nodi desktop e NAS collegati all'account.</p>
+        <button class="primary" onclick="loadNodes()">Aggiorna nodi</button>
+        <div id="nodeList" class="list"></div>
+      </div>
+    </section>
+
+    <section data-page="forum" id="forum">
+      <div class="panel stack">
+        <h2>Forum Velora</h2>
+        <textarea id="forumDraft" placeholder="Scrivi messaggio"></textarea>
+        <button class="primary" onclick="sendForum()">Invia</button>
+        <button onclick="loadForum()">Aggiorna</button>
+        <div id="forumMessages" class="list"></div>
+      </div>
+    </section>
+  </main>
+  <nav class="mobile">
+    <button class="active" onclick="showPage('home',this)">Home</button>
+    <button onclick="showPage('tools',this)">Tools</button>
+    <button onclick="showPage('cloud',this)">Cloud</button>
+    <button onclick="showPage('mining',this)">Mining</button>
+    <button onclick="showPage('nodes',this)">Nodi</button>
+  </nav>
+  <script>
+    let deferredInstall = null;
+    const tokenKey = 'velora.mobile.token';
+    const userKey = 'velora.mobile.user';
+    window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); deferredInstall = event; document.getElementById('installBtn').style.display = 'block'; });
+    document.getElementById('installBtn').onclick = async () => { if (deferredInstall) { deferredInstall.prompt(); deferredInstall = null; } else { alert('Su iPhone usa Condividi e poi Aggiungi alla schermata Home. Su Android usa Installa app dal menu browser.'); } };
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/mobile-sw.js').catch(() => undefined);
+    function token(){ return localStorage.getItem(tokenKey) || ''; }
+    function headers(json){ const h = token() ? { Authorization: 'Bearer ' + token() } : {}; return json ? { ...h, 'content-type':'application/json' } : h; }
+    function setMsg(id,msg,cls){ const el=document.getElementById(id); el.className=cls||'muted'; el.textContent=msg; }
+    function card(label,value){ return '<div class="card"><b>'+esc(label)+'</b><span>'+esc(String(value))+'</span></div>'; }
+    function item(title,body){ return '<div class="item"><b>'+esc(title)+'</b><br><small>'+esc(body||'')+'</small></div>'; }
+    function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
+    async function api(path,options){ const res=await fetch(path,options||{}); const text=await res.text(); let data=text; try{ data=text?JSON.parse(text):{}; }catch{} if(!res.ok) throw new Error(typeof data==='object' && data.message ? data.message : text || res.status); return data; }
+    function showPage(page,button){ document.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===page)); document.querySelectorAll('nav.mobile button').forEach(el=>el.classList.remove('active')); if(button) button.classList.add('active'); location.hash=page; if(page==='tools') loadTools(); if(page==='cloud') loadCloud(); if(page==='mining') loadMining(); if(page==='nodes') loadNodes(); if(page==='forum') loadForum(); }
+    async function register(){ try{ const body={username:username.value.trim(),email:email.value.trim(),password:password.value}; const data=await api('/api/v1/auth/register',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}); saveSession(data); setMsg('authMsg','Account creato','ok'); boot(); }catch(e){ setMsg('authMsg',e.message,'bad'); } }
+    async function login(){ try{ const body={username:username.value.trim(),password:password.value}; const data=await api('/api/v1/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}); saveSession(data); setMsg('authMsg','Accesso effettuato','ok'); boot(); }catch(e){ setMsg('authMsg',e.message,'bad'); } }
+    function saveSession(data){ localStorage.setItem(tokenKey,data.accessToken||data.token||''); localStorage.setItem(userKey, JSON.stringify(data.user||{})); }
+    function logout(){ localStorage.removeItem(tokenKey); localStorage.removeItem(userKey); boot(); }
+    async function boot(){ const user=JSON.parse(localStorage.getItem(userKey)||'{}'); sessionState.textContent=token() ? 'Connesso come ' + (user.username||'utente Velora') : 'Accesso non effettuato'; await loadHome(); }
+    async function loadHome(){ try{ const health=await api('/health'); const guardian=await api('/api/v1/guardian/status'); homeCards.innerHTML=card('API',health.ok?'online':'verifica')+card('Guardian',guardian.status||'protetto')+card('Livelli',guardian.totalLevels||10)+card('Mobile','attivo'); }catch(e){ homeCards.innerHTML=item('Stato',e.message); } }
+    async function loadTools(){ try{ const data=await api('/api/v1/tools'); toolList.innerHTML=(data.tools||[]).slice(0,40).map(t=>item(t.name,t.description)).join(''); }catch(e){ toolList.innerHTML=item('Errore',e.message); } }
+    function speakTool(){ const text=toolText.value.trim(); if(!text) return setMsg('toolOutput','Inserisci testo','bad'); speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(text)); setMsg('toolOutput','Lettura avviata','ok'); }
+    function translateTool(){ const text=toolText.value.trim(); if(!text) return setMsg('toolOutput','Inserisci testo','bad'); setMsg('toolOutput','Traduzione rapida: usa testo breve. Motore locale pronto per frasi semplici; per traduzioni avanzate verra usato il servizio cloud quando configurato.','ok'); }
+    function summarizeTool(){ const text=toolText.value.trim(); const parts=text.split(/[.!?\\n]/).map(x=>x.trim()).filter(Boolean); setMsg('toolOutput',parts.slice(0,3).join('. ') || 'Inserisci testo','ok'); }
+    async function hashTool(){ const text=toolText.value; const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)); setMsg('toolOutput',Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase(),'ok'); }
+    function walletTool(){ const v=toolText.value.trim(); const ok=/^(4|8)[1-9A-HJ-NP-Za-km-z]{90,110}$/.test(v)||/^Z[a-zA-Z0-9]{70,120}$/.test(v); setMsg('toolOutput',ok?'Wallet pubblico valido per controllo beta':'Formato wallet non riconosciuto',''+(ok?'ok':'bad')); }
+    function privacyTool(){ const text=toolText.value; const hits=[]; if(/[\\w.+-]+@[\\w.-]+\\.[a-z]{2,}/i.test(text)) hits.push('email'); if(/\\b\\d{8,}\\b/.test(text)) hits.push('numeri lunghi'); if(/seed|private key|password/i.test(text)) hits.push('segreti'); setMsg('toolOutput',hits.length?'Possibili dati sensibili: '+hits.join(', '):'Nessun dato sensibile evidente','ok'); }
+    async function loadCloud(){ if(!token()) return setMsg('cloudStatus','Accedi per usare Cloud','bad'); try{ const data=await api('/api/v1/cloud/files',{headers:headers()}); cloudStatus.textContent=(data.quota?.quotaLabel||'25 MB')+' disponibili - usati '+(data.quota?.usedBytes||0)+' byte'; cloudFiles.innerHTML=(data.files||[]).map(f=>item(f.name,(f.guardian_status||'PROTECTED')+' - '+f.size_bytes+' byte')).join('')||item('Cloud','Nessun file'); }catch(e){ setMsg('cloudStatus',e.message,'bad'); } }
+    async function uploadCloud(){ if(!token()) return setMsg('cloudStatus','Accedi per caricare','bad'); const f=cloudFile.files[0]; if(!f) return; const reader=new FileReader(); reader.onload=async()=>{ try{ const b64=String(reader.result).split(',')[1]||''; await api('/api/v1/cloud/files',{method:'POST',headers:headers(true),body:JSON.stringify({name:f.name,mimeType:f.type||'application/octet-stream',contentBase64:b64})}); setMsg('cloudStatus','File caricato','ok'); loadCloud(); }catch(e){ setMsg('cloudStatus',e.message,'bad'); } }; reader.readAsDataURL(f); }
+    async function loadMining(){ if(!token()) return miningStatus.innerHTML=item('Mining','Accedi per vedere i dati'); try{ const data=await api('/api/v1/mining/progress',{headers:headers()}); miningStatus.innerHTML=(data.workers||[]).map(w=>item(w.worker_id||'worker', 'Coin '+w.coin+' - Share ok '+(w.accepted_pool_shares||0)+' - Payout '+(w.pending_label||'-')+' - Soglia '+(w.payout_threshold_label||'-'))).join('')||item('Mining','Nessun worker registrato'); }catch(e){ miningStatus.innerHTML=item('Mining',e.message); } }
+    async function requestPayout(){ if(!token()) return; try{ await api('/api/v1/mining/payout-requests',{method:'POST',headers:headers(true),body:JSON.stringify({coin:payoutCoin.value,devicePeerId:payoutDevice.value,payoutWallet:payoutWallet.value,note:'Richiesta da Velora Mobile'})}); alert('Richiesta payout inviata'); loadMining(); }catch(e){ alert(e.message); } }
+    async function loadNodes(){ if(!token()) return nodeList.innerHTML=item('Nodi','Accedi per vedere i nodi'); try{ const data=await api('/api/v1/contribution/profile',{headers:headers()}); nodeList.innerHTML=(data.nodes||[]).map(n=>item(n.module||'Nodo', (n.status||'-')+' - '+(n.devicePeerId||n.device_peer_id||'-')+' - ultimo contatto '+(n.lastHeartbeatAt||n.last_heartbeat_at||'-'))).join('')||item('Nodi','Nessun nodo collegato'); }catch(e){ nodeList.innerHTML=item('Nodi',e.message); } }
+    async function loadForum(){ if(!token()) return forumMessages.innerHTML=item('Forum','Accedi per leggere e scrivere'); try{ const data=await api('/api/v1/forum/sections/global/messages',{headers:headers()}); forumMessages.innerHTML=(data.messages||[]).slice(0,30).map(m=>item(m.username||'Velora',m.body||m.message||'')).join('')||item('Forum','Nessun messaggio'); }catch(e){ forumMessages.innerHTML=item('Forum',e.message); } }
+    async function sendForum(){ if(!token()) return; try{ await api('/api/v1/forum/sections/global/messages',{method:'POST',headers:headers(true),body:JSON.stringify({body:forumDraft.value})}); forumDraft.value=''; loadForum(); }catch(e){ alert(e.message); } }
+    boot(); if(location.hash) showPage(location.hash.slice(1), document.querySelector('nav.mobile button'));
+  </script>
+</body>
+</html>`;
+}
+
 async function publicPage(page: string) {
   const title = {
     home: "VELORA - L'Upper Web",
@@ -2804,18 +3068,29 @@ async function publicPage(page: string) {
   const macosChecksumUrl = "/downloads/macos/Velora_0.1.0_aarch64.dmg.sha256.txt";
   const macosIntelDownloadUrl = "/downloads/macos/Velora_0.1.0_x86_64.dmg";
   const macosIntelChecksumUrl = "/downloads/macos/Velora_0.1.0_x86_64.dmg.sha256.txt";
+  const mobileUrl = "/mobile";
+  const mobilePackageUrl = `/downloads/mobile/${mobilePwaName}`;
+  const mobileChecksumUrl = `/downloads/mobile/${mobilePwaChecksumName}`;
   const releaseManifest = await readReleaseManifestSafe();
   const releasedAt = releaseManifest?.releasedAt ? new Date(releaseManifest.releasedAt).toLocaleDateString("it-IT") : "in aggiornamento";
   const macArm = releaseManifest?.platforms?.["macos-aarch64"] ?? {};
   const macIntel = releaseManifest?.platforms?.["macos-x86_64"] ?? {};
+  const mobile = releaseManifest?.platforms?.["mobile-pwa"] ?? {};
   const nasFallbackUrl = "/downloads/nas/velora-nas-fallback-agent-0.1.0-beta.zip";
   const moneroWalletUrl = "https://www.getmonero.org/downloads/";
   const zephyrWalletUrl = "https://zephyrprotocol.com/";
   const body = page === "download" ? `
     <section class="panel">
       <h1>Scarica Velora Beta</h1>
-      <p>Beta pubblica per Windows x64, Mac Apple Silicon e Mac Intel</p>
+      <p>Beta pubblica per Windows, macOS, iOS e Android</p>
       <section class="cards">
+        <article>
+          <b>Mobile iOS e Android</b>
+          <p>Velora Mobile installabile da browser con account, tool, Cloud, forum, mining monitor e nodi</p>
+          <a class="cta" href="${mobileUrl}">Apri Velora Mobile</a>
+          <a class="ghost" href="${mobilePackageUrl}">Scarica pacchetto PWA</a>
+          <a class="ghost" href="${mobileChecksumUrl}">Verifica SHA-256</a>
+        </article>
         <article>
           <b>Windows</b>
           <p>Installer MSI per PC Windows x64</p>
@@ -2844,6 +3119,7 @@ async function publicPage(page: string) {
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
         <dt>Data build</dt><dd>${escapeHtml(releasedAt)}</dd>
         <dt>Stato Mac</dt><dd>Beta con firma ad hoc, non ancora notarizzata da Apple</dd>
+        <dt>Mobile</dt><dd>${escapeHtml(String(mobile.size ?? 0))} byte<br>${escapeHtml(String(mobile.sha256 ?? "hash in aggiornamento"))}</dd>
         <dt>Apple Silicon</dt><dd>${escapeHtml(String(macArm.size ?? 0))} byte<br>${escapeHtml(String(macArm.sha256 ?? "hash in aggiornamento"))}</dd>
         <dt>Intel</dt><dd>${escapeHtml(String(macIntel.size ?? 0))} byte<br>${escapeHtml(String(macIntel.sha256 ?? "hash in aggiornamento"))}</dd>
       </dl>
