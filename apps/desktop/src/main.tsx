@@ -240,28 +240,40 @@ const isAdminSessionEnabled = false;
 
 const featuredSites: SearchCard[] = [
   {
-    title: "Velora Demo Shop",
-    zone: "shop.demo",
-    description: "Vetrina dimostrativa verificata per provare la navigazione nell'Upper Web.",
-    category: "Commercio",
-    publisher: "Velora Labs",
+    title: "HappyMeter",
+    zone: "happy.meter",
+    description: "Feliciometro adattato per Velora con accesso collegato all'identita unica.",
+    category: "Benessere",
+    publisher: "HappyMeter",
     identityLevel: "Livello 0",
     verified: true,
     familySafe: true,
-    availability: "Disponibile",
-    updatedAt: "Beta corrente"
+    availability: "Online",
+    updatedAt: "Pubblicato"
   },
   {
-    title: "HappyMeter Health",
-    zone: "health.happymeter",
-    description: "Modello per applicazioni Velora con Login Velora e SDK, senza account paralleli.",
-    category: "Benessere",
-    publisher: "HappyMeter",
+    title: "CreatorSpeaker TV",
+    zone: "video.creatorspeaker-tv",
+    description: "Canale video adattato per Velora con esperienza leggera e accesso Velora.",
+    category: "Media",
+    publisher: "CreatorSpeaker TV",
+    identityLevel: "Livello 1",
+    verified: true,
+    familySafe: true,
+    availability: "Online",
+    updatedAt: "Pubblicato"
+  },
+  {
+    title: "V Social",
+    zone: "v.social",
+    description: "Social community adattato per Velora con profilo, feed e accesso unico.",
+    category: "Community",
+    publisher: "V Social",
     identityLevel: "Livello 1",
     verified: false,
     familySafe: true,
-    availability: "In preparazione",
-    updatedAt: "Roadmap beta"
+    availability: "Online",
+    updatedAt: "Pubblicato"
   },
   {
     title: "Velora Security",
@@ -320,7 +332,7 @@ const veloraTools: ToolDefinition[] = [
   tool("Publish Plan", "tools.publish-plan", "Creator Studio", "Crea piano pubblicazione: controllo, manifest, upload, indicizzazione.", "publish-plan", "Zona", "nome.zona")
 ];
 
-const defaultFeaturedSites = featuredSites.filter((site) => site.zone === "shop.demo" || site.verified);
+const defaultFeaturedSites = featuredSites.filter((site) => site.availability === "Online" || site.verified);
 
 const identityLevels = [
   ["Livello 0", "Account creato", "Accesso, navigazione, VeloMail e pubblicazione beta."],
@@ -333,7 +345,7 @@ const publisherPlans = [
   ["Livello 1", "Gratis", "Login Velora e SDK obbligatori per account base."],
   ["Livello 2", "1,99 EUR/mese", "Attributi verificati con consenso utente."],
   ["Livello 3", "4,99 EUR/mese", "Operazioni sensibili predisposte, pagamenti non ancora attivi."],
-  ["Publisher Pro", "19,90 EUR/mese", "Supporto prioritario, strumenti avanzati e Siti Emergenti."]
+  ["Publisher Pro", "19,90 EUR/mese", "Supporto prioritario, strumenti avanzati e visibilita publisher."]
 ];
 
 function App() {
@@ -341,18 +353,18 @@ function App() {
   const [networkState, setNetworkState] = React.useState<NetworkState>("syncing");
   const [nodeMessage, setNodeMessage] = React.useState("Preparazione di Velora");
   const [query, setQuery] = React.useState("");
-  const [address, setAddress] = React.useState("shop.demo");
+  const [address, setAddress] = React.useState("happy.meter");
   const [loadedSite, setLoadedSite] = React.useState<LoadedSiteDocument | null>(null);
   const [activeToolZone, setActiveToolZone] = React.useState("tools.tts");
   const [viewerState, setViewerState] = React.useState<ViewerState>("idle");
   const [viewerMessage, setViewerMessage] = React.useState("Cerca o apri una zona dell'Upper Web.");
-  const [favorites, setFavorites] = React.useState<string[]>(["shop.demo"]);
+  const [favorites, setFavorites] = React.useState<string[]>(["happy.meter"]);
   const [searchResults, setSearchResults] = React.useState<SearchCard[]>([]);
   const [oceanoDraft, setOceanoDraft] = React.useState({ title: "", summary: "", body: "", contentType: "ARTICLE", sourceUrl: "", tags: "" });
   const [oceanoSubmissions, setOceanoSubmissions] = React.useState<OceanoSubmission[]>([]);
   const [oceanoUploadMessage, setOceanoUploadMessage] = React.useState("Compila il contenuto e invialo alla revisione admin.");
   const [publisherSitePath, setPublisherSitePath] = React.useState(demoSitePath);
-  const [publisherAddress, setPublisherAddress] = React.useState("shop.demo");
+  const [publisherAddress, setPublisherAddress] = React.useState("happy.meter");
   const [validation, setValidation] = React.useState<VeloraValidationResult | null>(null);
   const [packaged, setPackaged] = React.useState<PublisherPackageResponse | null>(null);
   const [releases, setReleases] = React.useState<PublisherReleaseRecord[]>([]);
@@ -651,8 +663,8 @@ function App() {
       setViewerMessage(`${result.title} pronto`);
     } catch (error) {
       setLoadedSite(null);
-      setViewerState(normalized === "shop.demo" ? "error" : "not-found");
-      setViewerMessage(normalized === "shop.demo" ? "Errore temporaneo nella preparazione della zona." : "Zona non trovata.");
+      setViewerState("not-found");
+      setViewerMessage("Zona non trovata.");
     }
   }
 
@@ -1596,7 +1608,7 @@ function Home({ query, setQuery, onSubmit, onSearch, onOpen, onMail, viewerState
           <p>{session ? `Casella attiva: ${session.mail.address}` : "Accedi per attivare la tua casella."}</p>
           <button type="button" onClick={onMail} disabled={!session}>Apri VeloMail</button>
         </article>
-        <FeatureBlock title="Siti verificati" sites={featuredSites.filter((site) => site.verified)} onOpen={onOpen} />
+        <FeatureBlock title="Siti verificati" sites={featuredSites.filter((site) => site.verified && !site.zone.includes("demo") && !site.zone.includes("shop"))} onOpen={onOpen} />
         <article className="glass-card">
           <span className="app-pill">Aggiornamenti</span>
           <h2>Velora Beta</h2>
@@ -1604,9 +1616,9 @@ function Home({ query, setQuery, onSubmit, onSearch, onOpen, onMail, viewerState
           <p>{releaseCheck?.latestVersion ? `Ultima versione: ${releaseCheck.latestVersion}` : "Premi controlla per leggere manifest e changelog."}</p>
           <button type="button" onClick={onCheckUpdates}>Controlla aggiornamenti</button>
         </article>
-        <FeatureBlock title="Siti Emergenti" sites={featuredSites.slice(0, 2)} onOpen={onOpen} />
+        <FeatureBlock title="Siti emergenti" sites={featuredSites.filter((site) => !site.verified && site.availability === "Online")} onOpen={onOpen} />
         <CategoryCloud />
-        <Milestones />
+        <NetworkHighlights />
       </section>
     </section>
   );
@@ -1999,12 +2011,17 @@ function CategoryCloud() {
   );
 }
 
-function Milestones() {
+function NetworkHighlights() {
   return (
-    <article className="glass-card achievement">
-      <span>Folletto</span>
-      <h2>A BOMBAITA!</h2>
-      <p>Gli achievement compariranno solo per milestone reali: primo accesso, prima zona approvata e primo sito pubblicato.</p>
+    <article className="glass-card">
+      <span className="app-pill">Rete Velora</span>
+      <h2>Zone online</h2>
+      <p>Apri i siti pubblicati, salva i preferiti e controlla nuove zone direttamente dal motore di ricerca.</p>
+      <div className="tag-cloud">
+        <span>happy.meter</span>
+        <span>video.creatorspeaker-tv</span>
+        <span>v.social</span>
+      </div>
     </article>
   );
 }
