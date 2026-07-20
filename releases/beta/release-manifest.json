@@ -1,7 +1,7 @@
-{
+﻿{
     "version":  "0.1.0-beta",
     "channel":  "beta",
-    "releasedAt":  "2026-07-19T14:35:19.0027036Z",
+    "releasedAt":  "2026-07-19T14:35:18.5225024Z",
     "platforms":  {
                       "windows-x64":  {
                                           "available":  true,
@@ -43,7 +43,7 @@
                                          "signed":  false,
                                          "notarized":  false,
                                          "filename":  "velora-mobile-pwa-0.1.0-beta.zip",
-                                         "launchUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/mobile",
+                                         "launchUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/portal",
                                          "downloadUrl":  "https://velora-beta-20260629-9a9196313b42.herokuapp.com/downloads/mobile/velora-mobile-pwa-0.1.0-beta.zip",
                                          "size":  1034,
                                          "sha256":  "86DF387965245B6EA942A7B5B6EFB36F5602EEEFE99B9E68E348B372D2D4CF2A"

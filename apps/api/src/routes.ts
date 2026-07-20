@@ -5,7 +5,7 @@ import { basename, resolve } from "node:path";
 import sensible from "@fastify/sensible";
 import cors from "@fastify/cors";
 import type { FastifyInstance, FastifyReply } from "fastify";
-import { navigationCategories, signedAdminCommandSchema, zoneCheckSchema, zoneRequestSchema } from "@velora/shared";
+import { navigationCategories, signedAdminCommandSchema, veloraManifestSchema, zoneCheckSchema, zoneRequestSchema } from "@velora/shared";
 import { validateVeloraSite } from "@velora/shared/velora-site-node";
 import { config } from "./config.js";
 import { buildLocalRelease, persistReleaseEvent, persistReleaseSnapshot } from "./content-store.js";
@@ -80,6 +80,8 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get("/mobile", async (_request, reply) => reply.type("text/html; charset=utf-8").send(mobilePage()));
   app.get("/apple", async (_request, reply) => reply.type("text/html; charset=utf-8").send(applePortalPage("home")));
   app.get("/apple/:section", async (request, reply) => reply.type("text/html; charset=utf-8").send(applePortalPage(routeParam(request.params, "section"))));
+  app.get("/portal", async (_request, reply) => reply.type("text/html; charset=utf-8").send(applePortalPage("home")));
+  app.get("/portal/:section", async (request, reply) => reply.type("text/html; charset=utf-8").send(applePortalPage(routeParam(request.params, "section"))));
   app.get("/admin", async (_request, reply) => reply.type("text/html; charset=utf-8").send(adminPage()));
   app.get("/what-is-velora", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("what-is-velora")));
   app.get("/security", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("security")));
@@ -101,6 +103,11 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get("/legal/privacy", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("privacy")));
   app.get("/legal/terms", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("terms")));
   app.get("/z/:address", async (request, reply) => {
+    const address = routeParam(request.params, "address");
+    const fallback = await findPublicZone(address);
+    return reply.type("text/html; charset=utf-8").send(publicZonePage(address, fallback));
+  });
+  app.get("/zone/:address", async (request, reply) => {
     const address = routeParam(request.params, "address");
     const fallback = await findPublicZone(address);
     return reply.type("text/html; charset=utf-8").send(publicZonePage(address, fallback));
@@ -441,6 +448,24 @@ export async function registerRoutes(app: FastifyInstance) {
     await requirePool().query("UPDATE users SET password_hash = $1 WHERE id = $2", [hashPassword(body.newPassword), user.id]);
     await appendUserEvent(user.id, "PASSWORD_RECOVERED", "USER", user.id, "Password aggiornata tramite key token personale.");
     return { ok: true, message: "Password aggiornata. Ora puoi accedere con la nuova password." };
+  });
+
+  app.get("/api/v1/auth/portal-session", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const user = await repository.findUserById(userId);
+    const mail = await repository.getOrCreateVeloMailAccount(userId, user?.username);
+    const profile = await buildAccountProfile(userId);
+    return {
+      loggedIn: true,
+      user: { id: userId, username: user?.username ?? "utente", identityLevel: mail.identityLevel },
+      mail: { address: mail.address, alias: mail.alias, status: mail.status },
+      scopes: ["identity:read", "mail:basic", "cloud:basic", "publisher:basic"],
+      devices: profile.devices.length,
+      sites: profile.sites.length
+    };
   });
   app.post("/api/v1/auth/recovery-token/seen", async (request, reply) => {
     const userId = await requireSessionUserId(request, reply);
@@ -802,6 +827,58 @@ export async function registerRoutes(app: FastifyInstance) {
     const guideResults = searchVeloraGuide(query);
     const documents = await repository.searchDocuments(query);
     return { query, results: [...guideResults, ...documents].slice(0, 35) };
+  });
+
+  app.post("/api/v1/sites/portal-prepare", async (request, reply) => {
+    const userId = await requireSessionUserId(request, reply);
+    if (!userId) {
+      return;
+    }
+    const body = request.body as Record<string, unknown>;
+    const rawManifest = typeof body.manifest === "object" && body.manifest ? body.manifest : {
+      formatVersion: 1,
+      address: body.address,
+      title: body.title,
+      description: body.description,
+      category: body.category,
+      entryFile: body.entryFile || "index.html",
+      languages: Array.isArray(body.languages) ? body.languages : ["it"],
+      keywords: Array.isArray(body.keywords) ? body.keywords : String(body.keywords ?? "").split(",").map((value) => value.trim()).filter(Boolean),
+      version: body.version || "1.0.0",
+      ageRating: body.ageRating || "EVERYONE",
+      familySafe: body.familySafe !== false,
+      permissions: body.permissions || {},
+      allowedExternalOrigins: Array.isArray(body.allowedExternalOrigins) ? body.allowedExternalOrigins : []
+    };
+    const parsed = veloraManifestSchema.safeParse(rawManifest);
+    const errors = parsed.success ? [] : parsed.error.issues.map((issue) => `${issue.path.join(".") || "manifest"}: ${issue.message}`);
+    const warnings = [];
+    if (parsed.success && parsed.data.permissions.externalNetwork && parsed.data.allowedExternalOrigins.length === 0) {
+      warnings.push("Hai richiesto rete esterna ma non hai indicato domini consentiti.");
+    }
+    if (parsed.success && parsed.data.keywords.length < 3) {
+      warnings.push("Aggiungi almeno 3 keyword per migliorare la ricerca.");
+    }
+    const guide = parsed.success ? [
+      "Crea una cartella con index.html e velora.json",
+      "Inserisci velora.json generato dal portale",
+      "Controlla con Publisher Validator",
+      "Pubblica dal client desktop, NAS agent o nodo autorizzato",
+      "Verifica apertura da Search e pagina /zone/" + parsed.data.address
+    ] : [
+      "Correggi gli errori del manifest",
+      "Ripeti la preparazione",
+      "Pubblica solo quando il validatore mostra zero errori"
+    ];
+    await appendUserEvent(userId, "PUBLISHER_PORTAL_PREPARE", "SITE_MANIFEST", parsed.success ? parsed.data.address : "INVALID", parsed.success ? "Manifest preparato dal portale" : "Manifest non valido", { errors, warnings });
+    return {
+      ready: parsed.success && errors.length === 0,
+      manifest: parsed.success ? parsed.data : rawManifest,
+      errors,
+      warnings,
+      guide,
+      nextAction: parsed.success ? "READY_FOR_DESKTOP_OR_NODE_PUBLISH" : "FIX_MANIFEST"
+    };
   });
   app.get("/api/v1/oceano/status", async () => repository.getOceanoStatus());
   app.post("/api/v1/oceano/submissions", async (request, reply) => {
@@ -1233,6 +1310,7 @@ export async function registerRoutes(app: FastifyInstance) {
       return;
     }
     const status = await betaLogicalNodeCluster.status();
+    const ops = await buildOpsStatus();
     return {
       api: "OK",
       database: "OK",
@@ -1244,13 +1322,82 @@ export async function registerRoutes(app: FastifyInstance) {
       },
       backups: {
         configured: Boolean(process.env.HEROKU_API_KEY || process.env.DATABASE_BACKUP_URL),
-        restoreTested: process.env.VELORA_BACKUP_RESTORE_TESTED === "true"
+        restoreTested: process.env.VELORA_BACKUP_RESTORE_TESTED === "true",
+        latest: ops.latestBackup,
+        latestRestoreTest: ops.latestRestoreTest
       },
       uptimeMonitor: {
         configured: Boolean(process.env.VELORA_UPTIME_MONITOR_URL),
-        urlPresent: Boolean(process.env.VELORA_UPTIME_MONITOR_URL)
-      }
+        urlPresent: Boolean(process.env.VELORA_UPTIME_MONITOR_URL),
+        latest: ops.latestUptime
+      },
+      operations: ops
     };
+  });
+  app.get("/api/admin/ops/status", async (request, reply) => {
+    if (!(await requireAdminSession(request, reply))) {
+      return;
+    }
+    return buildOpsStatus();
+  });
+  app.post("/api/admin/ops/backup-record", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) {
+      return;
+    }
+    const body = request.body as { status?: string; backupRef?: string; note?: string; metadata?: Record<string, unknown> };
+    const status = normalizeChoice(body.status, ["REQUESTED", "COMPLETED", "FAILED", "RESTORE_TESTED"], "REQUESTED");
+    const result = await requirePool().query(
+      `INSERT INTO database_backup_events (id, admin_id, kind, status, backup_ref, note, metadata_json)
+       VALUES ($1,$2,'BACKUP',$3,$4,$5,$6)
+       RETURNING *`,
+      [randomUUID(), admin.adminId, status, String(body.backupRef ?? "").trim() || null, String(body.note ?? "").trim() || null, JSON.stringify(body.metadata ?? {})]
+    );
+    await appendOperationalAudit(admin.adminId, `DATABASE_BACKUP_${status}`, "DATABASE", result.rows[0].id, String(body.note ?? "Backup record"));
+    return { event: result.rows[0], status: await buildOpsStatus() };
+  });
+  app.post("/api/admin/ops/restore-test-record", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) {
+      return;
+    }
+    const body = request.body as { status?: string; backupRef?: string; restoreTarget?: string; note?: string; metadata?: Record<string, unknown> };
+    const status = normalizeChoice(body.status, ["REQUESTED", "COMPLETED", "FAILED"], "REQUESTED");
+    const result = await requirePool().query(
+      `INSERT INTO database_backup_events (id, admin_id, kind, status, backup_ref, restore_target, note, metadata_json)
+       VALUES ($1,$2,'RESTORE_TEST',$3,$4,$5,$6,$7)
+       RETURNING *`,
+      [randomUUID(), admin.adminId, status, String(body.backupRef ?? "").trim() || null, String(body.restoreTarget ?? "").trim() || "test", String(body.note ?? "").trim() || null, JSON.stringify(body.metadata ?? {})]
+    );
+    await appendOperationalAudit(admin.adminId, `DATABASE_RESTORE_TEST_${status}`, "DATABASE", result.rows[0].id, String(body.note ?? "Restore test record"));
+    return { event: result.rows[0], status: await buildOpsStatus() };
+  });
+  app.post("/api/admin/ops/uptime-check", async (request, reply) => {
+    const admin = await requireAdminSession(request, reply);
+    if (!admin) {
+      return;
+    }
+    const started = Date.now();
+    try {
+      const health = config.betaNodeClusterEnabled ? await betaLogicalNodeCluster.publicStatus() : { ok: true, service: "velora-api", network: "cluster disattivato" };
+      const latencyMs = Date.now() - started;
+      const result = await requirePool().query(
+        `INSERT INTO uptime_checks (id, source, status, latency_ms, health_json)
+         VALUES ($1,'admin-manual','OK',$2,$3)
+         RETURNING *`,
+        [randomUUID(), latencyMs, JSON.stringify(health)]
+      );
+      await appendOperationalAudit(admin.adminId, "UPTIME_CHECK_OK", "UPTIME", result.rows[0].id, "Controllo uptime manuale");
+      return { check: result.rows[0], status: await buildOpsStatus() };
+    } catch (error) {
+      const result = await requirePool().query(
+        `INSERT INTO uptime_checks (id, source, status, latency_ms, error_message)
+         VALUES ($1,'admin-manual','FAILED',$2,$3)
+         RETURNING *`,
+        [randomUUID(), Date.now() - started, sanitizeError(error instanceof Error ? error.message : "uptime failed")]
+      );
+      return reply.code(503).send({ check: result.rows[0], status: await buildOpsStatus() });
+    }
   });
   app.get("/api/admin/guardian", async (request, reply) => {
     if (!(await requireAdminSession(request, reply))) {
@@ -2662,6 +2809,10 @@ function adminPage() {
         <h2>Health admin</h2>
         <div id="adminHealth"></div>
       </section>
+      <section class="wide">
+        <h2>Backup, restore e uptime</h2>
+        <div id="opsStatus"></div>
+      </section>
     </div>
   </main>
   <script>
@@ -2731,6 +2882,7 @@ function adminPage() {
       loadAudit();
       loadGuardian();
       loadAdminHealth();
+      loadOpsStatus();
     }
     async function loadOverview() {
       try {
@@ -2884,6 +3036,30 @@ function adminPage() {
         const data = await getJson('/api/admin/health');
         document.getElementById('adminHealth').innerHTML = '<pre>' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
       } catch (error) { showError('adminHealth', error); }
+    }
+    async function loadOpsStatus() {
+      try {
+        const data = await getJson('/api/admin/ops/status');
+        document.getElementById('opsStatus').innerHTML =
+          '<div class="cards"><div class="card"><b>Backup</b><span>' + escapeHtml(data.latestBackup?.status || 'Da registrare') + '</span></div><div class="card"><b>Restore test</b><span>' + escapeHtml(data.latestRestoreTest?.status || 'Da testare') + '</span></div><div class="card"><b>Uptime</b><span>' + escapeHtml(data.latestUptime?.status || 'Da controllare') + '</span></div><div class="card"><b>Modo</b><span>' + escapeHtml(data.backupMode || '-') + '</span></div></div>' +
+          '<h3>Azioni</h3><input id="backupRef" placeholder="Riferimento backup"><input id="backupNote" placeholder="Nota backup"><button class="primary" onclick="recordBackup()">Registra backup completato</button><input id="restoreTarget" placeholder="Target test restore"><button onclick="recordRestore()">Registra restore test completato</button><button onclick="runUptimeCheck()">Esegui uptime check</button>' +
+          '<h3>Stato</h3><pre>' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
+      } catch (error) { showError('opsStatus', error); }
+    }
+    async function recordBackup() {
+      await postJson('/api/admin/ops/backup-record', { status: 'COMPLETED', backupRef: document.getElementById('backupRef').value.trim(), note: document.getElementById('backupNote').value.trim() || 'Backup registrato da admin' });
+      await loadOpsStatus();
+      await loadAdminHealth();
+    }
+    async function recordRestore() {
+      await postJson('/api/admin/ops/restore-test-record', { status: 'COMPLETED', backupRef: document.getElementById('backupRef').value.trim(), restoreTarget: document.getElementById('restoreTarget').value.trim() || 'test', note: 'Restore test registrato da admin' });
+      await loadOpsStatus();
+      await loadAdminHealth();
+    }
+    async function runUptimeCheck() {
+      await postJson('/api/admin/ops/uptime-check', {});
+      await loadOpsStatus();
+      await loadAdminHealth();
     }
     loadAll();
   </script>
@@ -3069,6 +3245,7 @@ function applePortalPage(section: string) {
     function installHelp(){const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone;const isApple=/Mac|iPhone|iPad|iPod/.test(navigator.platform)||navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent);const isSafari=/Safari/.test(navigator.userAgent)&&!/Chrome|CriOS|Edg|Firefox|FxiOS/.test(navigator.userAgent);if(standalone)alert('Velora e gia aperta come app.');else if(isApple&&isSafari&&/iPhone|iPad|iPod/.test(navigator.userAgent))alert('Tocca Condividi e poi Aggiungi alla schermata Home.');else if(isApple&&isSafari)alert('Da Safari su Mac apri File e scegli Aggiungi al Dock.');else alert('Apri questa pagina in Safari per installare Velora nel Dock o nella schermata Home.');}
     window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e});
     if('serviceWorker'in navigator)navigator.serviceWorker.register('/apple-sw.js').catch(()=>undefined);
+    window.addEventListener('message',async event=>{if(event.data?.type!=='VELORA_AUTH_REQUEST')return;if(!token()){showModule('home');authMsg.textContent='Accedi o registrati per collegare il sito al tuo account Velora';event.source?.postMessage({type:'VELORA_AUTH_STATE',loggedIn:false,reason:'LOGIN_REQUIRED'},'*');return}try{const state=await api('/api/v1/auth/portal-session',{headers:headers()});event.source?.postMessage({type:'VELORA_AUTH_STATE',loggedIn:true,username:state.user.username,mail:state.mail.address,identityLevel:state.user.identityLevel,scopes:state.scopes},'*')}catch(e){event.source?.postMessage({type:'VELORA_AUTH_STATE',loggedIn:false,reason:e.message},'*')}})
     async function runGlobalSearch(){showModule('search');searchQuery.value=globalSearch.value;await loadSearch()}
     async function loadHome(){try{const [health,guardian,manifest]=await Promise.all([api('/health'),api('/api/v1/guardian/status'),api('/release-manifest.json')]);homeCards.innerHTML=card('Rete',health.ok?'Online':'Verifica')+card('Guardian',guardian.status||'Protetto')+card('Versione',manifest.version||'Beta')+card('PWA','Installabile');}catch(e){homeCards.innerHTML=item('Stato',e.message)}}
     async function loadSearch(){try{const q=searchQuery.value||globalSearch.value||'velora';const data=await api('/api/v1/search?q='+encodeURIComponent(q));const html=(data.results||[]).map(r=>'<div class="item"><b>'+esc(r.title||r.address)+'</b><p>'+esc(r.description||r.summary||'')+'</p><button onclick="openZone(\\''+esc(r.address||r.zone||'')+'\\')">Apri</button></div>').join('')||item('Search','Nessun risultato');searchResults.innerHTML=html;if(document.getElementById('oceanoResults'))oceanoResults.innerHTML=html;}catch(e){const html=item('Search',e.message);searchResults.innerHTML=html;if(document.getElementById('oceanoResults'))oceanoResults.innerHTML=html;}}
@@ -3087,7 +3264,9 @@ function applePortalPage(section: string) {
     async function loadMining(){if(!token())return miningBox.innerHTML=item('Mining','Accedi per vedere mining');try{const [progress,targets,history]=await Promise.all([api('/api/v1/mining/progress',{headers:headers()}),api('/api/v1/execution/targets',{headers:headers()}),api('/api/v1/mining/history',{headers:headers()})]);targetSelect.innerHTML=(targets.targets||[]).filter(t=>(t.capabilities||[]).includes('MINING_START')).map(t=>'<option value="'+esc(t.type+':'+t.id)+'">'+esc(t.label+' - '+t.status)+'</option>').join('');miningBox.innerHTML=(progress.workers||[]).map(w=>item(w.worker_id||'worker','Share ok '+(w.accepted_pool_shares||0)+' - payout '+(w.pending_label||'-')+' - soglia '+(w.payout_threshold_label||'-'))).join('')||item('Mining','Nessun worker');miningHistory.innerHTML=(history.payoutRequests||[]).map(p=>item(p.status,p.coin+' '+(p.payout_tx_hash||''))).join('')}catch(e){miningBox.innerHTML=item('Mining',e.message)}}
     async function execMining(op){const [type,id]=(targetSelect.value||'SERVER:').split(':');try{await api('/api/v1/execution/operations',{method:'POST',headers:headers(true),body:JSON.stringify({operation:op,targetType:type||'SERVER',targetId:id,requestedState:op,payload:{profile:miningProfile.value,coin:miningCoin.value},idempotencyKey:op+'-'+Date.now()})});loadMining()}catch(e){alert(e.message)}}
     async function loadNodes(){if(!token()){const html=item('Nodi','Accedi per vedere i nodi');nodesBox.innerHTML=html;if(document.getElementById('nasBox'))nasBox.innerHTML=html;return}try{const data=await api('/api/v1/execution/targets',{headers:headers()});const targets=data.targets||[];nodesBox.innerHTML=targets.map(t=>item(t.label,t.type+' - '+t.status+' - '+(t.online?'online':'offline'))).join('')||item('Nodi','Nessun nodo');if(document.getElementById('nasBox')){const nas=targets.filter(t=>t.type==='NAS');nasBox.innerHTML=nas.map(t=>item(t.label,(t.online?'online':'offline')+' - '+(t.storageAvailableBytesLabel||'spazio in verifica')+' - ultimo contatto '+(t.lastSeenAt||'-'))).join('')||item('NAS','Nessun NAS associato all account');}opsBox.innerHTML=(data.operations||[]).map(o=>item(o.operation,o.status+' - '+(o.target_type||''))).join('')||item('Operazioni','Nessuna operazione recente')}catch(e){nodesBox.innerHTML=item('Nodi',e.message);if(document.getElementById('nasBox'))nasBox.innerHTML=item('NAS',e.message)}}
-    async function loadPublisher(){publisherStatus.textContent='Usa validazione e pubblicazione collegate alle API Velora. Operazioni pesanti passano dal controller remoto.'}
+    async function preparePublisher(){if(!token())return publisherStatus.textContent='Accedi per preparare una pubblicazione';try{const payload={address:publisherAddress.value.trim(),title:publisherTitle.value.trim(),description:publisherDescription.value.trim(),category:publisherCategory.value,keywords:publisherKeywords.value.split(',').map(x=>x.trim()).filter(Boolean),version:publisherVersion.value.trim()||'1.0.0',entryFile:'index.html',languages:['it'],ageRating:'EVERYONE',familySafe:true,permissions:{externalNetwork:false,clipboardRead:false,clipboardWrite:false,notifications:false,fileDownload:false},allowedExternalOrigins:[]};const data=await api('/api/v1/sites/portal-prepare',{method:'POST',headers:headers(true),body:JSON.stringify(payload)});publisherStatus.innerHTML=(data.ready?'<b class="ok">Pronto per pubblicare</b>':'<b class="bad">Correggi prima di pubblicare</b>')+'<pre>'+esc(JSON.stringify(data,null,2))+'</pre>';publisherManifest.value=JSON.stringify(data.manifest,null,2)}catch(e){publisherStatus.textContent=e.message}}
+    async function queuePublish(){if(!token())return publisherStatus.textContent='Accedi per continuare';try{await preparePublisher();await api('/api/v1/execution/operations',{method:'POST',headers:headers(true),body:JSON.stringify({operation:'PUBLISH_VALIDATE',targetType:'SERVER',idempotencyKey:'publish-'+Date.now(),payload:{address:publisherAddress.value.trim(),source:'portal'}})});publisherStatus.innerHTML+='<p class="ok">Validazione registrata. Per caricare file locali usa desktop, NAS agent o nodo autorizzato.</p>'}catch(e){publisherStatus.textContent=e.message}}
+    async function loadPublisher(){publisherStatus.textContent='Compila i campi. Il portale genera manifest valido e guida il passaggio successivo senza usare account paralleli.'}
     async function loadAdmin(){adminFrame.src='/admin'}
     function loadModule(id){if(id==='home')loadHome();if(id==='search'||id==='oceano')loadSearch();if(id==='mail')loadMail();if(id==='cloud')loadCloud();if(id==='tools')loadTools();if(id==='forum')loadForum();if(id==='mining')loadMining();if(id==='nodes'||id==='nas')loadNodes();if(id==='publisher')loadPublisher();if(id==='admin')loadAdmin();}
     document.addEventListener('keydown',e=>{if(!e.metaKey)return;if(e.key.toLowerCase()==='k'){e.preventDefault();globalSearch.focus()}if(e.key.toLowerCase()==='l'){e.preventDefault();globalSearch.focus()}if(e.key.toLowerCase()==='r'){e.preventDefault();loadModule(currentSection)}if(e.key.toLowerCase()==='t'){e.preventDefault();showModule('browser')}})
@@ -3116,7 +3295,7 @@ function appleModulesHtml(initialSection: string) {
     <section id="m-browser" class="module${active("browser")}"><div class="panel"><h2>Browser Velora</h2><div class="row"><input id="browserAddress" placeholder="happy.meter"><button onclick="openZone(browserAddress.value)">Apri zona</button></div><iframe id="browserFrame" title="Velora Browser" style="width:100%;height:70vh;border:1px solid var(--line);border-radius:20px;background:#fff"></iframe></div></section>
     <section id="m-mail" class="module${active("mail")}"><div class="mail-layout"><div class="panel"><h2>Cartelle</h2><p id="mailAccount"></p><button onclick="loadMail()">Inbox</button></div><div class="panel"><h2>Messaggi</h2><div id="mailList" class="list"></div></div><div class="panel"><h2>VeloMail</h2><div id="mailOpen"></div><h3>Componi</h3><input id="mailTo" placeholder="destinatario@velora"><input id="mailSubject" placeholder="Oggetto"><textarea id="mailBody" placeholder="Messaggio"></textarea><button class="primary" onclick="sendMail()">Invia</button><p id="mailComposerMsg"></p></div></div></section>
     <section id="m-cloud" class="module${active("cloud")}"><div class="split"><div class="panel"><h2>Velora Cloud</h2><p id="cloudQuota"></p><div class="drop"><input id="cloudInput" type="file" multiple><button class="primary" onclick="uploadCloud()">Carica</button></div></div><div class="panel"><h2>File</h2><div id="cloudFiles" class="list"></div></div></div></section>
-    <section id="m-publisher" class="module${active("publisher")}"><div class="split"><div class="panel"><h2>Publisher Studio</h2><textarea id="publisherDraft" placeholder="Manifest, note o contenuto"></textarea><button onclick="loadPublisher()">Prepara</button><button class="primary" onclick="api('/api/v1/execution/operations',{method:'POST',headers:headers(true),body:JSON.stringify({operation:'PUBLISH_VALIDATE',targetType:'SERVER',idempotencyKey:'publish-'+Date.now(),payload:{source:'apple-portal'}})}).then(()=>publisherStatus.textContent='Validazione in coda')">Valida</button><p id="publisherStatus"></p></div><div class="panel"><h2>Anteprima</h2><p>Carica, valida, pubblica e apri zone usando le API Velora e i dispositivi associati.</p></div></div></section>
+    <section id="m-publisher" class="module${active("publisher")}"><div class="split"><div class="panel"><h2>Publisher Studio</h2><p>Compila i campi e Velora genera un manifest valido. I file locali vengono caricati da desktop, NAS agent o nodo autorizzato.</p><input id="publisherAddress" placeholder="categoria.nome-sito"><input id="publisherTitle" placeholder="Titolo sito"><textarea id="publisherDescription" placeholder="Descrizione chiara del sito"></textarea><div class="row"><select id="publisherCategory"><option>app</option><option>oceano</option><option>conoscenza</option><option>commercio</option><option>salute</option><option>creativita</option><option>istruzione</option><option>servizi</option><option>sistema</option></select><input id="publisherVersion" placeholder="1.0.0"></div><input id="publisherKeywords" placeholder="keyword separate da virgola"><div class="row"><button onclick="preparePublisher()">Controlla</button><button class="primary" onclick="queuePublish()">Prepara pubblicazione</button></div><div id="publisherStatus"></div></div><div class="panel"><h2>Manifest generato</h2><textarea id="publisherManifest" readonly placeholder="Il manifest appare qui dopo il controllo"></textarea><h3>Login Velora</h3><p>I siti pubblicati devono usare il bridge VELORA_AUTH_REQUEST. Il portale risponde con VELORA_AUTH_STATE quando l'utente e collegato.</p></div></div></section>
     <section id="m-tools" class="module${active("tools")}"><div class="split"><div class="panel"><h2>Velora Tools</h2><textarea id="toolInput" placeholder="Testo, wallet, link o contenuto"></textarea><pre id="toolOutput"></pre></div><div class="panel"><h2>40 strumenti</h2><div id="toolList" class="list"></div></div></div></section>
     <section id="m-forum" class="module${active("forum")}"><div class="panel"><h2>Forum e chat</h2><textarea id="forumDraft" placeholder="Scrivi nel forum"></textarea><button class="primary" onclick="sendForum()">Invia</button><button onclick="loadForum()">Aggiorna</button><div id="forumMessages" class="list"></div></div></section>
     <section id="m-mining" class="module${active("mining")}"><div class="grid"><div class="panel span-4"><h2>Comando remoto</h2><select id="targetSelect"></select><select id="miningCoin"><option>XMR</option><option>ZEPH</option></select><select id="miningProfile"><option>ECO</option><option>BILANCIATO</option><option>POTENZA</option></select><div class="three"><button onclick="execMining('MINING_START')">Avvia</button><button onclick="execMining('MINING_PAUSE')">Pausa</button><button onclick="execMining('MINING_STOP')">Stop</button></div></div><div class="panel span-8"><h2>Mining dashboard</h2><div id="miningBox" class="list"></div><h3>Storico payout</h3><div id="miningHistory" class="list"></div></div></div></section>
@@ -3629,8 +3808,15 @@ function publicZonePage(address: string, row: any) {
   const description = String(manifest.description ?? "Zona Velora pubblicata");
   const status = row?.release_status ?? row?.zone_status ?? "NON_TROVATA";
   return `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} - Velora</title>
-  <style>body{margin:0;background:#071524;color:#f6fbff;font-family:Georgia,serif}main{max-width:900px;margin:auto;padding:60px 22px}.card{border:1px solid #35506a;border-radius:28px;background:#0d2236;padding:34px}a{color:#f1d68b}</style></head>
-  <body><main><div class="card"><p>Zona Velora</p><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p><p>Indirizzo: <b>${escapeHtml(address)}</b></p><p>Stato: ${escapeHtml(String(status))}</p><p>Release: ${escapeHtml(String(row?.version ?? "non disponibile"))}</p><p>CID: ${escapeHtml(String(row?.content_cid ?? "non disponibile"))}</p><a href="/download">Scarica Velora per aprire e usare il sito</a></div></main></body></html>`;
+  <style>body{margin:0;background:#071524;color:#f6fbff;font-family:Georgia,serif}main{max-width:900px;margin:auto;padding:60px 22px}.card{border:1px solid #35506a;border-radius:28px;background:#0d2236;padding:34px}button,a{color:#f1d68b}button{border:1px solid #5b7794;border-radius:14px;background:#10283d;padding:12px 16px;font:inherit;cursor:pointer}.auth{margin-top:18px;padding:14px 16px;border-radius:18px;background:#07131f;color:#dce8f2}</style></head>
+  <body><main><div class="card"><p>Zona Velora</p><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p><p>Indirizzo: <b>${escapeHtml(address)}</b></p><p>Stato: ${escapeHtml(String(status))}</p><p>Release: ${escapeHtml(String(row?.version ?? "non disponibile"))}</p><p>CID: ${escapeHtml(String(row?.content_cid ?? "non disponibile"))}</p><button data-velora-auth>Accedi con Velora</button><div class="auth" data-velora-auth-state>Accesso Velora non ancora collegato</div><p><a href="/portal">Apri portale Velora</a></p></div></main><script>
+(() => {
+  const state = document.querySelector("[data-velora-auth-state]");
+  const requestAuth = (event) => { event.preventDefault(); window.parent.postMessage({ type: "VELORA_AUTH_REQUEST", zone: ${JSON.stringify(address)} }, "*"); };
+  document.addEventListener("click", (event) => { const target = event.target && event.target.closest ? event.target.closest("[data-velora-auth],a[href^='velora://auth']") : null; if (target) requestAuth(event); });
+  window.addEventListener("message", (event) => { if (!event.data || event.data.type !== "VELORA_AUTH_STATE") return; state.textContent = event.data.loggedIn ? "Account Velora collegato: " + (event.data.mail || event.data.username || "utente") : "Accedi dal portale Velora per continuare"; });
+})();
+</script></body></html>`;
 }
 
 async function buildAdminOverview() {
@@ -3644,6 +3830,29 @@ async function buildAdminOverview() {
     pool.query("SELECT COUNT(*)::int AS count FROM forum_moderation_actions").catch(() => ({ rows: [{ count: 0 }] }))
   ]);
   return { dashboard, mining, payoutRequests: payouts.rows, nodes, sites: sites.rows[0], reports: reports.rows[0] };
+}
+
+async function buildOpsStatus() {
+  const pool = requirePool();
+  const [latestBackup, latestRestoreTest, latestUptime, counts] = await Promise.all([
+    pool.query("SELECT id, status, backup_ref, note, created_at FROM database_backup_events WHERE kind='BACKUP' ORDER BY created_at DESC LIMIT 1").catch(() => ({ rows: [] })),
+    pool.query("SELECT id, status, backup_ref, restore_target, note, created_at FROM database_backup_events WHERE kind='RESTORE_TEST' ORDER BY created_at DESC LIMIT 1").catch(() => ({ rows: [] })),
+    pool.query("SELECT id, source, status, latency_ms, error_message, checked_at FROM uptime_checks ORDER BY checked_at DESC LIMIT 1").catch(() => ({ rows: [] })),
+    pool.query("SELECT kind, status, COUNT(*)::int AS count FROM database_backup_events GROUP BY kind,status ORDER BY kind,status").catch(() => ({ rows: [] }))
+  ]);
+  return {
+    backupConfigured: Boolean(process.env.HEROKU_API_KEY || process.env.DATABASE_BACKUP_URL || process.env.DATABASE_URL),
+    backupMode: process.env.DATABASE_BACKUP_URL ? "external" : "heroku-postgres",
+    latestBackup: latestBackup.rows[0] ?? null,
+    latestRestoreTest: latestRestoreTest.rows[0] ?? null,
+    latestUptime: latestUptime.rows[0] ?? null,
+    backupEvents: counts.rows,
+    recommendedActions: [
+      latestBackup.rows[0] ? "Backup registrato" : "Registra primo backup verificato",
+      latestRestoreTest.rows[0] ? "Restore test registrato" : "Esegui e registra test restore",
+      latestUptime.rows[0] ? "Uptime monitor attivo" : "Esegui primo controllo uptime"
+    ]
+  };
 }
 
 function escapeHtml(value: string) {
