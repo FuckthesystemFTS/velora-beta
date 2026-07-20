@@ -3657,17 +3657,36 @@ async function publicPage(page: string) {
       <article><b>Publisher Pro</b><span>19,90 EUR/mese</span><p>Supporto e strumenti avanzati.</p></article>
     </div></section>` : page === "status" ? `
     <section class="panel"><h1>Status</h1><p>API pubblica: <a href="/health">/health</a>. Download Windows e macOS Apple Silicon: operativi.</p></section>` : `
-    <section class="hero">
-      <span>VELORA - L'UPPER WEB</span>
-      <h1>Sopra Internet, il futuro e ora</h1>
-      <p>Sicuro<br>Veloce<br>Semplice<br>Per tutti</p>
-      <div><a class="cta" href="/portal">Apri Velora</a><a class="ghost" href="/download">Download avanzati</a></div>
-      <strong>Velora non sostituisce Internet<br>Lo eleva</strong>
+    <section class="hero home-hero">
+      <div class="hero-copy">
+        <span>VELORA - L'UPPER WEB</span>
+        <h1>Un nuovo livello per navigare, pubblicare e proteggere contenuti</h1>
+        <p class="lead">Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.</p>
+        <div class="hero-actions"><a class="cta" href="/portal">Apri Velora</a><a class="ghost" href="/download">Scarica app beta</a></div>
+        <div class="trust-row"><span>HTTPS attivo</span><span>Account unico</span><span>Beta pubblica</span></div>
+      </div>
+      <div class="hero-orbit" aria-hidden="true">
+        <div class="planet">V</div>
+        <div class="ring ring-one"></div>
+        <div class="ring ring-two"></div>
+        <div class="signal s1">Search</div>
+        <div class="signal s2">Cloud</div>
+        <div class="signal s3">Mail</div>
+        <div class="signal s4">Tools</div>
+      </div>
     </section>
-    <section class="cards">
-      <article><b>Upper Web</b><p>Zone verificate, ricerca interna e identita Velora.</p></article>
-      <article><b>Publisher</b><p>Pubblica siti nativi Velora con SDK e review.</p></article>
-      <article><b>Guardian</b><p>Cloud cifrato, multifirma e protezione dati automatica.</p></article>
+    <section class="quick-grid">
+      <article><span>01</span><b>Entra dal portale</b><p>Usa Velora subito da browser, iPhone, Android, Windows e Mac senza installazione obbligatoria.</p></article>
+      <article><span>02</span><b>Cerca zone e contenuti</b><p>Apri siti pubblicati, contenuti Oceano e strumenti Velora da un motore interno dedicato.</p></article>
+      <article><span>03</span><b>Pubblica siti Velora</b><p>Prepara manifest, login Velora e validazione per rendere online progetti e applicazioni.</p></article>
+      <article><span>04</span><b>Proteggi account e cloud</b><p>Guardian, audit, policy cookie, privacy e controlli sicurezza sono integrati nel sistema.</p></article>
+    </section>
+    <section class="panel manifesto">
+      <div>
+        <span>VISIONE</span>
+        <h2>Velora non sostituisce Internet. Lo eleva.</h2>
+      </div>
+      <p>Un ambiente sopra il web tradizionale dove identita, pubblicazione, ricerca, comunicazione e protezione lavorano insieme invece di restare separati.</p>
     </section>`;
   return `<!doctype html>
 <html lang="it">
@@ -3686,24 +3705,33 @@ async function publicPage(page: string) {
   <meta name="twitter:card" content="summary_large_image" />
   <style>
     :root{color:#f7fbff;background:#06111f;font-family:Aptos,Segoe UI,sans-serif}
-    body{margin:0;background:radial-gradient(circle at 70% 0,rgba(216,174,85,.24),transparent 30%),radial-gradient(circle at 15% 15%,rgba(47,155,255,.25),transparent 34%),linear-gradient(180deg,#0b2138,#03070d);min-height:100vh}
+    body{margin:0;background:radial-gradient(circle at 82% 5%,rgba(241,214,139,.22),transparent 28%),radial-gradient(circle at 12% 12%,rgba(69,178,255,.28),transparent 33%),linear-gradient(140deg,#071522 0%,#0b2740 44%,#03070d 100%);min-height:100vh}
     header,main,footer{max-width:1180px;margin:auto;padding:24px}
     nav{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
     nav a{color:#c8d9ea;text-decoration:none}
     nav a:first-child{color:#f1d68b;font-weight:900;letter-spacing:.18em}
-    .hero,.panel,.cards article{border:1px solid rgba(150,202,255,.18);background:rgba(10,30,50,.72);border-radius:30px;box-shadow:0 28px 80px rgba(0,0,0,.42)}
-    .hero{padding:clamp(36px,8vw,92px);margin-top:28px}
-    .hero span{color:#f1d68b;letter-spacing:.18em}
-    h1{font-size:clamp(42px,8vw,92px);line-height:.95;margin:14px 0;letter-spacing:-.05em}
+    .hero,.panel,.cards article,.quick-grid article{border:1px solid rgba(150,202,255,.18);background:rgba(10,30,50,.72);border-radius:30px;box-shadow:0 28px 80px rgba(0,0,0,.42)}
+    .hero{padding:clamp(28px,6vw,72px);margin-top:28px;position:relative;overflow:hidden}
+    .home-hero{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(300px,.72fr);gap:36px;align-items:center;min-height:620px}
+    .hero:before{content:"";position:absolute;inset:auto -14% -38% 35%;height:420px;background:radial-gradient(circle,rgba(92,200,255,.18),transparent 65%);pointer-events:none}
+    .hero span,.manifesto span{color:#f1d68b;letter-spacing:.18em;font-weight:900}
+    h1{font-size:clamp(48px,7vw,88px);line-height:.9;margin:14px 0;letter-spacing:-.06em;max-width:900px}
+    h2{font-size:clamp(30px,4vw,54px);line-height:.98;margin:8px 0 0;letter-spacing:-.04em}
     p,dd{color:#c8d9ea;font-size:18px}
+    .lead{font-size:clamp(18px,2vw,22px);max-width:760px;line-height:1.45}
     .cta,.ghost{display:inline-flex;margin:18px 12px 0 0;padding:14px 18px;border-radius:16px;text-decoration:none;border:1px solid rgba(216,174,85,.5)}
     .cta{background:linear-gradient(135deg,#f1d68b,#d8ae55);color:#06111f;font-weight:900}
     .ghost{color:#f1d68b}
+    .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.hero-actions .cta,.hero-actions .ghost{margin-top:0}
+    .trust-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}.trust-row span{letter-spacing:0;color:#dcecff;border:1px solid rgba(150,202,255,.25);background:rgba(255,255,255,.06);border-radius:999px;padding:9px 12px;font-size:14px}
+    .hero-orbit{position:relative;min-height:430px;display:grid;place-items:center}.planet{width:152px;height:152px;border-radius:42px;display:grid;place-items:center;background:linear-gradient(135deg,#f1d68b,#906a20);color:#06111f;font-size:72px;font-weight:1000;box-shadow:0 0 70px rgba(241,214,139,.35)}.ring{position:absolute;border:1px solid rgba(241,214,139,.38);border-radius:50%}.ring-one{width:310px;height:310px}.ring-two{width:420px;height:210px;transform:rotate(-18deg)}.signal{position:absolute;border:1px solid rgba(150,202,255,.28);background:rgba(5,18,30,.86);border-radius:16px;padding:10px 13px;color:#e9f5ff;font-weight:900}.s1{top:42px;left:32px}.s2{right:10px;top:118px}.s3{left:8px;bottom:95px}.s4{right:48px;bottom:36px}
     .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:22px}
+    .quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-top:22px}.quick-grid article{padding:22px;min-height:220px}.quick-grid span{color:#f1d68b;font-weight:1000}.quick-grid b{display:block;font-size:24px;line-height:1.05;margin:18px 0 10px}.quick-grid p{font-size:16px}
+    .manifesto{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:24px;align-items:end;margin-top:22px}.manifesto p{font-size:22px;line-height:1.35;margin:0}
     .cards article,.panel{padding:24px}
     dt{color:#f1d68b;margin-top:14px}
     dd{margin-left:0;overflow-wrap:anywhere}
-    footer{color:#9fb4c8}.cookie-banner{position:fixed;left:18px;right:18px;bottom:18px;z-index:30;display:none;gap:14px;align-items:center;justify-content:space-between;max-width:980px;margin:auto;padding:16px;border:1px solid rgba(216,174,85,.45);border-radius:22px;background:rgba(6,17,31,.96);box-shadow:0 20px 70px rgba(0,0,0,.45)}.cookie-banner.show{display:flex}.cookie-banner p{margin:0;font-size:15px}.cookie-banner button{width:auto;border:0;border-radius:14px;background:#f1d68b;color:#06111f;padding:11px 16px;font-weight:900;cursor:pointer}@media(max-width:720px){.cookie-banner{display:none;flex-direction:column;align-items:flex-start}.cookie-banner.show{display:flex}}
+    footer{color:#9fb4c8}.cookie-banner{position:fixed;left:18px;right:18px;bottom:18px;z-index:30;display:none;gap:14px;align-items:center;justify-content:space-between;max-width:980px;margin:auto;padding:16px;border:1px solid rgba(216,174,85,.45);border-radius:22px;background:rgba(6,17,31,.96);box-shadow:0 20px 70px rgba(0,0,0,.45)}.cookie-banner.show{display:flex}.cookie-banner p{margin:0;font-size:15px}.cookie-banner button{width:auto;border:0;border-radius:14px;background:#f1d68b;color:#06111f;padding:11px 16px;font-weight:900;cursor:pointer}@media(max-width:900px){.home-hero{grid-template-columns:1fr;min-height:auto}.hero-orbit{min-height:300px}.ring-one{width:240px;height:240px}.ring-two{width:320px;height:160px}.quick-grid,.manifesto{grid-template-columns:1fr}.quick-grid article{min-height:0}}@media(max-width:720px){header,main,footer{padding:16px}.hero{border-radius:24px}.hero-orbit{display:none}h1{font-size:42px}.cookie-banner{display:none;flex-direction:column;align-items:flex-start}.cookie-banner.show{display:flex}}
   </style>
 </head>
 <body>
