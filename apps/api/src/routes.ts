@@ -77,7 +77,7 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get("/apple.webmanifest", async (_request, reply) => reply.type("application/manifest+json; charset=utf-8").send(appleWebManifest()));
   app.get("/apple-sw.js", async (_request, reply) => reply.type("application/javascript; charset=utf-8").send(appleServiceWorker()));
   app.get("/download", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("download")));
-  app.get("/mobile", async (_request, reply) => reply.type("text/html; charset=utf-8").send(mobilePage()));
+  app.get("/mobile", async (_request, reply) => reply.redirect("/portal", 302));
   app.get("/apple", async (_request, reply) => reply.type("text/html; charset=utf-8").send(applePortalPage("home")));
   app.get("/apple/:section", async (request, reply) => reply.type("text/html; charset=utf-8").send(applePortalPage(routeParam(request.params, "section"))));
   app.get("/portal", async (_request, reply) => reply.type("text/html; charset=utf-8").send(applePortalPage("home")));
@@ -2906,7 +2906,7 @@ function adminPage() {
         document.getElementById('mobileRelease').innerHTML =
           '<div class="cards"><div class="card"><b>Versione</b><span>' + escapeHtml(manifest.version || '-') + '</span></div><div class="card"><b>Guardian</b><span>' + escapeHtml(guardian.status || '-') + '</span></div><div class="card"><b>Mobile</b><span>' + escapeHtml(platforms['mobile-pwa']?.available ? 'Attivo' : 'Verifica') + '</span></div><div class="card"><b>Canale</b><span>' + escapeHtml(manifest.channel || '-') + '</span></div></div>' +
           table(rows, [['platform','Piattaforma'],['available','Disponibile'],['size','Byte'],['sha256','SHA-256'],['downloadUrl','Link']]) +
-          '<p><a class="primary" href="/mobile" target="_blank">Apri Velora Mobile</a> <a href="/download" target="_blank">Pagina download</a></p>';
+          '<p><a class="primary" href="/portal" target="_blank">Apri Portale Velora</a> <a href="/download" target="_blank">Pagina download</a></p>';
       } catch (error) { showError('mobileRelease', error); }
     }
     async function loadPayouts() {
@@ -3069,10 +3069,10 @@ function adminPage() {
 
 function mobileWebManifest() {
   return JSON.stringify({
-    name: "Velora Mobile",
+    name: "Velora Portal",
     short_name: "Velora",
     description: "Velora su mobile con account, strumenti, Cloud, forum, mining monitor e nodi.",
-    start_url: "/mobile",
+    start_url: "/portal",
     scope: "/",
     display: "standalone",
     background_color: "#06131f",
@@ -3082,9 +3082,9 @@ function mobileWebManifest() {
       { src: "/favicon.ico", sizes: "64x64", type: "image/svg+xml", purpose: "any maskable" }
     ],
     shortcuts: [
-      { name: "Cloud", url: "/mobile#cloud" },
-      { name: "Mining", url: "/mobile#mining" },
-      { name: "Tools", url: "/mobile#tools" }
+      { name: "Cloud", url: "/portal/cloud" },
+      { name: "Mining", url: "/portal/mining" },
+      { name: "Tools", url: "/portal/tools" }
     ]
   });
 }
@@ -3092,24 +3092,24 @@ function mobileWebManifest() {
 function mobileServiceWorker() {
   return `
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open('velora-mobile-v1').then(cache => cache.addAll(['/mobile','/app.webmanifest','/favicon.ico'])));
+  event.waitUntil(caches.open('velora-mobile-v2').then(cache => cache.addAll(['/portal','/app.webmanifest','/favicon.ico'])));
   self.skipWaiting();
 });
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
-  event.respondWith(fetch(request).catch(() => caches.match(request).then(response => response || caches.match('/mobile'))));
+  event.respondWith(fetch(request).catch(() => caches.match(request).then(response => response || caches.match('/portal'))));
 });
 `;
 }
 
 function appleWebManifest() {
   return JSON.stringify({
-    name: "Velora Portal for Apple",
+    name: "Velora Portal",
     short_name: "Velora",
-    description: "Portale Apple-first per usare Velora da Mac, iPhone e iPad.",
-    start_url: "/apple",
+    description: "Portale universale per usare Velora da Windows, Mac, iPhone, iPad e Android.",
+    start_url: "/portal",
     scope: "/",
     display: "standalone",
     background_color: "#06131f",
@@ -3120,10 +3120,10 @@ function appleWebManifest() {
       { src: "/favicon.ico", sizes: "64x64", type: "image/svg+xml", purpose: "any maskable" }
     ],
     shortcuts: [
-      { name: "Search", url: "/apple/search" },
-      { name: "Cloud", url: "/apple/cloud" },
-      { name: "Mining", url: "/apple/mining" },
-      { name: "Tools", url: "/apple/tools" }
+      { name: "Search", url: "/portal/search" },
+      { name: "Cloud", url: "/portal/cloud" },
+      { name: "Mining", url: "/portal/mining" },
+      { name: "Tools", url: "/portal/tools" }
     ],
     screenshots: [
       { src: "/favicon.ico", sizes: "64x64", type: "image/svg+xml", form_factor: "narrow" },
@@ -3134,8 +3134,8 @@ function appleWebManifest() {
 
 function appleServiceWorker() {
   return `
-const CACHE = 'velora-apple-v1';
-const CORE = ['/apple','/apple/home','/apple/search','/apple/tools','/apple/help','/apple.webmanifest','/favicon.ico'];
+const CACHE = 'velora-portal-v2';
+const CORE = ['/portal','/portal/home','/portal/search','/portal/tools','/portal/help','/apple.webmanifest','/favicon.ico'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
   self.skipWaiting();
@@ -3152,7 +3152,7 @@ self.addEventListener('fetch', event => {
     const copy = response.clone();
     caches.open(CACHE).then(cache => cache.put(request, copy)).catch(() => undefined);
     return response;
-  }).catch(() => caches.match(request).then(response => response || caches.match('/apple'))));
+  }).catch(() => caches.match(request).then(response => response || caches.match('/portal'))));
 });
 `;
 }
@@ -3168,7 +3168,7 @@ function applePortalPage(section: string) {
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Velora">
   <link rel="manifest" href="/apple.webmanifest">
-  <title>Velora Portal for Apple</title>
+  <title>Velora Portal</title>
   <style>
     :root{color-scheme:dark;--bg:#06131f;--panel:#10273b;--panel2:#071a2a;--line:#294963;--gold:#e8c469;--ink:#f5f8fb;--muted:#a9bdd0;--green:#2de0a0;--red:#ff9b8d;--blue:#5cc8ff}
     :root.light{color-scheme:light;--bg:#eef6fb;--panel:#ffffff;--panel2:#f3f8fc;--line:#c7d8e7;--ink:#0b1823;--muted:#526879;--gold:#a77917;--green:#087d57;--red:#b64030;--blue:#116d9e}
@@ -3183,15 +3183,15 @@ function applePortalPage(section: string) {
     .hero{padding:26px;margin-bottom:16px}.kicker{color:var(--gold);font-size:12px;font-weight:1000;letter-spacing:.15em;text-transform:uppercase}h1{font-size:clamp(36px,6vw,72px);line-height:.92;margin:10px 0 14px}h2{margin:0 0 12px;font-size:23px}h3{margin:16px 0 8px}p{margin:0 0 10px;color:var(--muted);line-height:1.45}
     .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}.span-3{grid-column:span 3}.span-4{grid-column:span 4}.span-6{grid-column:span 6}.span-8{grid-column:span 8}.span-12{grid-column:1/-1}.panel{padding:16px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.card,.item{border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(255,255,255,.045);padding:13px}.light .card,.light .item{background:#fff}.card b{display:block;color:var(--gold);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.card span{font-size:22px;font-weight:1000}.list{display:grid;gap:10px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.muted{color:var(--muted)}.ok{color:var(--green)}.bad{color:var(--red)}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;word-break:break-all}
     .module{display:none}.module.active{display:block}.mail-layout{display:grid;grid-template-columns:180px minmax(220px,320px) minmax(0,1fr);gap:12px}.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}.drop{border:1px dashed var(--line);border-radius:18px;padding:18px;text-align:center}
-    .mobile-tabs{display:none;position:fixed;left:10px;right:10px;bottom:10px;z-index:20;background:rgba(6,19,31,.92);border:1px solid var(--line);border-radius:24px;padding:8px;grid-template-columns:repeat(5,1fr);gap:6px;backdrop-filter:blur(18px)}.mobile-tabs button{border:0;border-radius:16px;padding:10px 4px;background:transparent;color:var(--ink);font-size:12px}.mobile-tabs button.active{background:var(--gold);color:#06131f;font-weight:900}
+    .mobile-tabs{display:none;position:fixed;left:10px;right:10px;bottom:10px;z-index:20;background:rgba(6,19,31,.94);border:1px solid var(--line);border-radius:24px;padding:8px;grid-template-columns:repeat(5,1fr);gap:6px;backdrop-filter:blur(18px);box-shadow:0 18px 55px rgba(0,0,0,.35)}.mobile-tabs button{border:0;border-radius:16px;padding:10px 4px;background:transparent;color:var(--ink);font-size:12px;text-align:center}.mobile-tabs button.active{background:var(--gold);color:#06131f;font-weight:900}
     :focus-visible{outline:3px solid var(--blue);outline-offset:2px}@media(prefers-reduced-motion:no-preference){.panel,.hero{animation:rise .28s ease both}@keyframes rise{from{opacity:.4;transform:translateY(8px)}to{opacity:1;transform:none}}}
-    @media(max-width:980px){.app{grid-template-columns:1fr}.sidebar{display:none}.toolbar{grid-template-columns:1fr auto auto}.content{padding-bottom:92px}.grid,.mail-layout,.split{display:block}.panel{margin-bottom:14px}.span-3,.span-4,.span-6,.span-8,.span-12{grid-column:auto}.mobile-tabs{display:grid}h1{font-size:40px}}
+    @media(max-width:980px){body{background:linear-gradient(180deg,#06131f,#081927 78%)}.app{grid-template-columns:1fr}.sidebar{display:none}.toolbar{grid-template-columns:1fr auto;gap:8px;padding:10px;top:0}.toolbar button:nth-of-type(2){display:none}.toolbar button:nth-of-type(3){display:none}.searchbox,input,textarea,select{font-size:16px;border-radius:15px}.content{padding:12px 10px 96px}.hero{padding:18px;border-radius:24px;margin-bottom:12px}.grid,.mail-layout,.split,.row,.three{display:grid;grid-template-columns:1fr;gap:10px}.panel{margin-bottom:12px;border-radius:22px;padding:14px}.span-3,.span-4,.span-6,.span-8,.span-12{grid-column:auto}.mobile-tabs{display:grid}h1{font-size:38px}h2{font-size:21px}.cards{grid-template-columns:1fr}.item button,.panel button{width:100%;text-align:center;margin-top:6px}iframe{height:68vh!important}}
   </style>
 </head>
 <body>
   <div class="app">
     <aside class="sidebar">
-      <div class="brand"><div class="logo">V</div><div><b>VELORA</b><span>Portal for Apple</span></div></div>
+      <div class="brand"><div class="logo">V</div><div><b>VELORA</b><span>Portal universale</span></div></div>
       <nav class="nav" id="sideNav"></nav>
       <div class="bottom"><button onclick="installHelp()">Installa</button><button onclick="logout()">Esci</button></div>
     </aside>
@@ -3204,9 +3204,9 @@ function applePortalPage(section: string) {
       </header>
       <main class="content">
         <section class="hero">
-          <div class="kicker">Apple-first</div>
-          <h1>Velora senza DMG</h1>
-          <p>Usa Velora da Safari su Mac, iPhone e iPad. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS condividono gli stessi dati del client desktop.</p>
+          <div class="kicker">Portale universale</div>
+          <h1>Velora senza installazione</h1>
+          <p>Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.</p>
           <p id="sessionState">Accesso non effettuato</p>
         </section>
         ${appleModulesHtml(initialSection)}
@@ -3233,7 +3233,8 @@ function applePortalPage(section: string) {
     function card(k,v){return '<div class="card"><b>'+esc(k)+'</b><span>'+esc(v)+'</span></div>'}
     function item(t,b){return '<div class="item"><b>'+esc(t)+'</b><p>'+esc(b||'')+'</p></div>'}
     function renderNav(){const html=modules.map(([id,label])=>'<button class="'+(id===currentSection?'active':'')+'" onclick="showModule(\\''+id+'\\')">'+label+'</button>').join('');sideNav.innerHTML=html;mobileNav.innerHTML=modules.filter(x=>['home','search','cloud','mining','tools'].includes(x[0])).map(([id,label])=>'<button class="'+(id===currentSection?'active':'')+'" onclick="showModule(\\''+id+'\\')">'+label+'</button>').join('')}
-    function showModule(id){currentSection=id;document.querySelectorAll('.module').forEach(el=>el.classList.toggle('active',el.id==='m-'+id));history.replaceState(null,'','/apple/'+id);renderNav();loadModule(id)}
+    function portalBase(){return location.pathname.startsWith('/apple')?'/apple':'/portal'}
+    function showModule(id){currentSection=id;document.querySelectorAll('.module').forEach(el=>el.classList.toggle('active',el.id==='m-'+id));history.replaceState(null,'',portalBase()+'/'+id);renderNav();loadModule(id)}
     function saveSession(data){localStorage.setItem(tokenKey,data.accessToken||data.token||'');if(data.refreshToken)localStorage.setItem(refreshKey,data.refreshToken);localStorage.setItem(userKey,JSON.stringify(data.user||{}))}
     function sessionUser(){try{return JSON.parse(localStorage.getItem(userKey)||'{}')}catch{return {}}}
     function setSessionState(){const u=sessionUser();sessionState.textContent=token()?'Connesso come '+(u.username||'utente Velora'):'Accesso non effettuato';profileButton.textContent=token()?(u.username||'Profilo'):'Profilo'}
@@ -3248,7 +3249,7 @@ function applePortalPage(section: string) {
     window.addEventListener('message',async event=>{if(event.data?.type!=='VELORA_AUTH_REQUEST')return;if(!token()){showModule('home');authMsg.textContent='Accedi o registrati per collegare il sito al tuo account Velora';event.source?.postMessage({type:'VELORA_AUTH_STATE',loggedIn:false,reason:'LOGIN_REQUIRED'},'*');return}try{const state=await api('/api/v1/auth/portal-session',{headers:headers()});event.source?.postMessage({type:'VELORA_AUTH_STATE',loggedIn:true,username:state.user.username,mail:state.mail.address,identityLevel:state.user.identityLevel,scopes:state.scopes},'*')}catch(e){event.source?.postMessage({type:'VELORA_AUTH_STATE',loggedIn:false,reason:e.message},'*')}})
     async function runGlobalSearch(){showModule('search');searchQuery.value=globalSearch.value;await loadSearch()}
     async function loadHome(){try{const [health,guardian,manifest]=await Promise.all([api('/health'),api('/api/v1/guardian/status'),api('/release-manifest.json')]);homeCards.innerHTML=card('Rete',health.ok?'Online':'Verifica')+card('Guardian',guardian.status||'Protetto')+card('Versione',manifest.version||'Beta')+card('PWA','Installabile');}catch(e){homeCards.innerHTML=item('Stato',e.message)}}
-    async function loadSearch(){try{const q=searchQuery.value||globalSearch.value||'velora';const data=await api('/api/v1/search?q='+encodeURIComponent(q));const html=(data.results||[]).map(r=>'<div class="item"><b>'+esc(r.title||r.address)+'</b><p>'+esc(r.description||r.summary||'')+'</p><button onclick="openZone(\\''+esc(r.address||r.zone||'')+'\\')">Apri</button></div>').join('')||item('Search','Nessun risultato');searchResults.innerHTML=html;if(document.getElementById('oceanoResults'))oceanoResults.innerHTML=html;}catch(e){const html=item('Search',e.message);searchResults.innerHTML=html;if(document.getElementById('oceanoResults'))oceanoResults.innerHTML=html;}}
+    async function loadSearch(){try{const q=(currentSection==='oceano'?oceanoQuery.value:searchQuery.value)||globalSearch.value||'velora';const data=await api('/api/v1/search?q='+encodeURIComponent(q));const html=(data.results||[]).map(r=>'<div class="item"><b>'+esc(r.title||r.address)+'</b><p>'+esc(r.description||r.summary||'')+'</p><button onclick="openZone(\\''+esc(r.address||r.zone||'')+'\\')">Apri</button></div>').join('')||item('Search','Nessun risultato');searchResults.innerHTML=html;if(document.getElementById('oceanoResults'))oceanoResults.innerHTML=html;}catch(e){const html=item('Search',e.message);searchResults.innerHTML=html;if(document.getElementById('oceanoResults'))oceanoResults.innerHTML=html;}}
     function openZone(address){browserAddress.value=address;showModule('browser');browserFrame.src='/zone/'+encodeURIComponent(address)}
     async function loadMail(){if(!token())return mailList.innerHTML=item('VeloMail','Accedi per leggere la posta');try{const [account,inbox]=await Promise.all([api('/api/v1/mail/account',{headers:headers()}),api('/api/v1/mail/inbox',{headers:headers()})]);mailAccount.textContent=account.address||'';mailList.innerHTML=(inbox.messages||[]).map(m=>'<button onclick="openMail(\\''+m.id+'\\')">'+esc(m.subject||'Messaggio')+'</button>').join('')||'<p>Nessun messaggio</p>'}catch(e){mailList.innerHTML=item('VeloMail',e.message)}}
     async function openMail(id){try{selectedMessageId=id;const m=await api('/api/v1/mail/messages/'+id,{headers:headers()});mailOpen.innerHTML='<h3>'+esc(m.subject||'Messaggio')+'</h3><p class="mono">'+esc(m.from_address||m.from||'')+'</p><p>'+esc(m.body||m.body_ciphertext||'Messaggio cifrato')+'</p>'}catch(e){mailOpen.innerHTML=item('Errore',e.message)}}
@@ -3286,9 +3287,12 @@ function appleModulesHtml(initialSection: string) {
   return `
     <section id="m-home" class="module${active("home")}">
       <div class="grid">
-        <div class="panel span-8"><h2>Primo accesso</h2><div class="row"><input id="authUser" placeholder="Username"><input id="authPass" type="password" placeholder="Password"></div><div class="row"><button class="primary" onclick="login()">Accedi</button><button onclick="register()">Registrati</button></div><p id="authMsg"></p></div>
-        <div class="panel span-4"><h2>Installa</h2><p>Mac: Safari, File, Aggiungi al Dock.</p><p>iPhone e iPad: Condividi, Aggiungi alla schermata Home.</p><button onclick="installHelp()">Guida installazione</button></div>
+        <div class="panel span-8"><h2>Accedi a Velora</h2><p>Un solo account per portale, desktop, siti pubblicati, VeloMail, Cloud e forum.</p><div class="row"><input id="authUser" autocomplete="username" placeholder="Username"><input id="authPass" autocomplete="current-password" type="password" placeholder="Password"></div><div class="row"><button class="primary" onclick="login()">Accedi</button><button onclick="register()">Crea account</button></div><p id="authMsg"></p></div>
+        <div class="panel span-4"><h2>Uso rapido</h2><p>Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.</p><button onclick="installHelp()">Come salvarlo</button></div>
         <div class="panel span-12"><h2>Dashboard</h2><div id="homeCards" class="cards"></div></div>
+        <div class="panel span-4"><h2>Esplora</h2><p>Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.</p><button onclick="showModule('search')">Cerca ora</button></div>
+        <div class="panel span-4"><h2>Comunica</h2><p>VeloMail e forum usano la stessa sessione del tuo account.</p><button onclick="showModule('mail')">Apri VeloMail</button></div>
+        <div class="panel span-4"><h2>Pubblica</h2><p>Il Publisher guidato genera un manifest valido e riduce gli errori.</p><button onclick="showModule('publisher')">Prepara sito</button></div>
       </div>
     </section>
     <section id="m-search" class="module${active("search")}"><div class="panel"><h2>Search</h2><div class="row"><input id="searchQuery" placeholder="Cerca zone, Oceano, tools, guide"><button class="primary" onclick="loadSearch()">Cerca</button></div><div id="searchResults" class="list"></div></div></section>
@@ -3486,7 +3490,7 @@ async function publicPage(page: string) {
   const macosChecksumUrl = "/downloads/macos/Velora_0.1.0_aarch64.dmg.sha256.txt";
   const macosIntelDownloadUrl = "/downloads/macos/Velora_0.1.0_x86_64.dmg";
   const macosIntelChecksumUrl = "/downloads/macos/Velora_0.1.0_x86_64.dmg.sha256.txt";
-  const mobileUrl = "/apple";
+  const mobileUrl = "/portal";
   const mobilePackageUrl = `/downloads/mobile/${mobilePwaName}`;
   const mobileChecksumUrl = `/downloads/mobile/${mobilePwaChecksumName}`;
   const releaseManifest = await readReleaseManifestSafe();
@@ -3499,31 +3503,29 @@ async function publicPage(page: string) {
   const zephyrWalletUrl = "https://zephyrprotocol.com/";
   const body = page === "download" ? `
     <section class="panel">
-      <h1>Scarica Velora Beta</h1>
-      <p>Beta pubblica per Windows, macOS, iOS e Android</p>
+      <h1>Entra in Velora</h1>
+      <p>Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.</p>
       <section class="cards">
         <article>
-          <b>Velora Portal for Apple</b>
-          <p>Funziona direttamente da Safari su Mac, iPhone e iPad. Nessun DMG necessario</p>
-          <a class="cta" href="${mobileUrl}">Apri Velora su Apple</a>
-          <a class="ghost" href="${mobilePackageUrl}">Scarica pacchetto PWA</a>
-          <a class="ghost" href="${mobileChecksumUrl}">Verifica SHA-256</a>
+          <b>Portale Velora</b>
+          <p>Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati</p>
+          <a class="cta" href="${mobileUrl}">Apri Velora</a>
         </article>
         <article>
           <b>Windows</b>
-          <p>Installer MSI per PC Windows x64</p>
+          <p>Installer MSI per mining, nodo locale e funzioni desktop avanzate</p>
           <a class="cta" href="${downloadUrl}">Scarica per Windows</a>
           <a class="ghost" href="${checksumUrl}">Verifica SHA-256</a>
         </article>
         <article>
           <b>Mac Apple Silicon</b>
-          <p>Per Mac con chip Apple M1, M2, M3, M4 o successivi</p>
+          <p>Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS</p>
           <a class="cta" href="${macosDownloadUrl}">Scarica per Mac Apple Silicon</a>
           <a class="ghost" href="${macosChecksumUrl}">Verifica SHA-256</a>
         </article>
         <article>
           <b>Mac Intel</b>
-          <p>Per Mac che mostra Processore Intel in Informazioni su questo Mac</p>
+          <p>Beta avanzata per Mac Intel non notarizzata</p>
           <a class="cta" href="${macosIntelDownloadUrl}">Scarica per Mac Intel</a>
           <a class="ghost" href="${macosIntelChecksumUrl}">Verifica SHA-256</a>
         </article>
@@ -3537,7 +3539,7 @@ async function publicPage(page: string) {
         <dt>Versione</dt><dd>0.1.0 Beta</dd>
         <dt>Data build</dt><dd>${escapeHtml(releasedAt)}</dd>
         <dt>Stato Mac</dt><dd>Beta con firma ad hoc, non ancora notarizzata da Apple</dd>
-        <dt>Apple Portal</dt><dd>Mac, iPhone e iPad via Safari<br>${escapeHtml(String(mobile.sha256 ?? "hash in aggiornamento"))}</dd>
+        <dt>Portale</dt><dd>Windows, Mac, iPhone, iPad e Android<br>Nessuna installazione obbligatoria</dd>
         <dt>Apple Silicon</dt><dd>${escapeHtml(String(macArm.size ?? 0))} byte<br>${escapeHtml(String(macArm.sha256 ?? "hash in aggiornamento"))}</dd>
         <dt>Intel</dt><dd>${escapeHtml(String(macIntel.size ?? 0))} byte<br>${escapeHtml(String(macIntel.sha256 ?? "hash in aggiornamento"))}</dd>
       </dl>
@@ -3606,7 +3608,7 @@ async function publicPage(page: string) {
       <span>VELORA - L'UPPER WEB</span>
       <h1>Sopra Internet, il futuro e ora</h1>
       <p>Sicuro<br>Veloce<br>Semplice<br>Per tutti</p>
-      <div><a class="cta" href="/apple">Apri Velora su Apple</a><a class="ghost" href="/download">Scarica Velora Beta</a></div>
+      <div><a class="cta" href="/portal">Apri Velora</a><a class="ghost" href="/download">Download avanzati</a></div>
       <strong>Velora non sostituisce Internet<br>Lo eleva</strong>
     </section>
     <section class="cards">
@@ -3643,7 +3645,7 @@ async function publicPage(page: string) {
   </style>
 </head>
 <body>
-  <header><nav><a href="/">VELORA</a><a href="/download">Download</a><a href="/apple">Apple Portal</a><a href="/what-is-velora">Upper Web</a><a href="/security">Sicurezza</a><a href="/publishers">Publisher</a><a href="/publishers/guide">Guida</a><a href="/developers">Developers</a><a href="/pricing">Pricing</a><a href="/status">Status</a></nav></header>
+  <header><nav><a href="/">VELORA</a><a href="/portal">Portale</a><a href="/download">Download</a><a href="/what-is-velora">Upper Web</a><a href="/security">Sicurezza</a><a href="/publishers">Publisher</a><a href="/publishers/guide">Guida</a><a href="/developers">Developers</a><a href="/pricing">Pricing</a><a href="/status">Status</a></nav></header>
   <main>${body}</main>
   <footer>Sei pronto per Velora? Non vedo l'ora.</footer>
 </body>
@@ -3796,7 +3798,21 @@ async function findPublicZone(address: string) {
        LIMIT 1`,
       [address]
     );
-    return result.rows[0];
+    if (result.rows[0]) {
+      return result.rows[0];
+    }
+    const indexed = await requirePool().query(
+      `SELECT address, category, slug, title, description, searchable_text AS body, publisher,
+              age_rating, family_safe, trust_level, content_cid, release_version AS version,
+              availability, updated_at AS created_at, 'INDEXED' AS release_status
+       FROM search_documents
+       WHERE address = $1
+       LIMIT 1`,
+      [address]
+    );
+    if (indexed.rows[0]) {
+      return { ...indexed.rows[0], manifest_json: { title: indexed.rows[0].title, description: indexed.rows[0].description, category: indexed.rows[0].category } };
+    }
   } catch {
     return undefined;
   }
@@ -3807,9 +3823,11 @@ function publicZonePage(address: string, row: any) {
   const title = String(manifest.title ?? row?.address ?? address);
   const description = String(manifest.description ?? "Zona Velora pubblicata");
   const status = row?.release_status ?? row?.zone_status ?? "NON_TROVATA";
+  const body = String(row?.body ?? "").trim();
+  const found = Boolean(row);
   return `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} - Velora</title>
-  <style>body{margin:0;background:#071524;color:#f6fbff;font-family:Georgia,serif}main{max-width:900px;margin:auto;padding:60px 22px}.card{border:1px solid #35506a;border-radius:28px;background:#0d2236;padding:34px}button,a{color:#f1d68b}button{border:1px solid #5b7794;border-radius:14px;background:#10283d;padding:12px 16px;font:inherit;cursor:pointer}.auth{margin-top:18px;padding:14px 16px;border-radius:18px;background:#07131f;color:#dce8f2}</style></head>
-  <body><main><div class="card"><p>Zona Velora</p><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p><p>Indirizzo: <b>${escapeHtml(address)}</b></p><p>Stato: ${escapeHtml(String(status))}</p><p>Release: ${escapeHtml(String(row?.version ?? "non disponibile"))}</p><p>CID: ${escapeHtml(String(row?.content_cid ?? "non disponibile"))}</p><button data-velora-auth>Accedi con Velora</button><div class="auth" data-velora-auth-state>Accesso Velora non ancora collegato</div><p><a href="/portal">Apri portale Velora</a></p></div></main><script>
+  <style>body{margin:0;background:linear-gradient(160deg,#071524,#0b2236 62%,#09131d);color:#f6fbff;font-family:ui-serif,Georgia,serif}main{max-width:980px;margin:auto;padding:clamp(22px,5vw,60px)}.card{border:1px solid #35506a;border-radius:28px;background:rgba(13,34,54,.94);padding:clamp(22px,4vw,38px);box-shadow:0 24px 80px rgba(0,0,0,.28)}h1{font-size:clamp(32px,8vw,68px);line-height:.95;margin:8px 0 16px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.pill{border:1px solid #4d6b86;border-radius:999px;padding:8px 11px;color:#dce8f2;background:#07131f}.body{white-space:pre-wrap;line-height:1.62;font-size:18px;color:#eaf3fb;margin-top:22px}button,a{color:#f1d68b}button{border:1px solid #5b7794;border-radius:14px;background:#10283d;padding:12px 16px;font:inherit;cursor:pointer}.auth{margin-top:18px;padding:14px 16px;border-radius:18px;background:#07131f;color:#dce8f2}.notfound{border-color:#8b5b5b;background:#2d1720}</style></head>
+  <body><main><div class="card ${found ? "" : "notfound"}"><p>Zona Velora</p><h1>${escapeHtml(found ? title : "Zona non trovata")}</h1><p>${escapeHtml(found ? description : "Questa zona non e ancora pubblicata o indicizzata. Torna al portale e cerca un risultato disponibile.")}</p><div class="meta"><span class="pill">Indirizzo: ${escapeHtml(address)}</span><span class="pill">Stato: ${escapeHtml(String(status))}</span><span class="pill">Release: ${escapeHtml(String(row?.version ?? "non disponibile"))}</span></div>${body ? `<div class="body">${escapeHtml(body.slice(0, 12000))}</div>` : ""}<button data-velora-auth>Accedi con Velora</button><div class="auth" data-velora-auth-state>Accesso Velora non ancora collegato</div><p><a href="/portal">Apri portale Velora</a></p></div></main><script>
 (() => {
   const state = document.querySelector("[data-velora-auth-state]");
   const requestAuth = (event) => { event.preventDefault(); window.parent.postMessage({ type: "VELORA_AUTH_REQUEST", zone: ${JSON.stringify(address)} }, "*"); };
