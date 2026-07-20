@@ -1,52 +1,52 @@
-﻿{
-    "version":  "0.1.0-beta",
-    "channel":  "beta",
-    "releasedAt":  "2026-07-19T14:35:18.5225024Z",
-    "platforms":  {
-                      "windows-x64":  {
-                                          "available":  true,
-                                          "signed":  false,
-                                          "filename":  "Velora_0.1.0_x64_en-US.msi",
-                                          "downloadUrl":  "https://www.webvelora.it/downloads/windows/Velora_0.1.0_x64_en-US.msi",
-                                          "size":  5083136,
-                                          "sha256":  "E2494848C2B8437AB3A6919201EED3D305C3715ACB07F0C025A2AF6F88216A68"
-                                      },
-                      "macos-universal":  {
-                                              "available":  false,
-                                              "signed":  false,
-                                              "notarized":  false,
-                                              "filename":  "",
-                                              "downloadUrl":  "",
-                                              "size":  0,
-                                              "sha256":  ""
-                                          },
-                      "macos-aarch64":  {
-                                            "available":  true,
-                                            "signed":  false,
-                                            "notarized":  false,
-                                            "filename":  "Velora_0.1.0_aarch64.dmg",
-                                            "downloadUrl":  "https://www.webvelora.it/downloads/macos/Velora_0.1.0_aarch64.dmg",
-                                            "size":  10344450,
-                                            "sha256":  "64FEBDFC93D77B4FD0E84DFFCE7D646A40CF5F5FD515E6A541FBB567840ABF45"
-                                        },
-                      "macos-x86_64":  {
-                                           "available":  true,
-                                           "signed":  false,
-                                           "notarized":  false,
-                                           "filename":  "Velora_0.1.0_x86_64.dmg",
-                                           "downloadUrl":  "https://www.webvelora.it/downloads/macos/Velora_0.1.0_x86_64.dmg",
-                                           "size":  10865430,
-                                           "sha256":  "A57E1005241C624736D09D3B51E24515CF0CE2502E7361F717C858BAFFD1AAA6"
-                                       },
-                      "mobile-pwa":  {
-                                         "available":  true,
-                                         "signed":  false,
-                                         "notarized":  false,
-                                         "filename":  "velora-mobile-pwa-0.1.0-beta.zip",
-                                         "launchUrl":  "https://www.webvelora.it/portal",
-                                         "downloadUrl":  "https://www.webvelora.it/downloads/mobile/velora-mobile-pwa-0.1.0-beta.zip",
-                                         "size":  939,
-                                         "sha256":  "D7F1F19E0337A3099929E090BCDA15ACD1EA74C4695FEEE64CBC55375014A681"
-                                     }
-                  }
+{
+  "version": "0.1.0-beta",
+  "channel": "beta",
+  "releasedAt": "2026-07-19T14:35:18.5225024Z",
+  "platforms": {
+    "windows-x64": {
+      "available": true,
+      "signed": false,
+      "filename": "Velora_0.1.0_x64_en-US.msi",
+      "downloadUrl": "https://www.webvelora.it/downloads/windows/Velora_0.1.0_x64_en-US.msi",
+      "size": 5083136,
+      "sha256": "E2494848C2B8437AB3A6919201EED3D305C3715ACB07F0C025A2AF6F88216A68"
+    },
+    "macos-universal": {
+      "available": false,
+      "signed": false,
+      "notarized": false,
+      "filename": "",
+      "downloadUrl": "",
+      "size": 0,
+      "sha256": ""
+    },
+    "macos-aarch64": {
+      "available": true,
+      "signed": false,
+      "notarized": false,
+      "filename": "Velora_0.1.0_aarch64.dmg",
+      "downloadUrl": "https://www.webvelora.it/downloads/macos/Velora_0.1.0_aarch64.dmg",
+      "size": 10344450,
+      "sha256": "64FEBDFC93D77B4FD0E84DFFCE7D646A40CF5F5FD515E6A541FBB567840ABF45"
+    },
+    "macos-x86_64": {
+      "available": true,
+      "signed": false,
+      "notarized": false,
+      "filename": "Velora_0.1.0_x86_64.dmg",
+      "downloadUrl": "https://www.webvelora.it/downloads/macos/Velora_0.1.0_x86_64.dmg",
+      "size": 10865430,
+      "sha256": "A57E1005241C624736D09D3B51E24515CF0CE2502E7361F717C858BAFFD1AAA6"
+    },
+    "mobile-pwa": {
+      "available": true,
+      "signed": false,
+      "notarized": false,
+      "filename": "velora-mobile-pwa-0.1.0-beta.zip",
+      "launchUrl": "https://www.webvelora.it/portal",
+      "downloadUrl": "https://www.webvelora.it/downloads/mobile/velora-mobile-pwa-0.1.0-beta.zip",
+      "size": 932,
+      "sha256": "B80AB8AE78DA9D5A08234245589EB88164D532604193384117CDC3AD55FDBCC7"
+    }
+  }
 }

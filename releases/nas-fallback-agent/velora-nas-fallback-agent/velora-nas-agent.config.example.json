@@ -1,4 +1,4 @@
-﻿{
+{
   "agentName": "velora-nas-fallback-agent",
   "version": "0.1.0-beta",
   "mode": "fallback-storage-only",
