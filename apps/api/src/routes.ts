@@ -3224,7 +3224,7 @@ function applePortalPage(section: string) {
     let currentForumSlug='global-chat';
     let deferredInstall=null;
     const modules=[
-      ['home','Home'],['browser','Browser'],['search','Search'],['mail','VeloMail'],['cloud','Cloud'],['publisher','Publisher'],['tools','Tools'],['forum','Forum'],['mining','Mining'],['nodes','Nodi'],['nas','NAS'],['oceano','Oceano'],['help','Guida'],['settings','Impostazioni'],['admin','Admin']
+      ['home','Home'],['browser','Browser'],['search','Search'],['mail','VeloMail'],['cloud','Cloud'],['publisher','Publisher'],['tools','Tools'],['forum','Forum'],['mining','Mining'],['nodes','Nodi'],['nas','NAS'],['oceano','Oceano'],['help','Guida'],['settings','Impostazioni']
     ];
     function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
     function token(){return localStorage.getItem(tokenKey)||''}
@@ -3269,8 +3269,7 @@ function applePortalPage(section: string) {
     async function preparePublisher(){if(!token())return publisherStatus.textContent='Accedi per preparare una pubblicazione';try{const payload={address:publisherAddress.value.trim(),title:publisherTitle.value.trim(),description:publisherDescription.value.trim(),category:publisherCategory.value,keywords:publisherKeywords.value.split(',').map(x=>x.trim()).filter(Boolean),version:publisherVersion.value.trim()||'1.0.0',entryFile:'index.html',languages:['it'],ageRating:'EVERYONE',familySafe:true,permissions:{externalNetwork:false,clipboardRead:false,clipboardWrite:false,notifications:false,fileDownload:false},allowedExternalOrigins:[]};const data=await api('/api/v1/sites/portal-prepare',{method:'POST',headers:headers(true),body:JSON.stringify(payload)});publisherStatus.innerHTML=(data.ready?'<b class="ok">Pronto per pubblicare</b>':'<b class="bad">Correggi prima di pubblicare</b>')+'<pre>'+esc(JSON.stringify(data,null,2))+'</pre>';publisherManifest.value=JSON.stringify(data.manifest,null,2)}catch(e){publisherStatus.textContent=e.message}}
     async function queuePublish(){if(!token())return publisherStatus.textContent='Accedi per continuare';try{await preparePublisher();await api('/api/v1/execution/operations',{method:'POST',headers:headers(true),body:JSON.stringify({operation:'PUBLISH_VALIDATE',targetType:'SERVER',idempotencyKey:'publish-'+Date.now(),payload:{address:publisherAddress.value.trim(),source:'portal'}})});publisherStatus.innerHTML+='<p class="ok">Validazione registrata. Per caricare file locali usa desktop, NAS agent o nodo autorizzato.</p>'}catch(e){publisherStatus.textContent=e.message}}
     async function loadPublisher(){publisherStatus.textContent='Compila i campi. Il portale genera manifest valido e guida il passaggio successivo senza usare account paralleli.'}
-    async function loadAdmin(){adminFrame.src='/admin'}
-    function loadModule(id){if(id==='home')loadHome();if(id==='search'||id==='oceano')loadSearch();if(id==='mail')loadMail();if(id==='cloud')loadCloud();if(id==='tools')loadTools();if(id==='forum')loadForum();if(id==='mining')loadMining();if(id==='nodes'||id==='nas')loadNodes();if(id==='publisher')loadPublisher();if(id==='admin')loadAdmin();}
+    function loadModule(id){if(id==='home')loadHome();if(id==='search'||id==='oceano')loadSearch();if(id==='mail')loadMail();if(id==='cloud')loadCloud();if(id==='tools')loadTools();if(id==='forum')loadForum();if(id==='mining')loadMining();if(id==='nodes'||id==='nas')loadNodes();if(id==='publisher')loadPublisher();}
     document.addEventListener('keydown',e=>{if(!e.metaKey)return;if(e.key.toLowerCase()==='k'){e.preventDefault();globalSearch.focus()}if(e.key.toLowerCase()==='l'){e.preventDefault();globalSearch.focus()}if(e.key.toLowerCase()==='r'){e.preventDefault();loadModule(currentSection)}if(e.key.toLowerCase()==='t'){e.preventDefault();showModule('browser')}})
     if(localStorage.getItem('velora.apple.theme')==='light')toggleTheme();renderNav();setSessionState();refreshSession();showModule(initialSection);
   </script>
@@ -3280,7 +3279,7 @@ function applePortalPage(section: string) {
 
 function normalizeAppleSection(section: string) {
   const normalized = String(section || "home").toLowerCase().replace(/[^a-z0-9-]/g, "");
-  return ["home","browser","search","mail","cloud","publisher","tools","forum","mining","nodes","nas","oceano","help","settings","admin"].includes(normalized) ? normalized : "home";
+  return ["home","browser","search","mail","cloud","publisher","tools","forum","mining","nodes","nas","oceano","help","settings"].includes(normalized) ? normalized : "home";
 }
 
 function appleModulesHtml(initialSection: string) {
@@ -3309,7 +3308,6 @@ function appleModulesHtml(initialSection: string) {
     <section id="m-oceano" class="module${active("oceano")}"><div class="panel"><h2>Oceano</h2><p>Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.</p><div class="row"><input id="oceanoQuery" placeholder="Cerca in Oceano" oninput="searchQuery.value=this.value"><button onclick="loadSearch()">Cerca</button></div><div id="oceanoResults"></div></div></section>
     <section id="m-help" class="module${active("help")}"><div class="panel"><h2>Guida</h2><div class="cards"><div class="card"><b>Mac</b><span>Dock</span><p>Safari, File, Aggiungi al Dock.</p></div><div class="card"><b>iPhone</b><span>Home</span><p>Condividi, Aggiungi alla schermata Home.</p></div><div class="card"><b>Offline</b><span>Shell</span><p>La shell e la guida restano disponibili. Dati live richiedono rete.</p></div></div></div></section>
     <section id="m-settings" class="module${active("settings")}"><div class="panel"><h2>Impostazioni</h2><button onclick="toggleTheme()">Cambia tema</button><button onclick="Notification.requestPermission()">Consenti notifiche</button><button onclick="logout()">Logout</button></div></section>
-    <section id="m-admin" class="module${active("admin")}"><div class="panel"><h2>Admin autorizzato</h2><iframe id="adminFrame" title="Velora Admin" style="width:100%;height:75vh;border:1px solid var(--line);border-radius:20px"></iframe></div></section>
   `;
 }
 

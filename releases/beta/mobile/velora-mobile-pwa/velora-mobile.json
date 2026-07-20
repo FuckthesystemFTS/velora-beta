@@ -1,6 +1,6 @@
 ﻿{
   "name": "Velora Mobile Beta",
-  "url": "https://velora-beta-20260629-9a9196313b42.herokuapp.com/mobile",
+  "url": "https://www.webvelora.it/mobile",
   "platforms": ["ios", "android", "mobile-web"],
   "install": "Apri il link e aggiungi Velora alla schermata Home"
 }

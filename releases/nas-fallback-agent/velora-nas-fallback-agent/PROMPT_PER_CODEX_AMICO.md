@@ -8,7 +8,7 @@ Obiettivo:
 - Non aprire porte pubbliche
 - Non configurare mining
 - Non configurare proxy/VPN/shell remota
-- Abilitare solo traffico outbound HTTPS verso https://velora-beta-20260629-9a9196313b42.herokuapp.com
+- Abilitare solo traffico outbound HTTPS verso https://www.webvelora.it
 - Creare servizio di avvio se il sistema lo supporta, altrimenti creare script start/stop
 - Generare report finale con path, utente di esecuzione, limiti storage, stato health e prossimi passaggi
 

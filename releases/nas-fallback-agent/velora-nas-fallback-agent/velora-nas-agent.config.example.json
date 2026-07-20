@@ -4,7 +4,7 @@
   "mode": "fallback-storage-only",
   "defaultEnabled": false,
   "requiresExplicitEnrollment": true,
-  "veloraApiUrl": "https://velora-beta-20260629-9a9196313b42.herokuapp.com",
+  "veloraApiUrl": "https://www.webvelora.it",
   "storageRoot": "/volume1/Velora/velora-nas-fallback/data",
   "maxStorageGb": 2000,
   "cloudQuotaBytesPerUser": 26214400,
