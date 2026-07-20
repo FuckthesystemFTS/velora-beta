@@ -59,6 +59,12 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(sensible);
   app.addHook("onRequest", async (request, reply) => {
     const pathname = request.url.split("?")[0] ?? "/";
+    reply.header("X-Content-Type-Options", "nosniff");
+    reply.header("Referrer-Policy", "strict-origin-when-cross-origin");
+    reply.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    if (request.headers["x-forwarded-proto"] === "https" || request.protocol === "https") {
+      reply.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
     if (pathname === "/health" || pathname.startsWith("/downloads/")) {
       return;
     }
@@ -101,6 +107,7 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get("/faq", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("faq")));
   app.get("/status", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("status")));
   app.get("/legal/privacy", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("privacy")));
+  app.get("/legal/cookie", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("cookie")));
   app.get("/legal/terms", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("terms")));
   app.get("/z/:address", async (request, reply) => {
     const address = routeParam(request.params, "address");
@@ -231,15 +238,16 @@ export async function registerRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/auth/register", async (request, reply) => {
     const body = request.body as { username?: string; password?: string };
-    if (!body?.username || !body?.password) {
+    const username = normalizeVeloraUsername(body?.username);
+    if (!username || !body?.password) {
       return reply.badRequest("username and password are required");
     }
 
-    if (await repository.findUserByUsername(body.username)) {
+    if (await repository.findUserByUsername(username)) {
       return reply.conflict("username already exists");
     }
 
-    const user = await repository.createUser(body.username, hashPassword(body.password));
+    const user = await repository.createUser(username, hashPassword(body.password));
     const recovery = await ensureRecoveryToken(user.id, true);
     const mail = await repository.getOrCreateVeloMailAccount(user.id, user.username);
     const session = await repository.createAuthSession(user.id);
@@ -256,7 +264,8 @@ export async function registerRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/auth/login", async (request, reply) => {
     const body = request.body as { username?: string; password?: string };
-    const user = body?.username ? await repository.findUserByUsername(body.username) : undefined;
+    const username = normalizeVeloraUsername(body?.username);
+    const user = username ? await findLoginUser(username, body?.username, repository) : undefined;
     if (!user || user.password !== hashPassword(body?.password ?? "")) {
       return reply.unauthorized("invalid credentials");
     }
@@ -3182,7 +3191,7 @@ function applePortalPage(section: string) {
     .content{padding:18px;max-width:1500px;margin:auto}.hero,.panel{border:1px solid var(--line);border-radius:28px;background:linear-gradient(150deg,rgba(16,39,59,.92),rgba(7,26,42,.88));box-shadow:0 18px 70px rgba(0,0,0,.22)}.light .hero,.light .panel{background:linear-gradient(150deg,#fff,#f6fbff);box-shadow:0 18px 50px rgba(44,78,104,.12)}
     .hero{padding:26px;margin-bottom:16px}.kicker{color:var(--gold);font-size:12px;font-weight:1000;letter-spacing:.15em;text-transform:uppercase}h1{font-size:clamp(36px,6vw,72px);line-height:.92;margin:10px 0 14px}h2{margin:0 0 12px;font-size:23px}h3{margin:16px 0 8px}p{margin:0 0 10px;color:var(--muted);line-height:1.45}
     .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}.span-3{grid-column:span 3}.span-4{grid-column:span 4}.span-6{grid-column:span 6}.span-8{grid-column:span 8}.span-12{grid-column:1/-1}.panel{padding:16px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.card,.item{border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(255,255,255,.045);padding:13px}.light .card,.light .item{background:#fff}.card b{display:block;color:var(--gold);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.card span{font-size:22px;font-weight:1000}.list{display:grid;gap:10px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.muted{color:var(--muted)}.ok{color:var(--green)}.bad{color:var(--red)}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;word-break:break-all}
-    .module{display:none}.module.active{display:block}.mail-layout{display:grid;grid-template-columns:180px minmax(220px,320px) minmax(0,1fr);gap:12px}.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}.drop{border:1px dashed var(--line);border-radius:18px;padding:18px;text-align:center}.hidden{display:none!important}
+    .module{display:none}.module.active{display:block}.mail-layout{display:grid;grid-template-columns:180px minmax(220px,320px) minmax(0,1fr);gap:12px}.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}.drop{border:1px dashed var(--line);border-radius:18px;padding:18px;text-align:center}.hidden{display:none!important}.username-wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,.18);overflow:hidden}.username-wrap input{border:0;background:transparent;border-radius:0}.username-suffix{padding:0 14px;color:var(--gold);font-weight:900;white-space:nowrap}
     .mobile-tabs{display:none;position:fixed;left:10px;right:10px;bottom:10px;z-index:20;background:rgba(6,19,31,.94);border:1px solid var(--line);border-radius:24px;padding:8px;grid-template-columns:repeat(5,1fr);gap:6px;backdrop-filter:blur(18px);box-shadow:0 18px 55px rgba(0,0,0,.35)}.mobile-tabs button{border:0;border-radius:16px;padding:10px 4px;background:transparent;color:var(--ink);font-size:12px;text-align:center}.mobile-tabs button.active{background:var(--gold);color:#06131f;font-weight:900}
     :focus-visible{outline:3px solid var(--blue);outline-offset:2px}@media(prefers-reduced-motion:no-preference){.panel,.hero{animation:rise .28s ease both}@keyframes rise{from{opacity:.4;transform:translateY(8px)}to{opacity:1;transform:none}}}
     @media(max-width:980px){body{background:linear-gradient(180deg,#06131f,#081927 78%)}.app{grid-template-columns:1fr}.sidebar{display:none}.toolbar{grid-template-columns:1fr auto;gap:8px;padding:10px;top:0}.toolbar button:nth-of-type(2){display:none}.toolbar button:nth-of-type(3){display:none}.searchbox,input,textarea,select{font-size:16px;border-radius:15px}.content{padding:12px 10px 96px}.hero{padding:18px;border-radius:24px;margin-bottom:12px}.grid,.mail-layout,.split,.row,.three{display:grid;grid-template-columns:1fr;gap:10px}.panel{margin-bottom:12px;border-radius:22px;padding:14px}.span-3,.span-4,.span-6,.span-8,.span-12{grid-column:auto}.mobile-tabs{display:grid}h1{font-size:38px}h2{font-size:21px}.cards{grid-template-columns:1fr}.item button,.panel button{width:100%;text-align:center;margin-top:6px}iframe{height:68vh!important}}
@@ -3239,8 +3248,9 @@ function applePortalPage(section: string) {
     function sessionUser(){try{return JSON.parse(localStorage.getItem(userKey)||'{}')}catch{return {}}}
     function setSessionState(){const u=sessionUser();const logged=Boolean(token());sessionState.textContent=logged?'Connesso come '+(u.username||'utente Velora'):'Accesso non effettuato';profileButton.textContent=logged?(u.username||'Profilo'):'Profilo';if(document.getElementById('authForm'))authForm.classList.toggle('hidden',logged);if(document.getElementById('accountBox'))accountBox.classList.toggle('hidden',!logged);if(document.getElementById('accountName'))accountName.textContent=u.username||'utente Velora';if(document.getElementById('accountMail'))accountMail.textContent=(u.mail||u.username||'account')+'';}
     function clearAuthFields(){if(document.getElementById('authPass'))authPass.value='';if(document.getElementById('authUser'))authUser.value='';}
-    async function register(){try{const data=await api('/api/v1/auth/register',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:authUser.value,password:authPass.value})});saveSession(data);localStorage.setItem(userKey,JSON.stringify({...data.user,mail:data.mail?.address}));clearAuthFields();authMsg.textContent='Account creato';setSessionState();loadModule(currentSection)}catch(e){authMsg.textContent=e.message}}
-    async function login(){try{const data=await api('/api/v1/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:authUser.value,password:authPass.value})});saveSession(data);localStorage.setItem(userKey,JSON.stringify({...data.user,mail:data.mail?.address}));clearAuthFields();authMsg.textContent='Accesso effettuato';setSessionState();loadModule(currentSection)}catch(e){authMsg.textContent=e.message}}
+    function authUsername(){return (authUser.value||'').trim().replace(/@velora$/i,'')+'@velora'}
+    async function register(){try{const data=await api('/api/v1/auth/register',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:authUsername(),password:authPass.value})});saveSession(data);localStorage.setItem(userKey,JSON.stringify({...data.user,mail:data.mail?.address}));clearAuthFields();authMsg.textContent='Account creato';setSessionState();loadModule(currentSection)}catch(e){authMsg.textContent=e.message}}
+    async function login(){try{const data=await api('/api/v1/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username:authUsername(),password:authPass.value})});saveSession(data);localStorage.setItem(userKey,JSON.stringify({...data.user,mail:data.mail?.address}));clearAuthFields();authMsg.textContent='Accesso effettuato';setSessionState();loadModule(currentSection)}catch(e){authMsg.textContent=e.message}}
     async function refreshSession(){const refreshToken=localStorage.getItem(refreshKey);if(!refreshToken)return;try{const data=await api('/api/v1/auth/refresh',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({refreshToken})});saveSession({...data,user:sessionUser()});setSessionState()}catch{}}
     function logout(){localStorage.removeItem(tokenKey);localStorage.removeItem(refreshKey);localStorage.removeItem(userKey);setSessionState();showModule('home')}
     function toggleTheme(){document.documentElement.classList.toggle('light');document.body.classList.toggle('light');localStorage.setItem('velora.apple.theme',document.documentElement.classList.contains('light')?'light':'dark')}
@@ -3287,7 +3297,7 @@ function appleModulesHtml(initialSection: string) {
   return `
     <section id="m-home" class="module${active("home")}">
       <div class="grid">
-        <div class="panel span-8"><h2>Accedi a Velora</h2><p>Un solo account per portale, desktop, siti pubblicati, VeloMail, Cloud e forum.</p><div id="authForm"><div class="row"><input id="authUser" autocomplete="username" placeholder="Username"><input id="authPass" autocomplete="current-password" type="password" placeholder="Password"></div><div class="row"><button class="primary" onclick="login()">Accedi</button><button onclick="register()">Crea account</button></div></div><div id="accountBox" class="hidden"><div class="card"><b>Account attivo</b><span id="accountName">utente Velora</span><p id="accountMail"></p></div><button onclick="logout()">Esci</button></div><p id="authMsg"></p></div>
+        <div class="panel span-8"><h2>Accedi a Velora</h2><p>Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.</p><div id="authForm"><div class="row"><label class="username-wrap"><input id="authUser" autocomplete="username" placeholder="nomeutente"><span class="username-suffix">@velora</span></label><input id="authPass" autocomplete="current-password" type="password" placeholder="Password"></div><div class="row"><button class="primary" onclick="login()">Accedi</button><button onclick="register()">Crea account</button></div></div><div id="accountBox" class="hidden"><div class="card"><b>Account attivo</b><span id="accountName">utente Velora</span><p id="accountMail"></p></div><button onclick="logout()">Esci</button></div><p id="authMsg"></p></div>
         <div class="panel span-4"><h2>Uso rapido</h2><p>Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.</p><button onclick="installHelp()">Come salvarlo</button></div>
         <div class="panel span-12"><h2>Dashboard</h2><div id="homeCards" class="cards"></div></div>
         <div class="panel span-4"><h2>Esplora</h2><p>Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.</p><button onclick="showModule('search')">Cerca ora</button></div>
@@ -3330,7 +3340,7 @@ function mobilePage() {
     main{padding:16px 14px 96px;max-width:760px;margin:auto}.hero,.panel{border:1px solid var(--line);border-radius:26px;background:linear-gradient(160deg,rgba(16,39,59,.95),rgba(7,27,43,.9));box-shadow:0 18px 60px rgba(0,0,0,.28)}
     .hero{padding:22px;margin-bottom:14px}.hero p{color:var(--muted);line-height:1.45}.kicker{color:var(--gold);font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}h1{font-size:34px;line-height:.96;margin:10px 0 12px}h2{margin:0 0 12px;font-size:21px}h3{margin:14px 0 8px}p{margin:0 0 10px}
     .panel{padding:16px;margin:14px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(255,255,255,.045);padding:12px}.card b{display:block;color:var(--gold);font-size:12px;text-transform:uppercase;letter-spacing:.08em}.card span{font-size:18px;font-weight:900}
-    input,textarea,button,select{width:100%;border:1px solid var(--line);border-radius:16px;background:#06121d;color:var(--ink);padding:13px 14px;font:inherit}textarea{min-height:110px;resize:vertical}button{font-weight:900;background:linear-gradient(135deg,#264a64,#11263a);cursor:pointer}button.primary{background:linear-gradient(135deg,var(--gold),#f7df91);border:0;color:#07131e}
+    input,textarea,button,select{width:100%;border:1px solid var(--line);border-radius:16px;background:#06121d;color:var(--ink);padding:13px 14px;font:inherit}textarea{min-height:110px;resize:vertical}button{font-weight:900;background:linear-gradient(135deg,#264a64,#11263a);cursor:pointer}button.primary{background:linear-gradient(135deg,var(--gold),#f7df91);border:0;color:#07131e}.username-wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;border:1px solid var(--line);border-radius:16px;background:#06121d;overflow:hidden}.username-wrap input{border:0;background:transparent;border-radius:0}.username-suffix{padding:0 14px;color:var(--gold);font-weight:900;white-space:nowrap}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stack{display:grid;gap:10px}.muted{color:var(--muted)}.ok{color:var(--green)}.bad{color:var(--red)}.list{display:grid;gap:10px}.item{border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:12px;background:rgba(0,0,0,.13)}.item small{color:var(--muted)}
     nav.mobile{position:fixed;left:10px;right:10px;bottom:10px;z-index:10;background:rgba(6,19,31,.92);border:1px solid var(--line);border-radius:24px;padding:8px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;backdrop-filter:blur(18px)}nav.mobile button{padding:10px 4px;border-radius:16px;font-size:12px}nav.mobile button.active{background:linear-gradient(135deg,var(--gold),#f6df95);color:#07131e}
     section[data-page]{display:none}section[data-page].active{display:block}.install{display:none}.install.show{display:block}
@@ -3353,7 +3363,7 @@ function mobilePage() {
     <section data-page="home" class="active">
       <div class="panel stack">
         <h2>Account Velora</h2>
-        <input id="username" placeholder="Username">
+        <label class="username-wrap"><input id="username" placeholder="nomeutente" autocomplete="username"><span class="username-suffix">@velora</span></label>
         <input id="email" placeholder="Email per nuova registrazione">
         <input id="password" type="password" placeholder="Password">
         <div class="row"><button class="primary" onclick="login()">Entra</button><button onclick="register()">Crea account</button></div>
@@ -3443,8 +3453,9 @@ function mobilePage() {
     function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
     async function api(path,options){ const res=await fetch(path,options||{}); const text=await res.text(); let data=text; try{ data=text?JSON.parse(text):{}; }catch{} if(!res.ok) throw new Error(typeof data==='object' && data.message ? data.message : text || res.status); return data; }
     function showPage(page,button){ document.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===page)); document.querySelectorAll('nav.mobile button').forEach(el=>el.classList.remove('active')); if(button) button.classList.add('active'); location.hash=page; if(page==='tools') loadTools(); if(page==='cloud') loadCloud(); if(page==='mining') loadMining(); if(page==='nodes') loadNodes(); if(page==='forum') loadForum(); }
-    async function register(){ try{ const body={username:username.value.trim(),email:email.value.trim(),password:password.value}; const data=await api('/api/v1/auth/register',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}); saveSession(data); setMsg('authMsg','Account creato','ok'); boot(); }catch(e){ setMsg('authMsg',e.message,'bad'); } }
-    async function login(){ try{ const body={username:username.value.trim(),password:password.value}; const data=await api('/api/v1/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}); saveSession(data); setMsg('authMsg','Accesso effettuato','ok'); boot(); }catch(e){ setMsg('authMsg',e.message,'bad'); } }
+    function authUsername(){ return (username.value||'').trim().replace(/@velora$/i,'') + '@velora'; }
+    async function register(){ try{ const body={username:authUsername(),email:email.value.trim(),password:password.value}; const data=await api('/api/v1/auth/register',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}); saveSession(data); setMsg('authMsg','Account creato','ok'); boot(); }catch(e){ setMsg('authMsg',e.message,'bad'); } }
+    async function login(){ try{ const body={username:authUsername(),password:password.value}; const data=await api('/api/v1/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}); saveSession(data); setMsg('authMsg','Accesso effettuato','ok'); boot(); }catch(e){ setMsg('authMsg',e.message,'bad'); } }
     function saveSession(data){ localStorage.setItem(tokenKey,data.accessToken||data.token||''); localStorage.setItem(userKey, JSON.stringify(data.user||{})); }
     function logout(){ localStorage.removeItem(tokenKey); localStorage.removeItem(userKey); boot(); }
     async function boot(){ const user=JSON.parse(localStorage.getItem(userKey)||'{}'); sessionState.textContent=token() ? 'Connesso come ' + (user.username||'utente Velora') : 'Accesso non effettuato'; await loadHome(); }
@@ -3481,8 +3492,21 @@ async function publicPage(page: string) {
     faq: "FAQ",
     status: "Status",
     privacy: "Privacy",
+    cookie: "Cookie Policy",
     terms: "Termini"
   }[page] ?? "VELORA";
+  const publicBaseUrl = "https://www.webvelora.it";
+  const canonicalPath = page === "home" ? "/" : page === "privacy" ? "/legal/privacy" : page === "cookie" ? "/legal/cookie" : page === "terms" ? "/legal/terms" : `/${page}`;
+  const canonicalUrl = `${publicBaseUrl}${canonicalPath}`;
+  const description = {
+    home: "Velora e una piattaforma Upper Web con portale universale, account unico, siti pubblicati, cloud, VeloMail, tools, nodi e sicurezza Guardian.",
+    download: "Scarica Velora Beta per Windows, Mac, mobile PWA e NAS fallback con hash SHA-256 e stato versione.",
+    security: "Velora Guardian protegge cloud, account e operazioni sensibili con livelli di sicurezza, audit e controlli admin.",
+    publishers: "Strumenti e guida per pubblicare siti e applicazioni nell'Upper Web Velora con manifest, login e validazione.",
+    privacy: "Informativa privacy Velora per account, portale, cloud, mail, publishing e funzioni beta.",
+    cookie: "Cookie Policy Velora per cookie tecnici, sessione, sicurezza e preferenze essenziali.",
+    terms: "Termini d'uso Velora per portale, beta, download, publishing, cloud e community."
+  }[page] ?? "Velora Upper Web: portale, browser, search, cloud, VeloMail, publishing, nodi e sicurezza.";
   const downloadUrl = "/downloads/windows/Velora_0.1.0_x64_en-US.msi";
   const checksumUrl = "/downloads/windows/Velora_0.1.0_x64_en-US.msi.sha256.txt";
   const macosDownloadUrl = "/downloads/macos/Velora_0.1.0_aarch64.dmg";
@@ -3573,6 +3597,36 @@ async function publicPage(page: string) {
       <a class="ghost" href="${moneroWalletUrl}" rel="noopener noreferrer">Wallet Monero ufficiale</a>
       <a class="ghost" href="${zephyrWalletUrl}" rel="noopener noreferrer">Wallet Zephyr ufficiale</a>
       <p>Durante la beta puoi richiedere payout manuale dal tuo account quando la quota viene verificata nel pannello admin</p>
+    </section>` : page === "privacy" ? `
+    <section class="panel">
+      <h1>Privacy Velora</h1>
+      <p>Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.</p>
+      <div class="cards">
+        <article><b>Dati account</b><p>Username Velora, sessioni, dispositivi autorizzati e log di sicurezza necessari al funzionamento.</p></article>
+        <article><b>Contenuti utente</b><p>File cloud, messaggi, siti pubblicati e richieste vengono conservati per fornire il servizio e prevenire abusi.</p></article>
+        <article><b>Contatti</b><p>Email supporto: srivarola104 gmail.com<br>Account Velora: simonefolletto velora</p></article>
+      </div>
+      <p>Non chiediamo seed phrase, chiavi private, password wallet o file wallet. Le credenziali sensibili non devono essere inviate tramite form pubblici.</p>
+      <a class="ghost" href="/legal/cookie">Cookie Policy</a>
+      <a class="ghost" href="/legal/terms">Termini d'uso</a>
+    </section>` : page === "cookie" ? `
+    <section class="panel">
+      <h1>Cookie Policy</h1>
+      <p>Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.</p>
+      <div class="cards">
+        <article><b>Sessione</b><p>Mantiene l'accesso Velora e riduce login ripetuti.</p></article>
+        <article><b>Sicurezza</b><p>Aiuta a proteggere account, rate limit, integrita richieste e operazioni sensibili.</p></article>
+        <article><b>Preferenze</b><p>Memorizza tema, stato consenso e impostazioni essenziali dell'interfaccia.</p></article>
+      </div>
+      <p>Non sono attivi cookie pubblicitari di terze parti nella beta pubblica Velora.</p>
+      <a class="cta" href="/portal">Apri Velora</a>
+    </section>` : page === "terms" ? `
+    <section class="panel">
+      <h1>Termini Velora</h1>
+      <p>Velora e in beta pubblica. Usa il servizio in modo lecito, non pubblicare contenuti abusivi, non tentare accessi non autorizzati e verifica sempre hash e fonti ufficiali dei download.</p>
+      <p>Le funzioni avanzate come mining, nodi, NAS, payout, cloud e publishing possono essere soggette a limiti, verifiche manuali e sospensioni di sicurezza.</p>
+      <a class="ghost" href="/legal/privacy">Privacy</a>
+      <a class="ghost" href="/legal/cookie">Cookie</a>
     </section>` : page === "security" ? `
     <section class="panel">
       <h1>Velora Guardian</h1>
@@ -3620,7 +3674,16 @@ async function publicPage(page: string) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${title}</title>
+  <title>${escapeHtml(title)} - Velora</title>
+  <meta name="description" content="${escapeHtml(description)}" />
+  <meta name="robots" content="index,follow,max-image-preview:large" />
+  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Velora" />
+  <meta property="og:title" content="${escapeHtml(title)} - Velora" />
+  <meta property="og:description" content="${escapeHtml(description)}" />
+  <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />
+  <meta name="twitter:card" content="summary_large_image" />
   <style>
     :root{color:#f7fbff;background:#06111f;font-family:Aptos,Segoe UI,sans-serif}
     body{margin:0;background:radial-gradient(circle at 70% 0,rgba(216,174,85,.24),transparent 30%),radial-gradient(circle at 15% 15%,rgba(47,155,255,.25),transparent 34%),linear-gradient(180deg,#0b2138,#03070d);min-height:100vh}
@@ -3640,19 +3703,38 @@ async function publicPage(page: string) {
     .cards article,.panel{padding:24px}
     dt{color:#f1d68b;margin-top:14px}
     dd{margin-left:0;overflow-wrap:anywhere}
-    footer{color:#9fb4c8}
+    footer{color:#9fb4c8}.cookie-banner{position:fixed;left:18px;right:18px;bottom:18px;z-index:30;display:none;gap:14px;align-items:center;justify-content:space-between;max-width:980px;margin:auto;padding:16px;border:1px solid rgba(216,174,85,.45);border-radius:22px;background:rgba(6,17,31,.96);box-shadow:0 20px 70px rgba(0,0,0,.45)}.cookie-banner.show{display:flex}.cookie-banner p{margin:0;font-size:15px}.cookie-banner button{width:auto;border:0;border-radius:14px;background:#f1d68b;color:#06111f;padding:11px 16px;font-weight:900;cursor:pointer}@media(max-width:720px){.cookie-banner{display:none;flex-direction:column;align-items:flex-start}.cookie-banner.show{display:flex}}
   </style>
 </head>
 <body>
   <header><nav><a href="/">VELORA</a><a href="/portal">Portale</a><a href="/download">Download</a><a href="/what-is-velora">Upper Web</a><a href="/security">Sicurezza</a><a href="/publishers">Publisher</a><a href="/publishers/guide">Guida</a><a href="/developers">Developers</a><a href="/pricing">Pricing</a><a href="/status">Status</a></nav></header>
   <main>${body}</main>
-  <footer>Sei pronto per Velora? Non vedo l'ora.</footer>
+  <footer><p>Velora Beta pubblica</p><p><a href="/legal/privacy">Privacy</a> · <a href="/legal/cookie">Cookie</a> · <a href="/legal/terms">Termini</a> · Supporto: srivarola104 gmail.com · Account Velora: simonefolletto velora</p></footer>
+  <div class="cookie-banner" id="cookieBanner"><p>Velora usa solo cookie e storage tecnici necessari per accesso, sicurezza e preferenze essenziali.</p><div><a class="ghost" href="/legal/cookie">Leggi policy</a><button onclick="localStorage.setItem('velora.cookie.ok','1');cookieBanner.classList.remove('show')">Accetta</button></div></div>
+  <script>if(!localStorage.getItem('velora.cookie.ok'))cookieBanner.classList.add('show')</script>
 </body>
 </html>`;
 }
 
 function routeParam(params: unknown, key: string) {
   return String((params as Record<string, string>)[key]);
+}
+
+function normalizeVeloraUsername(value: unknown) {
+  const raw = String(value ?? "").trim().toLowerCase().normalize("NFKC");
+  if (!raw) return "";
+  const local = raw.endsWith("@velora") ? raw.slice(0, -7) : raw;
+  const normalizedLocal = local.replace(/[^a-z0-9._-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  if (!/^[a-z0-9][a-z0-9._-]{2,30}$/.test(normalizedLocal)) return "";
+  return `${normalizedLocal}@velora`;
+}
+
+async function findLoginUser(canonicalUsername: string, submittedUsername: unknown, userRepository: typeof repository) {
+  const direct = await userRepository.findUserByUsername(canonicalUsername);
+  if (direct) return direct;
+  const raw = String(submittedUsername ?? "").trim().toLowerCase().normalize("NFKC");
+  const legacy = raw.endsWith("@velora") ? raw.slice(0, -7) : raw;
+  return legacy && legacy !== canonicalUsername ? userRepository.findUserByUsername(legacy) : undefined;
 }
 
 async function hitRateLimit(bucket: string, maxHits: number) {
