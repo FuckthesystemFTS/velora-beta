@@ -1,0 +1,139 @@
+<section class="admin-section">
+  <div class="shell">
+    <div class="dashboard-hero admin-hero">
+      <div>
+        <p class="eyebrow">Configurazione piattaforma</p>
+        <h1>Impostazioni operative</h1>
+        <p class="muted">Da qui gestisci brand, email ufficiali, pagamenti, testi legali e SEO principale senza intervenire sul codice</p>
+      </div>
+    </div>
+
+    <div class="admin-summary-strip top-gap">
+      <article><span>SMTP</span><strong><%= data.mailStatus.configured ? 'pronto' : 'da completare' %></strong></article>
+      <article><span>Info</span><strong><%= (data.operations && data.operations.officialInfoEmail) || contactEmails.info %></strong></article>
+      <article><span>Service</span><strong><%= (data.operations && data.operations.officialServiceEmail) || contactEmails.service %></strong></article>
+      <article><span>Network</span><strong><%= (data.operations && data.operations.officialNetworkEmail) || contactEmails.network %></strong></article>
+    </div>
+
+    <form class="stack-form" action="/admin/settings" method="post">
+      <%- include("partials/csrf-fields") %>
+      <div class="two-column">
+        <article class="info-panel">
+          <h1>Brand e contatti</h1>
+          <p class="muted">Questi dati vengono usati nel sito pubblico, nei metadati e nelle comunicazioni operative</p>
+          <label>Nome sito<input type="text" name="siteName" value="<%= data.site.name || 'creatorspeaker TV' %>" /></label>
+          <label>Claim<input type="text" name="siteClaim" value="<%= data.site.claim || '' %>" /></label>
+          <label>Logo<input type="text" name="siteLogo" value="<%= data.site.logo || '' %>" /></label>
+          <label>Email info<input type="email" name="officialInfoEmail" value="<%= (data.operations && data.operations.officialInfoEmail) || contactEmails.info %>" /></label>
+          <label>Email service<input type="email" name="officialServiceEmail" value="<%= (data.operations && data.operations.officialServiceEmail) || contactEmails.service %>" /></label>
+          <label>Email network<input type="email" name="officialNetworkEmail" value="<%= (data.operations && data.operations.officialNetworkEmail) || contactEmails.network %>" /></label>
+          <div class="grid-3">
+            <input type="text" name="colorBg" value="<%= data.site.colors.bg %>" />
+            <input type="text" name="colorPanel" value="<%= data.site.colors.panel %>" />
+            <input type="text" name="colorAccent" value="<%= data.site.colors.accent %>" />
+          </div>
+          <div class="grid-3">
+            <input type="text" name="colorAccent2" value="<%= data.site.colors.accent2 %>" />
+            <input type="text" name="colorGold" value="<%= data.site.colors.gold %>" />
+            <input type="text" name="colorCyan" value="<%= data.site.colors.cyan %>" />
+          </div>
+        </article>
+
+        <article class="info-panel">
+          <h2>Pagamenti e SMTP</h2>
+          <div class="admin-empty-state">
+            <strong><%= data.mailStatus.configured ? 'SMTP pronto' : 'SMTP da completare' %></strong>
+            <span><%= data.mailStatus.message %></span>
+          </div>
+          <p class="muted">Disattiva i metodi non ancora collegati oppure completa i dati necessari prima di usarli con richieste reali</p>
+          <label class="checkbox"><input type="checkbox" name="enableBankTransfer" <%= !data.operations || data.operations.enableBankTransfer !== false ? "checked" : "" %> /> Abilita bonifico</label>
+          <label class="checkbox"><input type="checkbox" name="enablePaypal" <%= !data.operations || data.operations.enablePaypal !== false ? "checked" : "" %> /> Abilita PayPal</label>
+          <label class="checkbox"><input type="checkbox" name="enableStripe" <%= !data.operations || data.operations.enableStripe !== false ? "checked" : "" %> /> Abilita Stripe</label>
+          <label>Email merchant PayPal<input type="text" name="paypalMerchantEmail" value="<%= (data.operations && data.operations.paypalMerchantEmail) || '' %>" /></label>
+          <label>Stripe publishable key<input type="text" name="stripePublishableKey" value="<%= (data.operations && data.operations.stripePublishableKey) || '' %>" /></label>
+          <label>SMTP host<input type="text" name="smtpHost" value="<%= (data.operations && data.operations.smtpHost) || '' %>" /></label>
+          <div class="grid-3">
+            <input type="text" name="smtpPort" value="<%= (data.operations && data.operations.smtpPort) || '' %>" placeholder="Porta SMTP" />
+            <input type="text" name="smtpUser" value="<%= (data.operations && data.operations.smtpUser) || '' %>" placeholder="Utente SMTP" />
+            <input type="text" name="smtpFrom" value="<%= (data.operations && data.operations.smtpFrom) || '' %>" placeholder="Mittente SMTP" />
+          </div>
+          <p class="muted">La password SMTP non viene mostrata nel pannello. Impostala da Heroku con SMTP_PASS</p>
+          <label class="checkbox"><input type="checkbox" name="smtpSecure" <%= data.operations && data.operations.smtpSecure ? "checked" : "" %> /> Connessione SMTP sicura</label>
+        </article>
+      </div>
+
+      <div class="two-column top-gap">
+        <article class="info-panel">
+          <h2>Bonifico e legale</h2>
+          <p class="muted">Il bonifico viene mostrato dopo richiesta o ordine quando il metodo e abilitato</p>
+          <label>Intestatario<input type="text" name="bankHolder" value="<%= data.bank.holder || '' %>" /></label>
+          <label>IBAN<input type="text" name="bankIban" value="<%= data.bank.iban || '' %>" /></label>
+          <label>Causale base<input type="text" name="bankCausalPrefix" value="<%= data.bank.causalPrefix || '' %>" /></label>
+          <label>Nota amministrativa<textarea name="bankAdminNote"><%= data.bank.adminNote || '' %></textarea></label>
+        </article>
+        <article class="info-panel">
+          <h2>Testi legali</h2>
+          <p class="muted">Privacy, cookie e termini sono pubblici e vengono richiamati nei form di contatto, registrazione e checkout</p>
+          <label>Privacy<textarea name="privacyText"><%= data.legal.privacy || '' %></textarea></label>
+          <label>Cookie<textarea name="cookieText"><%= data.legal.cookie || '' %></textarea></label>
+          <label>Termini<textarea name="termsText"><%= data.legal.terms || '' %></textarea></label>
+        </article>
+      </div>
+
+      <button class="button" type="submit">Salva impostazioni</button>
+    </form>
+
+    <form class="stack-form top-gap" action="/admin/settings/test-email" method="post">
+      <%- include("partials/csrf-fields") %>
+      <article class="info-panel">
+        <h2>Test email operativo</h2>
+        <p class="muted">Usalo dopo aver impostato la password della casella Register su Heroku</p>
+        <label>Email destinataria test<input type="email" name="test_email" value="info@creatorspeakertv.it" /></label>
+        <button class="button secondary" type="submit">Invia email test</button>
+      </article>
+    </form>
+
+    <form class="stack-form top-gap" action="/admin/cms-settings" method="post">
+      <%- include("partials/csrf-fields") %>
+      <div class="two-column">
+        <article class="info-panel">
+          <h2>Impostazioni sito CMS</h2>
+          <label>Telefono<input type="text" name="phone" value="<%= (data.cmsSettings && data.cmsSettings.phone) || '' %>" /></label>
+          <label>WhatsApp<input type="text" name="whatsapp" value="<%= (data.cmsSettings && data.cmsSettings.whatsapp) || '' %>" /></label>
+          <label>Indirizzo<input type="text" name="address" value="<%= (data.cmsSettings && data.cmsSettings.address) || '' %>" /></label>
+          <label>Footer testo<textarea name="footer_text"><%= (data.cmsSettings && data.cmsSettings.footer_text) || '' %></textarea></label>
+          <label>Link Instagram<input type="text" name="social_instagram" value="<%= (data.cmsSettings && data.cmsSettings.social_instagram) || '' %>" /></label>
+          <label>Link Facebook<input type="text" name="social_facebook" value="<%= (data.cmsSettings && data.cmsSettings.social_facebook) || '' %>" /></label>
+        </article>
+        <article class="info-panel">
+          <h2>SEO base</h2>
+          <p class="muted">Usa testi chiari, naturali e specifici. Le landing SEO dedicate sono gia incluse nella sitemap</p>
+          <label>SEO title home<input type="text" name="seo_home_title" value="<%= (data.cmsSettings && data.cmsSettings.seo_home_title) || '' %>" placeholder="CreatorSpeaker TV network per creator, speaker e aziende" /></label>
+          <label>SEO description home<textarea name="seo_home_description" placeholder="Network editoriale e multimediale per pubblicare video, podcast, format creator e contenuti aziendali su piu canali"><%= (data.cmsSettings && data.cmsSettings.seo_home_description) || '' %></textarea></label>
+          <label>Open Graph image URL<input type="text" name="og_image" value="<%= (data.cmsSettings && data.cmsSettings.og_image) || '' %>" /></label>
+          <label>Logo URL<input type="text" name="logo_url" value="<%= (data.cmsSettings && data.cmsSettings.logo_url) || '' %>" /></label>
+          <label>Favicon URL<input type="text" name="favicon_url" value="<%= (data.cmsSettings && data.cmsSettings.favicon_url) || '' %>" /></label>
+        </article>
+      </div>
+      <button class="button secondary" type="submit">Salva impostazioni CMS</button>
+    </form>
+
+    <div class="two-column top-gap">
+      <article class="info-panel">
+        <h2>Strategia crescita</h2>
+        <ul class="mini-list">
+          <% data.growth.forEach(function(item) { %><li><%= item %></li><% }) %>
+        </ul>
+      </article>
+      <article class="info-panel">
+        <h2>Notifiche recenti</h2>
+        <% data.notifications.forEach(function(item) { %>
+          <div class="row-card">
+            <strong><%= item.subject %></strong>
+            <span><%= item.type %> - <%= item.status %></span>
+          </div>
+        <% }) %>
+      </article>
+    </div>
+  </div>
+</section>

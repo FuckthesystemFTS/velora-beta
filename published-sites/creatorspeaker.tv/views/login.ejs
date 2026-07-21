@@ -1,0 +1,17 @@
+<section class="auth-section">
+  <div class="shell auth-grid">
+    <article class="auth-copy">
+      <p class="eyebrow">Area Riservata</p>
+      <h1>Accedi al tuo spazio</h1>
+      <p>Consulta richieste, crediti, contenuti caricati e strumenti utili per far crescere il progetto</p>
+    </article>
+    <form class="auth-card" action="/login" method="post">
+      <%- include("partials/csrf-fields") %>
+      <label>Email<input type="email" name="email" required /></label>
+      <label>Password<input type="password" name="password" required /></label>
+      <button class="button" type="submit">Accedi</button>
+      <p class="muted"><a href="/password-dimenticata">Password dimenticata?</a></p>
+      <p class="muted">Non hai ancora un account? <a href="/register">Registrati qui</a></p>
+    </form>
+  </div>
+</section>

@@ -1,0 +1,62 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <p class="eyebrow">Pacchetti CMS</p>
+    <h1>Pacchetti e servizi pubblici</h1>
+    <div class="admin-action-row">
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/site') %>">Pagine e sezioni</a>
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/media') %>">Media Library</a>
+      <a class="ghost-button compact-ghost" href="/servizi" target="_blank" rel="noreferrer">Anteprima pubblica</a>
+    </div>
+    <div class="split-layout top-gap">
+      <article class="admin-card">
+        <h2>Nuovo pacchetto</h2>
+        <form class="stack-form" method="post" action="<%= panelPath('/admin/cms-packages') %>">
+          <%- include("partials/csrf-fields") %>
+          <label>Titolo<input type="text" name="title" required /></label>
+          <label>Slug<input type="text" name="slug" /></label>
+          <label>Categoria<select name="category"><option value="creator">creator</option><option value="speaker">speaker</option><option value="azienda">azienda</option><option value="smart-tv">smart-tv</option><option value="custom">custom</option></select></label>
+          <label>Descrizione breve<textarea name="short_description"></textarea></label>
+          <label>Descrizione lunga<textarea name="long_description"></textarea></label>
+          <div class="grid-2"><label>Prezzo<input type="text" name="price" value="0" /></label><label>Valuta<input type="text" name="currency" value="EUR" /></label></div>
+          <label>Tipo pagamento<select name="billing_type"><option value="one_time">una tantum</option><option value="monthly">mensile</option><option value="yearly">annuale</option><option value="quote">su preventivo</option></select></label>
+          <label>Features una per riga<textarea name="features"></textarea></label>
+          <label>Media<select name="media_asset_id"><option value="">Nessuno</option><% data.mediaOptions.forEach(function(media) { %><option value="<%= media.id %>"><%= media.title %></option><% }) %></select></label>
+          <div class="grid-2"><label>Stato<select name="status"><option value="active">active</option><option value="draft">draft</option><option value="hidden">hidden</option></select></label><label>Ordine<input type="number" name="sort_order" value="0" /></label></div>
+          <label class="checkbox"><input type="checkbox" name="is_featured" /> In evidenza</label>
+          <label>CTA label<input type="text" name="cta_label" value="Richiedi attivazione" /></label>
+          <button class="button secondary" type="submit">Salva pacchetto</button>
+        </form>
+      </article>
+
+      <div class="table-list">
+        <% if (!data.packages.length) { %>
+          <div class="admin-empty-state">
+            <strong>Non hai ancora creato pacchetti</strong>
+            <span>Crea il primo pacchetto per pubblicarlo sul sito, collegarlo a media e usarlo nei flussi di richiesta</span>
+          </div>
+        <% } %>
+        <% data.packages.forEach(function(pkg) { %>
+          <article class="admin-card">
+            <form class="stack-form" method="post" action="<%= panelPath('/admin/cms-packages') %>">
+              <%- include("partials/csrf-fields") %>
+              <input type="hidden" name="id" value="<%= pkg.id %>" />
+              <div class="grid-2"><label>Titolo<input name="title" value="<%= pkg.title %>" /></label><label>Slug<input name="slug" value="<%= pkg.slug %>" /></label></div>
+              <label>Categoria<input name="category" value="<%= pkg.category %>" /></label>
+              <label>Descrizione breve<textarea name="short_description"><%= pkg.short_description %></textarea></label>
+              <label>Descrizione lunga<textarea name="long_description"><%= pkg.long_description %></textarea></label>
+              <div class="grid-2"><label>Prezzo<input name="price" value="<%= (pkg.price || 0) / 100 %>" /></label><label>Valuta<input name="currency" value="<%= pkg.currency %>" /></label></div>
+              <label>Tipo pagamento<input name="billing_type" value="<%= pkg.billing_type %>" /></label>
+              <label>Features<textarea name="features"><%= (pkg.features || []).join('\n') %></textarea></label>
+              <label>Media<select name="media_asset_id"><option value="">Nessuno</option><% data.mediaOptions.forEach(function(media) { %><option value="<%= media.id %>" <%= Number(pkg.media_asset_id) === Number(media.id) ? 'selected' : '' %>><%= media.title %></option><% }) %></select></label>
+              <div class="grid-2"><label>Stato<input name="status" value="<%= pkg.status %>" /></label><label>Ordine<input type="number" name="sort_order" value="<%= pkg.sort_order %>" /></label></div>
+              <label class="checkbox"><input type="checkbox" name="is_featured" <%= pkg.is_featured ? 'checked' : '' %> /> In evidenza</label>
+              <label>CTA label<input name="cta_label" value="<%= pkg.cta_label %>" /></label>
+              <button class="ghost-button compact-ghost" type="submit">Aggiorna</button>
+            </form>
+            <form method="post" action="<%= panelPath('/admin/cms-packages/' + pkg.id + '/delete') %>"><%- include("partials/csrf-fields") %><button class="ghost-button compact-ghost" type="submit">Elimina</button></form>
+          </article>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</section>

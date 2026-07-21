@@ -1,0 +1,33 @@
+<section class="page-section">
+  <div class="shell narrow">
+    <article class="success-card">
+      <p class="eyebrow">Richiesta ricevuta</p>
+      <h1><%= data.order.order_code %></h1>
+      <p>Stato iniziale <strong><%= data.order.status %></strong></p>
+      <div class="info-panel">
+        <h2>Riepilogo</h2>
+        <ul class="mini-list">
+          <% data.items.forEach(function(item) { %>
+            <li><%= item.name %> x <%= item.quantity %> - <%= formatMoney(item.subtotalCents) %></li>
+          <% }) %>
+        </ul>
+        <p class="price"><%= formatMoney(data.order.total_cents) %></p>
+      </div>
+      <div class="info-panel">
+        <h2>Metodo scelto</h2>
+        <p>
+          <strong>
+            <%= ({ bank_transfer: "Bonifico", paypal: "PayPal", stripe: "Stripe" })[data.order.payment_method] || data.order.payment_method %>
+          </strong>
+        </p>
+        <% if (data.order.payment_method === "bank_transfer") { %>
+          <pre><%= data.order.bank_instructions %></pre>
+        <% } else { %>
+          <p class="muted">Il flusso provider e gia predisposto nel database e nei pannelli operativi</p>
+          <p class="muted">L'incasso verra attivato appena inseriremo le chiavi <%= data.order.payment_method === "paypal" ? "PayPal" : "Stripe" %></p>
+        <% } %>
+      </div>
+      <p class="muted">Il codice richiesta resta disponibile anche nella dashboard utente e nel pannello admin</p>
+    </article>
+  </div>
+</section>

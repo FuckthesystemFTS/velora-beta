@@ -1,0 +1,49 @@
+{
+  "name": "v-social-network",
+  "description": "V social network with distributed moderation",
+  "stack": "heroku-24",
+  "keywords": ["nextjs", "postgresql", "prisma", "social-network"],
+  "env": {
+    "APP_URL": {
+      "description": "Public URL of the app",
+      "value": "https://your-app-name.herokuapp.com"
+    },
+    "SESSION_COOKIE_NAME": {
+      "value": "v_session"
+    },
+    "SESSION_TTL_HOURS": {
+      "value": "336"
+    },
+    "SMTP_HOST": {
+      "value": "smtp.gmail.com"
+    },
+    "SMTP_PORT": {
+      "value": "587"
+    },
+    "SMTP_USER": {
+      "description": "Gmail account used by SMTP"
+    },
+    "SMTP_PASS": {
+      "description": "Gmail app password"
+    },
+    "SMTP_FROM": {
+      "value": "V <no-reply@v.local>"
+    },
+    "CLOUDINARY_CLOUD_NAME": {
+      "description": "Cloudinary cloud name"
+    },
+    "CLOUDINARY_API_KEY": {
+      "description": "Cloudinary API key"
+    },
+    "CLOUDINARY_API_SECRET": {
+      "description": "Cloudinary API secret"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "standard-1x"
+    }
+  },
+  "addons": ["heroku-postgresql:essential-0"]
+}

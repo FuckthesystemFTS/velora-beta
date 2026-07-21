@@ -1,0 +1,36 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner narrow">
+    <article class="admin-card">
+      <p class="eyebrow">Nuova piattaforma</p>
+      <h1>Crea piattaforma abbonamento</h1>
+      <% if (!page.encryption.hasKey) { %>
+        <p class="muted"><%= page.encryption.message %></p>
+      <% } %>
+      <form class="stack-form top-gap" method="post" action="/admin/abbonamenti/piattaforme">
+        <%- include("partials/csrf-fields") %>
+        <label>Nome<input type="text" name="name" value="Canva" required /></label>
+        <label>Slug<input type="text" name="slug" value="canva" required /></label>
+        <label>Descrizione pubblica<textarea name="public_description" required>Accesso Canva disponibile dopo richiesta, verifica pagamento e attivazione manuale admin</textarea></label>
+        <label>Descrizione interna<textarea name="description" required>Strumento per creare grafiche, contenuti social, presentazioni e materiali visivi</textarea></label>
+        <div class="grid-2">
+          <label>Stato<select name="status"><option value="active">active</option><option value="inactive">inactive</option></select></label>
+          <label>Numero massimo utenti<input type="number" name="max_users" min="1" value="25" required /></label>
+        </div>
+        <div class="grid-2">
+          <label>Prezzo per utente in centesimi<input type="number" name="price_per_user" min="0" value="0" /></label>
+          <label>Valuta<input type="text" name="currency" value="EUR" required /></label>
+        </div>
+        <div class="grid-2">
+          <label>Durata giorni<input type="number" name="duration_days" min="1" value="30" required /></label>
+          <label>URL piattaforma<input type="url" name="platform_url" value="https://www.canva.com" required /></label>
+        </div>
+        <label>URL login<input type="url" name="login_url" value="https://www.canva.com/login" required /></label>
+        <label>Email accesso condiviso<input type="email" name="shared_login_email" /></label>
+        <label>Password accesso condiviso<input type="text" name="shared_login_password" /></label>
+        <label>Note private admin<textarea name="admin_private_notes"></textarea></label>
+        <label>Istruzioni visibili all utente<textarea name="user_visible_instructions">Apri Canva, copia le credenziali e non condividerle con terzi</textarea></label>
+        <button class="button secondary" type="submit">Salva piattaforma</button>
+      </form>
+    </article>
+  </div>
+</section>

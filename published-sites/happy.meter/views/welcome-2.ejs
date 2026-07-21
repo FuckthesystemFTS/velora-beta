@@ -1,0 +1,17 @@
+<section class="welcome-screen">
+  <div class="welcome-card">
+    <div class="welcome-visual">
+      <img src="<%= lang === 'de' ? '/images/prepagina-2-de.jpg' : lang === 'en' ? '/images/prepagina-2-en.jpg' : '/images/prepagina-2.jpg' %>" alt="Prepagina 2 HappyMeter" class="welcome-image" loading="eager" />
+    </div>
+    <div class="welcome-copy">
+      <img src="/images/logo-happy.png" alt="Logo HappyMeter" class="welcome-logo" loading="eager" />
+      <span class="eyebrow"><%= copy('Prepagina 2', 'Welcome screen 2', 'Willkommensseite 2') %></span>
+      <h1><%= copy('Capisci cosa ti fa stare bene e trasformalo in abitudine', 'Understand what makes you feel good and turn it into a habit', 'Verstehe besser, was dir guttut, und mach daraus eine Gewohnheit') %></h1>
+      <p class="welcome-lead"><%= copy('Tra test quotidiano, attivita felici, diario e insight personali, HappyMeter ti aiuta a vedere meglio i pattern della tua giornata', 'With a daily test, happy activities, diary and personal insights, HappyMeter helps you see your daily patterns more clearly', 'Mit taeglichem Test, Gluecksaktivitaeten, Tagebuch und persoenlichen Einblicken hilft dir HappyMeter, die Muster deines Tages klarer zu sehen') %></p>
+      <div class="welcome-actions">
+        <a href="/welcome<%= lang ? `?lang=${lang}` : '' %>" class="ghost-btn" data-lang-link="/welcome"><%= copy('Indietro', 'Back', 'Zurueck') %></a>
+        <a href="<%= lang ? `/?lang=${lang}` : '/' %>" class="primary-btn" data-welcome-enter data-lang-link="/"><%= copy('Entra nell app', 'Enter the app', 'Zur App') %></a>
+      </div>
+    </div>
+  </div>
+</section>

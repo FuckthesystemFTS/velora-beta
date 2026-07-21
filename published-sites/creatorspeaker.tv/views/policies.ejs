@@ -1,0 +1,26 @@
+<section class="page-section">
+  <div class="shell narrow">
+    <article class="info-panel legal-card">
+      <p class="eyebrow"><%= data.legalType === "offers" ? "Offerte" : "Documentazione" %></p>
+      <h1><%= data.title %></h1>
+      <% String(data.content || "").split(/\n\s*\n/).forEach(function(block) { %>
+        <p class="legal-text"><%= block %></p>
+      <% }) %>
+
+      <% if (data.offers && data.offers.length) { %>
+        <div class="card-grid offers-grid top-gap">
+          <% data.offers.forEach(function(offer) { %>
+            <article class="offer-card">
+              <p class="tag"><%= offer.category_name || "Offerta" %></p>
+              <h3><%= offer.title %></h3>
+              <p class="price"><%= formatMoney(offer.current_price_cents) %></p>
+              <p class="muted">Sconto: <%= offer.discount_percent || 0 %>%</p>
+              <a class="button secondary" href="<%= offer.affiliate_url %>" target="_blank" rel="noreferrer">Apri link affiliato</a>
+            </article>
+          <% }) %>
+        </div>
+        <p class="muted top-gap"><%= data.disclosure %></p>
+      <% } %>
+    </article>
+  </div>
+</section>

@@ -1,0 +1,20 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <p class="eyebrow">Log</p>
+    <h1>Visualizzazioni credenziali e azioni admin</h1>
+    <div class="table-list top-gap">
+      <% page.logs.forEach(function(log) { %>
+        <div class="admin-row split-admin-row">
+          <div>
+            <strong><%= log.created_at_label %></strong>
+            <p class="muted"><%= log.actor_type %> · <%= log.actor_name || 'sistema' %> · <%= log.platform_name || 'piattaforma' %></p>
+          </div>
+          <div>
+            <p class="muted"><%= log.action_label %></p>
+            <p class="muted"><%= log.ip_address || '' %> <%= log.user_agent_short || '' %></p>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>

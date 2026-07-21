@@ -1,0 +1,49 @@
+<section class="app-card">
+  <div class="section-heading app-heading">
+    <span class="eyebrow">Diario della felicita</span>
+    <h2>Le tue giornate, una accanto all altra</h2>
+  </div>
+  <form method="get" class="toolbar-form">
+    <select name="filter">
+      <option value="week" <%= filter === 'week' ? 'selected' : '' %>>Settimana</option>
+      <option value="month" <%= filter === 'month' ? 'selected' : '' %>>Mese</option>
+    </select>
+    <input type="search" name="q" value="<%= search %>" placeholder="Cerca parole o persone" />
+    <button type="submit" class="secondary-btn">Filtra</button>
+  </form>
+</section>
+
+<section class="timeline">
+  <% if (!entries.length) { %>
+    <article class="timeline-item">
+      <h3>Ancora nessuna giornata registrata</h3>
+      <p>Compila il test di oggi e qui iniziera a prendere forma il tuo diario</p>
+    </article>
+  <% } %>
+  <% entries.forEach((entry) => { %>
+    <% const dayActivities = activities.filter((activity) => String(activity.completed_date).slice(0, 10) === String(entry.entry_date).slice(0, 10)); %>
+    <% const dayGesture = gestures.find((gesture) => String(gesture.gesture_date).slice(0, 10) === String(entry.entry_date).slice(0, 10)); %>
+    <article class="timeline-item">
+      <div class="timeline-head">
+        <strong><%= String(entry.entry_date).slice(0, 10) %></strong>
+        <span class="score-pill"><%= entry.happy_score %>/100</span>
+      </div>
+      <p><%= entry.note || "Per questa giornata non hai lasciato una nota" %></p>
+      <dl class="entry-meta">
+        <div><dt>Persone</dt><dd><%= entry.people_text || "Nessuna indicazione" %></dd></div>
+        <div><dt>Momenti belli</dt><dd><%= entry.good_things_text || "Nessuna indicazione" %></dd></div>
+        <div><dt>Cose difficili</dt><dd><%= entry.hard_things_text || "Nessuna indicazione" %></dd></div>
+      </dl>
+      <% if (dayActivities.length) { %>
+        <div class="tag-list">
+          <% dayActivities.forEach((activity) => { %>
+            <span class="tag"><%= activity.icon || "✨" %> <%= activity.custom_name || getLocalizedField(activity, "name", lang) %></span>
+          <% }) %>
+        </div>
+      <% } %>
+      <% if (dayGesture) { %>
+        <p class="gesture-line">Gesto felice: <strong><%= getLocalizedField(dayGesture, "text", lang) %></strong></p>
+      <% } %>
+    </article>
+  <% }) %>
+</section>

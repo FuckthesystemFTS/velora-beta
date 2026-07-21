@@ -1,7 +1,7 @@
 import { createReadStream } from "node:fs";
 import { randomBytes, randomUUID } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
-import { basename, resolve } from "node:path";
+import { basename, extname, join, normalize, relative, resolve } from "node:path";
 import sensible from "@fastify/sensible";
 import cors from "@fastify/cors";
 import type { FastifyInstance, FastifyReply } from "fastify";
@@ -33,6 +33,11 @@ const nasFallbackRoots = [
   resolve("releases/nas-fallback-agent"),
   resolve("../releases/nas-fallback-agent"),
   resolve("../../releases/nas-fallback-agent")
+];
+const publishedSiteRoots = [
+  resolve("published-sites"),
+  resolve("../published-sites"),
+  resolve("../../published-sites")
 ];
 const publisherGuideCandidates = [
   resolve("VELORA_GUIDA_PUBBLICAZIONE.html"),
@@ -83,7 +88,7 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get("/apple.webmanifest", async (_request, reply) => reply.type("application/manifest+json; charset=utf-8").send(appleWebManifest()));
   app.get("/apple-sw.js", async (_request, reply) => reply.type("application/javascript; charset=utf-8").send(appleServiceWorker()));
   app.get("/download", async (_request, reply) => reply.type("text/html; charset=utf-8").send(await publicPage("download")));
-  app.get("/mobile", async (_request, reply) => reply.redirect("/portal", 302));
+  app.get("/mobile", async (_request, reply) => reply.type("text/html; charset=utf-8").send(mobilePage()));
   app.get("/apple", async (_request, reply) => reply.type("text/html; charset=utf-8").send(applePortalPage("home")));
   app.get("/apple/:section", async (request, reply) => reply.type("text/html; charset=utf-8").send(applePortalPage(routeParam(request.params, "section"))));
   app.get("/portal", async (_request, reply) => reply.type("text/html; charset=utf-8").send(applePortalPage("home")));
@@ -112,12 +117,17 @@ export async function registerRoutes(app: FastifyInstance) {
   app.get("/z/:address", async (request, reply) => {
     const address = routeParam(request.params, "address");
     const fallback = await findPublicZone(address);
-    return reply.type("text/html; charset=utf-8").send(publicZonePage(address, fallback));
+    return sendZoneRuntime(address, fallback, reply);
   });
   app.get("/zone/:address", async (request, reply) => {
     const address = routeParam(request.params, "address");
     const fallback = await findPublicZone(address);
-    return reply.type("text/html; charset=utf-8").send(publicZonePage(address, fallback));
+    return sendZoneRuntime(address, fallback, reply);
+  });
+  app.get("/zone-assets/:address/*", async (request, reply) => {
+    const address = routeParam(request.params, "address");
+    const asset = routeParam(request.params, "*");
+    return sendZoneAsset(address, asset, reply);
   });
   app.get("/health", async () => {
     if (!config.betaNodeClusterEnabled) {
@@ -162,6 +172,17 @@ export async function registerRoutes(app: FastifyInstance) {
   });
   app.get("/api/v1/releases/changelog", async () => ({ version: "0.1.0-beta", channel: "beta", items: releaseChangelog() }));
   app.get("/api/v1/tools", async () => ({ groups: veloraToolGroups(), tools: veloraToolCatalog() }));
+  app.post("/api/v1/analytics", async (request) => {
+    const body = request.body as { event?: string; targetType?: string; targetId?: string; summary?: string; payload?: Record<string, unknown> };
+    await appendOperationalEvent({
+      eventType: sanitizeSignal(String(body?.event ?? "PUBLIC_EVENT")),
+      targetType: sanitizeSignal(String(body?.targetType ?? "PUBLIC")),
+      targetId: String(body?.targetId ?? "unknown").slice(0, 160),
+      summary: String(body?.summary ?? "Evento pubblico").slice(0, 300),
+      payload: sanitizeAnalyticsPayload(body?.payload ?? {})
+    });
+    return { ok: true };
+  });
   app.get("/api/v1/guide", async () => ({ sections: veloraGuideCatalog() }));
   app.get("/api/v1/guardian/status", async () => publicGuardianStatus());
   app.get("/api/v1/guide/:slug", async (request, reply) => {
@@ -3241,7 +3262,7 @@ function applePortalPage(section: string) {
     async function api(path,options={}){const res=await fetch(path,options);const text=await res.text();let data=text;try{data=text?JSON.parse(text):{}}catch{}if(!res.ok)throw new Error(typeof data==='object'&&data.message?data.message:text||String(res.status));return data}
     function card(k,v){return '<div class="card"><b>'+esc(k)+'</b><span>'+esc(v)+'</span></div>'}
     function item(t,b){return '<div class="item"><b>'+esc(t)+'</b><p>'+esc(b||'')+'</p></div>'}
-    function renderNav(){const html=modules.map(([id,label])=>'<button class="'+(id===currentSection?'active':'')+'" onclick="showModule(\\''+id+'\\')">'+label+'</button>').join('');sideNav.innerHTML=html;mobileNav.innerHTML=modules.filter(x=>['home','search','cloud','mining','tools'].includes(x[0])).map(([id,label])=>'<button class="'+(id===currentSection?'active':'')+'" onclick="showModule(\\''+id+'\\')">'+label+'</button>').join('')}
+    function renderNav(){const html=modules.map(([id,label])=>'<button class="'+(id===currentSection?'active':'')+'" onclick="showModule(\\''+id+'\\')">'+label+'</button>').join('');sideNav.innerHTML=html;mobileNav.innerHTML=modules.filter(x=>['home','search','browser','tools','settings'].includes(x[0])).map(([id,label])=>'<button class="'+(id===currentSection?'active':'')+'" onclick="showModule(\\''+id+'\\')">'+(id==='settings'?'Account':label)+'</button>').join('')}
     function portalBase(){return location.pathname.startsWith('/apple')?'/apple':'/portal'}
     function showModule(id){currentSection=id;document.querySelectorAll('.module').forEach(el=>el.classList.toggle('active',el.id==='m-'+id));history.replaceState(null,'',portalBase()+'/'+id);renderNav();loadModule(id)}
     function saveSession(data){localStorage.setItem(tokenKey,data.accessToken||data.token||'');if(data.refreshToken)localStorage.setItem(refreshKey,data.refreshToken);localStorage.setItem(userKey,JSON.stringify(data.user||{}))}
@@ -3259,9 +3280,10 @@ function applePortalPage(section: string) {
     if('serviceWorker'in navigator)navigator.serviceWorker.register('/apple-sw.js').catch(()=>undefined);
     window.addEventListener('message',async event=>{if(event.data?.type!=='VELORA_AUTH_REQUEST')return;if(!token()){showModule('home');authMsg.textContent='Accedi o registrati per collegare il sito al tuo account Velora';event.source?.postMessage({type:'VELORA_AUTH_STATE',loggedIn:false,reason:'LOGIN_REQUIRED'},'*');return}try{const state=await api('/api/v1/auth/portal-session',{headers:headers()});event.source?.postMessage({type:'VELORA_AUTH_STATE',loggedIn:true,username:state.user.username,mail:state.mail.address,identityLevel:state.user.identityLevel,scopes:state.scopes},'*')}catch(e){event.source?.postMessage({type:'VELORA_AUTH_STATE',loggedIn:false,reason:e.message},'*')}})
     async function runGlobalSearch(){showModule('search');searchQuery.value=globalSearch.value;await loadSearch()}
-    async function loadHome(){try{const [health,guardian,manifest]=await Promise.all([api('/health'),api('/api/v1/guardian/status'),api('/release-manifest.json')]);homeCards.innerHTML=card('Rete',health.ok?'Online':'Verifica')+card('Guardian',guardian.status||'Protetto')+card('Versione',manifest.version||'Beta')+card('PWA','Installabile');}catch(e){homeCards.innerHTML=item('Stato',e.message)}}
-    async function loadSearch(){try{const q=(currentSection==='oceano'?oceanoQuery.value:searchQuery.value)||globalSearch.value||'velora';const data=await api('/api/v1/search?q='+encodeURIComponent(q));const html=(data.results||[]).map(r=>'<div class="item"><b>'+esc(r.title||r.address)+'</b><p>'+esc(r.description||r.summary||'')+'</p><button onclick="openZone(\\''+esc(r.address||r.zone||'')+'\\')">Apri</button></div>').join('')||item('Search','Nessun risultato');searchResults.innerHTML=html;if(document.getElementById('oceanoResults'))oceanoResults.innerHTML=html;}catch(e){const html=item('Search',e.message);searchResults.innerHTML=html;if(document.getElementById('oceanoResults'))oceanoResults.innerHTML=html;}}
-    function openZone(address){browserAddress.value=address;showModule('browser');browserFrame.src='/zone/'+encodeURIComponent(address)}
+    function track(event,targetType,targetId,payload={}){fetch('/api/v1/analytics',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({event,targetType,targetId,summary:event,payload})}).catch(()=>undefined)}
+    async function loadHome(){try{const [health,guardian,manifest]=await Promise.all([api('/health'),api('/api/v1/guardian/status'),api('/release-manifest.json')]);homeCards.innerHTML=card('Rete',health.ok?'Online':'Verifica')+card('Guardian',guardian.status||'Protetto')+card('Versione',manifest.version||'Beta')+card('PWA','Installabile');if(document.getElementById('nextActions'))nextActions.innerHTML=item('Cerca una zona','Apri Search e prova happy.meter o v.social')+item('Usa un tool','Apri Tools e prova Hash, Wallet Check o Link Check')+item('Pubblica','Prepara manifest e validazione dal Publisher')+item('Account','Accedi per VeloMail, Cloud, Forum e nodi')}catch(e){homeCards.innerHTML=item('Stato',e.message)}}
+    async function loadSearch(){try{const q=(currentSection==='oceano'?oceanoQuery.value:searchQuery.value)||globalSearch.value||'velora';const data=await api('/api/v1/search?q='+encodeURIComponent(q));if(!(data.results||[]).length)track('SEARCH_EMPTY','SEARCH',q);const html=(data.results||[]).map(r=>'<div class="item"><b>'+esc(r.title||r.address)+'</b><p>'+esc(r.description||r.summary||'')+'</p><span class="mono">'+esc(r.address||r.zone||'')+'</span><button onclick="openZone(\\''+esc(r.address||r.zone||'')+'\\')">Apri</button></div>').join('')||item('Search','Nessun risultato disponibile');searchResults.innerHTML=html;if(document.getElementById('oceanoResults'))oceanoResults.innerHTML=html;}catch(e){track('SEARCH_ERROR','SEARCH',searchQuery.value||globalSearch.value,{message:e.message});const html=item('Search',e.message);searchResults.innerHTML=html;if(document.getElementById('oceanoResults'))oceanoResults.innerHTML=html;}}
+    function openZone(address){if(!address)return;track('ZONE_OPEN','ZONE',address);browserAddress.value=address;showModule('browser');browserFrame.src='/zone/'+encodeURIComponent(address)}
     async function loadMail(){if(!token())return mailList.innerHTML=item('VeloMail','Accedi per leggere la posta');try{const [account,inbox]=await Promise.all([api('/api/v1/mail/account',{headers:headers()}),api('/api/v1/mail/inbox',{headers:headers()})]);mailAccount.textContent=account.address||'';mailList.innerHTML=(inbox.messages||[]).map(m=>'<button onclick="openMail(\\''+m.id+'\\')">'+esc(m.subject||'Messaggio')+'</button>').join('')||'<p>Nessun messaggio</p>'}catch(e){mailList.innerHTML=item('VeloMail',e.message)}}
     async function openMail(id){try{selectedMessageId=id;const m=await api('/api/v1/mail/messages/'+id,{headers:headers()});mailOpen.innerHTML='<h3>'+esc(m.subject||'Messaggio')+'</h3><p class="mono">'+esc(m.from_address||m.from||'')+'</p><p>'+esc(m.body||m.body_ciphertext||'Messaggio cifrato')+'</p>'}catch(e){mailOpen.innerHTML=item('Errore',e.message)}}
     async function sendMail(){try{await api('/api/v1/mail/send',{method:'POST',headers:headers(true),body:JSON.stringify({to:mailTo.value.split(',').map(x=>x.trim()).filter(Boolean),subject:mailSubject.value,body:mailBody.value,subjectCiphertext:mailSubject.value,bodyCiphertext:mailBody.value,encryptedByClient:true})});mailComposerMsg.textContent='Invio completato';loadMail()}catch(e){mailComposerMsg.textContent=e.message}}
@@ -3269,16 +3291,16 @@ function applePortalPage(section: string) {
     async function uploadCloud(){const files=[...cloudInput.files];for(const file of files){const b64=await fileToBase64(file);await api('/api/v1/cloud/files',{method:'POST',headers:headers(true),body:JSON.stringify({name:file.name,mimeType:file.type||'application/octet-stream',contentBase64:b64})})}loadCloud()}
     function fileToBase64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]||'');r.onerror=reject;r.readAsDataURL(file)})}
     async function downloadCloud(id,name){const data=await fetch('/api/v1/cloud/files/'+id+'/download',{headers:headers()}).then(r=>r.text());const blob=new Blob([data]);const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href)}
-    async function loadTools(){try{const data=await api('/api/v1/tools');toolList.innerHTML=(data.tools||[]).map(t=>'<div class="item"><b>'+esc(t.name)+'</b><p>'+esc(t.description)+'</p><button onclick="runTool(\\''+esc(t.action||t.zone||t.name)+'\\')">Esegui</button></div>').join('')}catch(e){toolList.innerHTML=item('Tools',e.message)}}
-    async function runTool(action){const text=toolInput.value;let out='';if(action.includes('tts')){speechSynthesis.speak(new SpeechSynthesisUtterance(text));out='Lettura avviata'}else if(action.includes('hash')){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));out=[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase()}else if(action.includes('wallet')){out=/^(4|8)[1-9A-HJ-NP-Za-km-z]{90,110}$|^Z[a-zA-Z0-9]{70,120}$/.test(text.trim())?'Wallet valido':'Wallet non riconosciuto'}else out='Strumento eseguito nel portale quando supportato dal browser';toolOutput.textContent=out}
+    async function loadTools(){try{const data=await api('/api/v1/tools');const tools=(data.tools||[]).filter(t=>t.executable);toolList.innerHTML=tools.map(t=>'<div class="item"><b>'+esc(t.name||t.title)+'</b><p>'+esc(t.description)+'</p><span class="mono">'+esc(t.group||'Velora')+'</span><button onclick="runTool(\\''+esc(t.action||t.zone||t.address)+'\\')">Esegui</button></div>').join('')||item('Tools','Nessuno strumento disponibile')}catch(e){toolList.innerHTML=item('Tools',e.message)}}
+    async function runTool(action){const text=toolInput.value.trim();let out='';track('TOOL_RUN','TOOL',action);try{if(action.includes('tts')){if(!text)throw new Error('Inserisci testo');speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(text));out='Lettura avviata'}else if(action.includes('hash')){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));out=[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase()}else if(action.includes('wallet')){out=/^(4|8)[1-9A-HJ-NP-Za-km-z]{90,110}$|^Z[a-zA-Z0-9]{70,120}$/.test(text)?'Wallet pubblico valido':'Wallet non riconosciuto'}else if(action.includes('link-check')){let u=new URL(text);out=['https:','http:'].includes(u.protocol)?'Link leggibile: '+u.hostname:'Protocollo non consentito'}else if(action.includes('privacy')){const hits=[];if(/[\\w.+-]+@[\\w.-]+\\.[a-z]{2,}/i.test(text))hits.push('email');if(/\\b\\d{8,}\\b/.test(text))hits.push('numeri lunghi');if(/seed|private key|password/i.test(text))hits.push('segreti');out=hits.length?'Possibili dati sensibili: '+hits.join(', '):'Nessun dato sensibile evidente'}else if(action.includes('publisher-validator')){try{const m=JSON.parse(text);out=m.address&&m.title&&m.entryFile?'Manifest leggibile':'Manifest incompleto'}catch{out='Incolla un manifest JSON valido'}}else if(action.includes('zone-explorer')){openZone(text||'happy.meter');out='Apertura zona avviata'}else if(action.includes('login-test')){out=token()?'Sessione Velora attiva':'Accedi a Velora per testare il login'}else if(action.includes('node-health')){const h=await api('/api/network/nodes/summary');out='Rete '+(h.network||'online')+' - nodi '+((h.nodes||[]).length)}else if(action.includes('mail-test')){out=token()?'VeloMail pronto: apri la sezione VeloMail per inviare un messaggio':'Accedi per testare VeloMail'}else if(action.includes('report-abuse')){out='Segnalazione pronta: descrivi contenuto, zona o utente e inviala dal pannello segnalazioni'}else throw new Error('Strumento non disponibile');toolOutput.textContent=out}catch(e){track('TOOL_ERROR','TOOL',action,{message:e.message});toolOutput.textContent=e.message}}
     async function loadForum(){if(!token())return forumMessages.innerHTML=item('Forum','Accedi per usare il forum');try{const sections=await api('/api/v1/forum/sections',{headers:headers()});currentForumSlug=(sections.sections||[])[0]?.slug||currentForumSlug;const data=await api('/api/v1/forum/sections/'+encodeURIComponent(currentForumSlug)+'/messages',{headers:headers()});forumMessages.innerHTML=(data.messages||[]).map(m=>item(m.username||'Velora',m.body||m.message||'')).join('')||item('Forum','Nessun messaggio')}catch(e){forumMessages.innerHTML=item('Forum',e.message)}}
     async function sendForum(){try{await api('/api/v1/forum/sections/'+encodeURIComponent(currentForumSlug)+'/messages',{method:'POST',headers:headers(true),body:JSON.stringify({body:forumDraft.value})});forumDraft.value='';loadForum()}catch(e){alert(e.message)}}
     async function loadMining(){if(!token())return miningBox.innerHTML=item('Mining','Accedi per vedere mining');try{const [progress,targets,history]=await Promise.all([api('/api/v1/mining/progress',{headers:headers()}),api('/api/v1/execution/targets',{headers:headers()}),api('/api/v1/mining/history',{headers:headers()})]);targetSelect.innerHTML=(targets.targets||[]).filter(t=>(t.capabilities||[]).includes('MINING_START')).map(t=>'<option value="'+esc(t.type+':'+t.id)+'">'+esc(t.label+' - '+t.status)+'</option>').join('');miningBox.innerHTML=(progress.workers||[]).map(w=>item(w.worker_id||'worker','Share ok '+(w.accepted_pool_shares||0)+' - payout '+(w.pending_label||'-')+' - soglia '+(w.payout_threshold_label||'-'))).join('')||item('Mining','Nessun worker');miningHistory.innerHTML=(history.payoutRequests||[]).map(p=>item(p.status,p.coin+' '+(p.payout_tx_hash||''))).join('')}catch(e){miningBox.innerHTML=item('Mining',e.message)}}
     async function execMining(op){const [type,id]=(targetSelect.value||'SERVER:').split(':');try{await api('/api/v1/execution/operations',{method:'POST',headers:headers(true),body:JSON.stringify({operation:op,targetType:type||'SERVER',targetId:id,requestedState:op,payload:{profile:miningProfile.value,coin:miningCoin.value},idempotencyKey:op+'-'+Date.now()})});loadMining()}catch(e){alert(e.message)}}
     async function loadNodes(){if(!token()){const html=item('Nodi','Accedi per vedere i nodi');nodesBox.innerHTML=html;if(document.getElementById('nasBox'))nasBox.innerHTML=html;return}try{const data=await api('/api/v1/execution/targets',{headers:headers()});const targets=data.targets||[];nodesBox.innerHTML=targets.map(t=>item(t.label,t.type+' - '+t.status+' - '+(t.online?'online':'offline'))).join('')||item('Nodi','Nessun nodo');if(document.getElementById('nasBox')){const nas=targets.filter(t=>t.type==='NAS');nasBox.innerHTML=nas.map(t=>item(t.label,(t.online?'online':'offline')+' - '+(t.storageAvailableBytesLabel||'spazio in verifica')+' - ultimo contatto '+(t.lastSeenAt||'-'))).join('')||item('NAS','Nessun NAS associato all account');}opsBox.innerHTML=(data.operations||[]).map(o=>item(o.operation,o.status+' - '+(o.target_type||''))).join('')||item('Operazioni','Nessuna operazione recente')}catch(e){nodesBox.innerHTML=item('Nodi',e.message);if(document.getElementById('nasBox'))nasBox.innerHTML=item('NAS',e.message)}}
     async function preparePublisher(){if(!token())return publisherStatus.textContent='Accedi per preparare una pubblicazione';try{const payload={address:publisherAddress.value.trim(),title:publisherTitle.value.trim(),description:publisherDescription.value.trim(),category:publisherCategory.value,keywords:publisherKeywords.value.split(',').map(x=>x.trim()).filter(Boolean),version:publisherVersion.value.trim()||'1.0.0',entryFile:'index.html',languages:['it'],ageRating:'EVERYONE',familySafe:true,permissions:{externalNetwork:false,clipboardRead:false,clipboardWrite:false,notifications:false,fileDownload:false},allowedExternalOrigins:[]};const data=await api('/api/v1/sites/portal-prepare',{method:'POST',headers:headers(true),body:JSON.stringify(payload)});publisherStatus.innerHTML=(data.ready?'<b class="ok">Pronto per pubblicare</b>':'<b class="bad">Correggi prima di pubblicare</b>')+'<pre>'+esc(JSON.stringify(data,null,2))+'</pre>';publisherManifest.value=JSON.stringify(data.manifest,null,2)}catch(e){publisherStatus.textContent=e.message}}
-    async function queuePublish(){if(!token())return publisherStatus.textContent='Accedi per continuare';try{await preparePublisher();await api('/api/v1/execution/operations',{method:'POST',headers:headers(true),body:JSON.stringify({operation:'PUBLISH_VALIDATE',targetType:'SERVER',idempotencyKey:'publish-'+Date.now(),payload:{address:publisherAddress.value.trim(),source:'portal'}})});publisherStatus.innerHTML+='<p class="ok">Validazione registrata. Per caricare file locali usa desktop, NAS agent o nodo autorizzato.</p>'}catch(e){publisherStatus.textContent=e.message}}
-    async function loadPublisher(){publisherStatus.textContent='Compila i campi. Il portale genera manifest valido e guida il passaggio successivo senza usare account paralleli.'}
+    async function queuePublish(){if(!token())return publisherStatus.textContent='Accedi per continuare';try{await preparePublisher();await api('/api/v1/execution/operations',{method:'POST',headers:headers(true),body:JSON.stringify({operation:'PUBLISH_VALIDATE',targetType:'SERVER',idempotencyKey:'publish-'+Date.now(),payload:{address:publisherAddress.value.trim(),source:'portal'}})});publisherStatus.innerHTML+='<p class="ok">Controllo registrato. Ora puoi completare la pubblicazione dal tuo dispositivo autorizzato.</p>'}catch(e){publisherStatus.textContent=e.message}}
+    async function loadPublisher(){publisherStatus.textContent='Compila i campi, controlla il sito e prepara la pubblicazione.'}
     function loadModule(id){if(id==='home')loadHome();if(id==='search'||id==='oceano')loadSearch();if(id==='mail')loadMail();if(id==='cloud')loadCloud();if(id==='tools')loadTools();if(id==='forum')loadForum();if(id==='mining')loadMining();if(id==='nodes'||id==='nas')loadNodes();if(id==='publisher')loadPublisher();}
     document.addEventListener('keydown',e=>{if(!e.metaKey)return;if(e.key.toLowerCase()==='k'){e.preventDefault();globalSearch.focus()}if(e.key.toLowerCase()==='l'){e.preventDefault();globalSearch.focus()}if(e.key.toLowerCase()==='r'){e.preventDefault();loadModule(currentSection)}if(e.key.toLowerCase()==='t'){e.preventDefault();showModule('browser')}})
     if(localStorage.getItem('velora.apple.theme')==='light')toggleTheme();renderNav();setSessionState();refreshSession();showModule(initialSection);
@@ -3300,6 +3322,7 @@ function appleModulesHtml(initialSection: string) {
         <div class="panel span-8"><h2>Accedi a Velora</h2><p>Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.</p><div id="authForm"><div class="row"><label class="username-wrap"><input id="authUser" autocomplete="username" placeholder="nomeutente"><span class="username-suffix">@velora</span></label><input id="authPass" autocomplete="current-password" type="password" placeholder="Password"></div><div class="row"><button class="primary" onclick="login()">Accedi</button><button onclick="register()">Crea account</button></div></div><div id="accountBox" class="hidden"><div class="card"><b>Account attivo</b><span id="accountName">utente Velora</span><p id="accountMail"></p></div><button onclick="logout()">Esci</button></div><p id="authMsg"></p></div>
         <div class="panel span-4"><h2>Uso rapido</h2><p>Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.</p><button onclick="installHelp()">Come salvarlo</button></div>
         <div class="panel span-12"><h2>Dashboard</h2><div id="homeCards" class="cards"></div></div>
+        <div class="panel span-12"><h2>Cosa posso fare ora</h2><div id="nextActions" class="cards"></div></div>
         <div class="panel span-4"><h2>Esplora</h2><p>Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.</p><button onclick="showModule('search')">Cerca ora</button></div>
         <div class="panel span-4"><h2>Comunica</h2><p>VeloMail e forum usano la stessa sessione del tuo account.</p><button onclick="showModule('mail')">Apri VeloMail</button></div>
         <div class="panel span-4"><h2>Pubblica</h2><p>Il Publisher guidato genera un manifest valido e riduce gli errori.</p><button onclick="showModule('publisher')">Prepara sito</button></div>
@@ -3309,8 +3332,8 @@ function appleModulesHtml(initialSection: string) {
     <section id="m-browser" class="module${active("browser")}"><div class="panel"><h2>Browser Velora</h2><div class="row"><input id="browserAddress" placeholder="happy.meter"><button onclick="openZone(browserAddress.value)">Apri zona</button></div><iframe id="browserFrame" title="Velora Browser" style="width:100%;height:70vh;border:1px solid var(--line);border-radius:20px;background:#fff"></iframe></div></section>
     <section id="m-mail" class="module${active("mail")}"><div class="mail-layout"><div class="panel"><h2>Cartelle</h2><p id="mailAccount"></p><button onclick="loadMail()">Inbox</button></div><div class="panel"><h2>Messaggi</h2><div id="mailList" class="list"></div></div><div class="panel"><h2>VeloMail</h2><div id="mailOpen"></div><h3>Componi</h3><input id="mailTo" placeholder="destinatario@velora"><input id="mailSubject" placeholder="Oggetto"><textarea id="mailBody" placeholder="Messaggio"></textarea><button class="primary" onclick="sendMail()">Invia</button><p id="mailComposerMsg"></p></div></div></section>
     <section id="m-cloud" class="module${active("cloud")}"><div class="split"><div class="panel"><h2>Velora Cloud</h2><p id="cloudQuota"></p><div class="drop"><input id="cloudInput" type="file" multiple><button class="primary" onclick="uploadCloud()">Carica</button></div></div><div class="panel"><h2>File</h2><div id="cloudFiles" class="list"></div></div></div></section>
-    <section id="m-publisher" class="module${active("publisher")}"><div class="split"><div class="panel"><h2>Publisher Studio</h2><p>Compila i campi e Velora genera un manifest valido. I file locali vengono caricati da desktop, NAS agent o nodo autorizzato.</p><input id="publisherAddress" placeholder="shop.nome-sito"><input id="publisherTitle" placeholder="Titolo sito"><textarea id="publisherDescription" placeholder="Descrizione chiara del sito"></textarea><div class="row"><select id="publisherCategory"><option>shop</option><option>tool</option><option>social</option><option>video</option><option>blog</option><option>business</option><option>community</option><option>education</option><option>health</option><option>science</option><option>service</option><option>tech</option><option>cloud</option><option>portfolio</option><option>news</option></select><input id="publisherVersion" placeholder="1.0.0"></div><input id="publisherKeywords" placeholder="keyword separate da virgola"><div class="row"><button onclick="preparePublisher()">Controlla</button><button class="primary" onclick="queuePublish()">Prepara pubblicazione</button></div><div id="publisherStatus"></div></div><div class="panel"><h2>Manifest generato</h2><textarea id="publisherManifest" readonly placeholder="Il manifest appare qui dopo il controllo"></textarea><h3>Login Velora</h3><p>I siti pubblicati devono usare il bridge VELORA_AUTH_REQUEST. Il portale risponde con VELORA_AUTH_STATE quando l'utente e collegato.</p></div></div></section>
-    <section id="m-tools" class="module${active("tools")}"><div class="split"><div class="panel"><h2>Velora Tools</h2><textarea id="toolInput" placeholder="Testo, wallet, link o contenuto"></textarea><pre id="toolOutput"></pre></div><div class="panel"><h2>40 strumenti</h2><div id="toolList" class="list"></div></div></div></section>
+    <section id="m-publisher" class="module${active("publisher")}"><div class="split"><div class="panel"><h2>Publisher Studio</h2><p>Prepara una zona Velora con titolo, descrizione, categoria e controllo iniziale.</p><input id="publisherAddress" placeholder="nome.zona"><input id="publisherTitle" placeholder="Titolo sito"><textarea id="publisherDescription" placeholder="Descrizione chiara del sito"></textarea><div class="row"><select id="publisherCategory"><option>shop</option><option>tool</option><option>social</option><option>video</option><option>blog</option><option>business</option><option>community</option><option>education</option><option>health</option><option>science</option><option>service</option><option>tech</option><option>cloud</option><option>portfolio</option><option>news</option></select><input id="publisherVersion" placeholder="1.0.0"></div><input id="publisherKeywords" placeholder="keyword separate da virgola"><div class="row"><button onclick="preparePublisher()">Controlla</button><button class="primary" onclick="queuePublish()">Prepara pubblicazione</button></div><div id="publisherStatus"></div></div><div class="panel"><h2>Stato pubblicazione</h2><textarea id="publisherManifest" readonly placeholder="Il riepilogo appare qui dopo il controllo"></textarea><h3>Accesso Velora</h3><p>I siti pubblicati possono usare l'account Velora senza creare account separati.</p></div></div></section>
+    <section id="m-tools" class="module${active("tools")}"><div class="split"><div class="panel"><h2>Velora Tools</h2><p>Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.</p><textarea id="toolInput" placeholder="Testo, wallet, link o contenuto"></textarea><pre id="toolOutput"></pre></div><div class="panel"><h2>Tools disponibili</h2><div id="toolList" class="list"></div></div></div></section>
     <section id="m-forum" class="module${active("forum")}"><div class="panel"><h2>Forum e chat</h2><textarea id="forumDraft" placeholder="Scrivi nel forum"></textarea><button class="primary" onclick="sendForum()">Invia</button><button onclick="loadForum()">Aggiorna</button><div id="forumMessages" class="list"></div></div></section>
     <section id="m-mining" class="module${active("mining")}"><div class="grid"><div class="panel span-4"><h2>Comando remoto</h2><select id="targetSelect"></select><select id="miningCoin"><option>XMR</option><option>ZEPH</option></select><select id="miningProfile"><option>ECO</option><option>BILANCIATO</option><option>POTENZA</option></select><div class="three"><button onclick="execMining('MINING_START')">Avvia</button><button onclick="execMining('MINING_PAUSE')">Pausa</button><button onclick="execMining('MINING_STOP')">Stop</button></div></div><div class="panel span-8"><h2>Mining dashboard</h2><div id="miningBox" class="list"></div><h3>Storico payout</h3><div id="miningHistory" class="list"></div></div></div></section>
     <section id="m-nodes" class="module${active("nodes")}"><div class="split"><div class="panel"><h2>Nodi</h2><button onclick="loadNodes()">Aggiorna</button><div id="nodesBox" class="list"></div></div><div class="panel"><h2>Operazioni</h2><div id="opsBox" class="list"></div></div></div></section>
@@ -3361,6 +3384,40 @@ function mobilePage() {
     </section>
 
     <section data-page="home" class="active">
+      <div class="panel">
+        <h2>Cosa posso fare ora</h2>
+        <div class="list">
+          <button onclick="showPage('search',document.querySelector('[data-tab=search]'))">Cerca una zona</button>
+          <button onclick="showPage('browser',document.querySelector('[data-tab=browser]'))">Apri Browser Velora</button>
+          <button onclick="showPage('tools',document.querySelector('[data-tab=tools]'))">Usa Velora Tools</button>
+          <button onclick="showPage('account',document.querySelector('[data-tab=account]'))">Gestisci account</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Stato Velora</h2>
+        <div class="grid" id="homeCards"></div>
+      </div>
+    </section>
+
+    <section data-page="search" id="search">
+      <div class="panel stack">
+        <h2>Cerca su Velora</h2>
+        <input id="mobileSearch" placeholder="happy.meter, v.social, guida">
+        <button class="primary" onclick="runMobileSearch()">Cerca</button>
+        <div id="mobileSearchResults" class="list"></div>
+      </div>
+    </section>
+
+    <section data-page="browser" id="browser">
+      <div class="panel stack">
+        <h2>Browser Velora</h2>
+        <input id="mobileZone" placeholder="happy.meter">
+        <button class="primary" onclick="openMobileZone(mobileZone.value)">Apri zona</button>
+        <iframe id="mobileFrame" title="Browser Velora" style="width:100%;height:68vh;border:1px solid var(--line);border-radius:20px;background:#fff"></iframe>
+      </div>
+    </section>
+
+    <section data-page="account" id="account">
       <div class="panel stack">
         <h2>Account Velora</h2>
         <label class="username-wrap"><input id="username" placeholder="nomeutente" autocomplete="username"><span class="username-suffix">@velora</span></label>
@@ -3369,10 +3426,6 @@ function mobilePage() {
         <div class="row"><button class="primary" onclick="login()">Entra</button><button onclick="register()">Crea account</button></div>
         <button onclick="logout()">Esci</button>
         <p id="authMsg" class="muted"></p>
-      </div>
-      <div class="panel">
-        <h2>Stato Velora</h2>
-        <div class="grid" id="homeCards"></div>
       </div>
     </section>
 
@@ -3431,11 +3484,11 @@ function mobilePage() {
     </section>
   </main>
   <nav class="mobile">
-    <button class="active" onclick="showPage('home',this)">Home</button>
-    <button onclick="showPage('tools',this)">Tools</button>
-    <button onclick="showPage('cloud',this)">Cloud</button>
-    <button onclick="showPage('mining',this)">Mining</button>
-    <button onclick="showPage('nodes',this)">Nodi</button>
+    <button class="active" data-tab="home" onclick="showPage('home',this)">Home</button>
+    <button data-tab="search" onclick="showPage('search',this)">Cerca</button>
+    <button data-tab="browser" onclick="showPage('browser',this)">Browser</button>
+    <button data-tab="tools" onclick="showPage('tools',this)">Tools</button>
+    <button data-tab="account" onclick="showPage('account',this)">Account</button>
   </nav>
   <script>
     let deferredInstall = null;
@@ -3452,7 +3505,10 @@ function mobilePage() {
     function item(title,body){ return '<div class="item"><b>'+esc(title)+'</b><br><small>'+esc(body||'')+'</small></div>'; }
     function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
     async function api(path,options){ const res=await fetch(path,options||{}); const text=await res.text(); let data=text; try{ data=text?JSON.parse(text):{}; }catch{} if(!res.ok) throw new Error(typeof data==='object' && data.message ? data.message : text || res.status); return data; }
-    function showPage(page,button){ document.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===page)); document.querySelectorAll('nav.mobile button').forEach(el=>el.classList.remove('active')); if(button) button.classList.add('active'); location.hash=page; if(page==='tools') loadTools(); if(page==='cloud') loadCloud(); if(page==='mining') loadMining(); if(page==='nodes') loadNodes(); if(page==='forum') loadForum(); }
+    function track(event,targetType,targetId,payload){ fetch('/api/v1/analytics',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({event,targetType,targetId,summary:event,payload:payload||{}})}).catch(()=>undefined); }
+    function showPage(page,button){ document.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===page)); document.querySelectorAll('nav.mobile button').forEach(el=>el.classList.remove('active')); if(button) button.classList.add('active'); location.hash=page; if(page==='tools') loadTools(); }
+    async function runMobileSearch(){ try{ const q=mobileSearch.value.trim()||'velora'; const data=await api('/api/v1/search?q='+encodeURIComponent(q)); if(!(data.results||[]).length)track('SEARCH_EMPTY','SEARCH',q); mobileSearchResults.innerHTML=(data.results||[]).map(r=>'<div class="item"><b>'+esc(r.title||r.address)+'</b><br><small>'+esc(r.description||r.summary||'')+'</small><button onclick="openMobileZone(\\''+esc(r.address||r.zone||'')+'\\')">Apri</button></div>').join('')||item('Search','Nessun risultato disponibile'); }catch(e){ track('SEARCH_ERROR','SEARCH',mobileSearch.value,{message:e.message}); mobileSearchResults.innerHTML=item('Search',e.message); } }
+    function openMobileZone(zone){ if(!zone)return; track('ZONE_OPEN','ZONE',zone); mobileZone.value=zone; showPage('browser',document.querySelector('[data-tab=browser]')); mobileFrame.src='/zone/'+encodeURIComponent(zone); }
     function authUsername(){ return (username.value||'').trim().replace(/@velora$/i,'') + '@velora'; }
     async function register(){ try{ const body={username:authUsername(),email:email.value.trim(),password:password.value}; const data=await api('/api/v1/auth/register',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}); saveSession(data); setMsg('authMsg','Account creato','ok'); boot(); }catch(e){ setMsg('authMsg',e.message,'bad'); } }
     async function login(){ try{ const body={username:authUsername(),password:password.value}; const data=await api('/api/v1/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}); saveSession(data); setMsg('authMsg','Accesso effettuato','ok'); boot(); }catch(e){ setMsg('authMsg',e.message,'bad'); } }
@@ -3460,9 +3516,9 @@ function mobilePage() {
     function logout(){ localStorage.removeItem(tokenKey); localStorage.removeItem(userKey); boot(); }
     async function boot(){ const user=JSON.parse(localStorage.getItem(userKey)||'{}'); sessionState.textContent=token() ? 'Connesso come ' + (user.username||'utente Velora') : 'Accesso non effettuato'; await loadHome(); }
     async function loadHome(){ try{ const health=await api('/health'); const guardian=await api('/api/v1/guardian/status'); homeCards.innerHTML=card('API',health.ok?'online':'verifica')+card('Guardian',guardian.status||'protetto')+card('Livelli',guardian.totalLevels||10)+card('Mobile','attivo'); }catch(e){ homeCards.innerHTML=item('Stato',e.message); } }
-    async function loadTools(){ try{ const data=await api('/api/v1/tools'); toolList.innerHTML=(data.tools||[]).slice(0,40).map(t=>item(t.name,t.description)).join(''); }catch(e){ toolList.innerHTML=item('Errore',e.message); } }
+    async function loadTools(){ try{ const data=await api('/api/v1/tools'); toolList.innerHTML=(data.tools||[]).filter(t=>t.executable).map(t=>item(t.name,t.description)).join('')||item('Tools','Nessuno strumento disponibile'); }catch(e){ toolList.innerHTML=item('Errore',e.message); } }
     function speakTool(){ const text=toolText.value.trim(); if(!text) return setMsg('toolOutput','Inserisci testo','bad'); speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(text)); setMsg('toolOutput','Lettura avviata','ok'); }
-    function translateTool(){ const text=toolText.value.trim(); if(!text) return setMsg('toolOutput','Inserisci testo','bad'); setMsg('toolOutput','Traduzione rapida: usa testo breve. Motore locale pronto per frasi semplici; per traduzioni avanzate verra usato il servizio cloud quando configurato.','ok'); }
+    function translateTool(){ const text=toolText.value.trim(); if(!text) return setMsg('toolOutput','Inserisci testo','bad'); const dict={ciao:'hello',grazie:'thank you',si:'yes',no:'no',buongiorno:'good morning',buonasera:'good evening',veloce:'fast',sicuro:'safe',semplice:'simple'}; const out=text.split(/\\s+/).map(w=>dict[w.toLowerCase()]||w).join(' '); setMsg('toolOutput',out,'ok'); }
     function summarizeTool(){ const text=toolText.value.trim(); const parts=text.split(/[.!?\\n]/).map(x=>x.trim()).filter(Boolean); setMsg('toolOutput',parts.slice(0,3).join('. ') || 'Inserisci testo','ok'); }
     async function hashTool(){ const text=toolText.value; const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)); setMsg('toolOutput',Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase(),'ok'); }
     function walletTool(){ const v=toolText.value.trim(); const ok=/^(4|8)[1-9A-HJ-NP-Za-km-z]{90,110}$/.test(v)||/^Z[a-zA-Z0-9]{70,120}$/.test(v); setMsg('toolOutput',ok?'Wallet pubblico valido per controllo beta':'Formato wallet non riconosciuto',''+(ok?'ok':'bad')); }
@@ -3927,7 +3983,94 @@ async function findPublicZone(address: string) {
   }
 }
 
-function publicZonePage(address: string, row: any) {
+async function sendZoneRuntime(address: string, row: any, reply: FastifyReply) {
+  const safeAddress = normalizeZoneAddress(address);
+  const siteRoot = safeAddress ? await findPublishedSiteRoot(safeAddress) : undefined;
+  if (siteRoot) {
+    const indexPath = join(siteRoot, "index.html");
+    try {
+      const raw = await readFile(indexPath, "utf8");
+      const html = injectZoneRuntime(raw, safeAddress, row);
+      reply.header("Content-Security-Policy", "default-src 'self' data: blob:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline'; connect-src 'self' https://www.webvelora.it https://velora-beta-20260629-9a9196313b42.herokuapp.com; frame-ancestors 'self'");
+      return reply.type("text/html; charset=utf-8").send(html);
+    } catch {
+      await appendOperationalEvent({ eventType: "ZONE_INDEX_MISSING", targetType: "ZONE", targetId: safeAddress, summary: "Index zona non leggibile", payload: { address: safeAddress } });
+    }
+  }
+  if (!row) {
+    await appendOperationalEvent({ eventType: "ZONE_NOT_OPENABLE", targetType: "ZONE", targetId: address, summary: "Zona richiesta non trovata", payload: { address } });
+  } else if (!siteRoot) {
+    await appendOperationalEvent({ eventType: "ZONE_CONTENT_MISSING", targetType: "ZONE", targetId: safeAddress || address, summary: "Zona indicizzata senza runtime locale", payload: { address, contentCid: row.content_cid ?? null } });
+  }
+  return reply.type("text/html; charset=utf-8").send(publicZonePage(address, row, Boolean(siteRoot)));
+}
+
+async function sendZoneAsset(address: string, asset: string, reply: FastifyReply) {
+  const safeAddress = normalizeZoneAddress(address);
+  if (!safeAddress) return reply.notFound("zone not found");
+  const siteRoot = await findPublishedSiteRoot(safeAddress);
+  if (!siteRoot) return reply.notFound("zone asset not found");
+  const cleanAsset = normalize(String(asset || "")).replace(/^(\.\.[/\\])+/, "").replace(/^[/\\]+/, "");
+  if (!cleanAsset || cleanAsset.includes("..")) return reply.notFound("zone asset not found");
+  const assetPath = resolve(siteRoot, cleanAsset);
+  const relativeAsset = relative(siteRoot, assetPath);
+  if (relativeAsset.startsWith("..") || relativeAsset.includes(":")) return reply.notFound("zone asset not found");
+  try {
+    const info = await stat(assetPath);
+    if (!info.isFile()) return reply.notFound("zone asset not found");
+    reply.header("Cache-Control", "public, max-age=300");
+    reply.header("Content-Length", String(info.size));
+    reply.type(mimeFromPath(assetPath));
+    return reply.send(createReadStream(assetPath));
+  } catch {
+    return reply.notFound("zone asset not found");
+  }
+}
+
+function normalizeZoneAddress(address: string) {
+  const normalized = String(address || "").trim().toLowerCase().normalize("NFKC");
+  return /^[a-z0-9][a-z0-9.-]{1,90}[a-z0-9]$/.test(normalized) && normalized.includes(".") ? normalized : "";
+}
+
+async function findPublishedSiteRoot(address: string) {
+  for (const root of publishedSiteRoots) {
+    const candidate = resolve(root, address);
+    if (!candidate.startsWith(resolve(root))) continue;
+    try {
+      const info = await stat(join(candidate, "index.html"));
+      if (info.isFile()) return candidate;
+    } catch {
+      continue;
+    }
+  }
+  return undefined;
+}
+
+function injectZoneRuntime(html: string, address: string, row: any) {
+  const baseTag = `<base href="/zone-assets/${escapeHtml(address)}/">`;
+  const status = row?.release_status ?? row?.zone_status ?? "LOCAL_RUNTIME";
+  const shell = `<div data-velora-runtime style="position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483647;display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid rgba(232,196,105,.45);border-radius:16px;background:rgba(6,19,31,.9);color:#f6fbff;font:13px system-ui;box-shadow:0 12px 35px rgba(0,0,0,.28)"><span>Zona ${escapeHtml(address)} · ${escapeHtml(String(status))}</span><button data-velora-auth style="border:0;border-radius:12px;background:#e8c469;color:#06131f;padding:8px 10px;font-weight:800">Login Velora</button><span data-velora-auth-state>non collegato</span></div>`;
+  const bridge = `<script>(()=>{const s=document.querySelector("[data-velora-auth-state]");document.addEventListener("click",e=>{const t=e.target&&e.target.closest?e.target.closest("[data-velora-auth],a[href^='velora://auth']"):null;if(!t)return;e.preventDefault();window.parent.postMessage({type:"VELORA_AUTH_REQUEST",zone:${JSON.stringify(address)}},"*")});window.addEventListener("message",e=>{if(!e.data||e.data.type!=="VELORA_AUTH_STATE")return;if(s)s.textContent=e.data.loggedIn?"collegato: "+(e.data.mail||e.data.username||"utente"):"serve accesso Velora"})})();</script>`;
+  const withBase = /<head[^>]*>/i.test(html) ? html.replace(/<head([^>]*)>/i, `<head$1>${baseTag}`) : `${baseTag}${html}`;
+  return /<\/body>/i.test(withBase) ? withBase.replace(/<\/body>/i, `${shell}${bridge}</body>`) : `${withBase}${shell}${bridge}`;
+}
+
+function mimeFromPath(filePath: string) {
+  const ext = extname(filePath).toLowerCase();
+  if (ext === ".html") return "text/html; charset=utf-8";
+  if (ext === ".css") return "text/css; charset=utf-8";
+  if (ext === ".js" || ext === ".mjs") return "application/javascript; charset=utf-8";
+  if (ext === ".json") return "application/json; charset=utf-8";
+  if (ext === ".svg") return "image/svg+xml";
+  if (ext === ".png") return "image/png";
+  if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
+  if (ext === ".webp") return "image/webp";
+  if (ext === ".ico") return "image/x-icon";
+  if (ext === ".woff2") return "font/woff2";
+  return "application/octet-stream";
+}
+
+function publicZonePage(address: string, row: any, hasRuntime = false) {
   const manifest = row?.manifest_json ?? {};
   const title = String(manifest.title ?? row?.address ?? address);
   const description = String(manifest.description ?? "Zona Velora pubblicata");
@@ -3936,7 +4079,7 @@ function publicZonePage(address: string, row: any) {
   const found = Boolean(row);
   return `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} - Velora</title>
   <style>body{margin:0;background:linear-gradient(160deg,#071524,#0b2236 62%,#09131d);color:#f6fbff;font-family:ui-serif,Georgia,serif}main{max-width:980px;margin:auto;padding:clamp(22px,5vw,60px)}.card{border:1px solid #35506a;border-radius:28px;background:rgba(13,34,54,.94);padding:clamp(22px,4vw,38px);box-shadow:0 24px 80px rgba(0,0,0,.28)}h1{font-size:clamp(32px,8vw,68px);line-height:.95;margin:8px 0 16px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.pill{border:1px solid #4d6b86;border-radius:999px;padding:8px 11px;color:#dce8f2;background:#07131f}.body{white-space:pre-wrap;line-height:1.62;font-size:18px;color:#eaf3fb;margin-top:22px}button,a{color:#f1d68b}button{border:1px solid #5b7794;border-radius:14px;background:#10283d;padding:12px 16px;font:inherit;cursor:pointer}.auth{margin-top:18px;padding:14px 16px;border-radius:18px;background:#07131f;color:#dce8f2}.notfound{border-color:#8b5b5b;background:#2d1720}</style></head>
-  <body><main><div class="card ${found ? "" : "notfound"}"><p>Zona Velora</p><h1>${escapeHtml(found ? title : "Zona non trovata")}</h1><p>${escapeHtml(found ? description : "Questa zona non e ancora pubblicata o indicizzata. Torna al portale e cerca un risultato disponibile.")}</p><div class="meta"><span class="pill">Indirizzo: ${escapeHtml(address)}</span><span class="pill">Stato: ${escapeHtml(String(status))}</span><span class="pill">Release: ${escapeHtml(String(row?.version ?? "non disponibile"))}</span></div>${body ? `<div class="body">${escapeHtml(body.slice(0, 12000))}</div>` : ""}<button data-velora-auth>Accedi con Velora</button><div class="auth" data-velora-auth-state>Accesso Velora non ancora collegato</div><p><a href="/portal">Apri portale Velora</a></p></div></main><script>
+  <body><main><div class="card ${found ? "" : "notfound"}"><p>Zona Velora</p><h1>${escapeHtml(found ? title : "Zona non trovata")}</h1><p>${escapeHtml(found ? description : "Questa zona non e ancora pubblicata o indicizzata. Torna al portale e cerca un risultato disponibile.")}</p><div class="meta"><span class="pill">Indirizzo: ${escapeHtml(address)}</span><span class="pill">Stato: ${escapeHtml(String(status))}</span><span class="pill">${hasRuntime ? "Contenuto disponibile" : "Contenuto non disponibile"}</span><span class="pill">Release: ${escapeHtml(String(row?.version ?? "non disponibile"))}</span></div>${!hasRuntime && found ? `<div class="auth">Il contenuto della zona non e disponibile ora. Riprova piu tardi o torna al portale per aprire un'altra zona.</div>` : ""}${body ? `<div class="body">${escapeHtml(body.slice(0, 12000))}</div>` : ""}<button data-velora-auth>Accedi con Velora</button><div class="auth" data-velora-auth-state>Accesso Velora non ancora collegato</div><p><a href="/portal">Apri portale Velora</a></p></div></main><script>
 (() => {
   const state = document.querySelector("[data-velora-auth-state]");
   const requestAuth = (event) => { event.preventDefault(); window.parent.postMessage({ type: "VELORA_AUTH_REQUEST", zone: ${JSON.stringify(address)} }, "*"); };
@@ -4136,6 +4279,33 @@ async function appendUserOperationalEvent(userId: string, eventType: string, tar
   ).catch(() => undefined);
 }
 
+async function appendOperationalEvent(input: { eventType: string; targetType: string; targetId: string; summary: string; payload?: Record<string, unknown> }) {
+  await requirePool().query(
+    `INSERT INTO operational_events (id, event_type, target_type, target_id, summary, payload)
+     VALUES ($1,$2,$3,$4,$5,$6)`,
+    [
+      randomUUID(),
+      sanitizeSignal(input.eventType),
+      sanitizeSignal(input.targetType),
+      String(input.targetId || "unknown").slice(0, 160),
+      String(input.summary || "Evento Velora").slice(0, 500),
+      JSON.stringify(sanitizeAnalyticsPayload(input.payload ?? {}))
+    ]
+  ).catch(() => undefined);
+}
+
+function sanitizeAnalyticsPayload(payload: Record<string, unknown>) {
+  const safe: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(payload).slice(0, 20)) {
+    const cleanKey = key.replace(/[^A-Za-z0-9_:-]/g, "").slice(0, 60);
+    if (!cleanKey || /password|secret|seed|private|token|wallet/i.test(cleanKey)) continue;
+    if (typeof value === "string") safe[cleanKey] = value.replace(/[A-Za-z0-9]{32,}/g, "[dato protetto]").slice(0, 240);
+    else if (typeof value === "number" || typeof value === "boolean") safe[cleanKey] = value;
+    else if (value === null) safe[cleanKey] = null;
+  }
+  return safe;
+}
+
 function normalizeChoice(value: unknown, allowed: string[], fallback: string) {
   const normalized = String(value ?? "").trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_");
   return allowed.includes(normalized) ? normalized : fallback;
@@ -4307,14 +4477,32 @@ function veloraToolCatalog() {
 }
 
 function mapToolCatalog(group: string, rows: string[][]) {
+  const executable = new Set([
+    "tools.wallet",
+    "tools.mining",
+    "tools.publisher-validator",
+    "tools.zone-explorer",
+    "tools.login-test",
+    "tools.mail-test",
+    "tools.node-health",
+    "tools.hash",
+    "tools.report-abuse",
+    "tools.tts",
+    "tools.link-check",
+    "tools.privacy"
+  ]);
   return rows.map(([address, title, description]) => ({
     address,
+    zone: address,
     title,
+    name: title,
+    action: address,
     description,
     group,
     category: "Velora Tools",
-    status: "READY",
-    indexed: true
+    status: executable.has(address) ? "READY" : "INDEXED",
+    indexed: true,
+    executable: executable.has(address)
   }));
 }
 

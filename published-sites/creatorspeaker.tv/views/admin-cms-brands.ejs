@@ -1,0 +1,40 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <p class="eyebrow">Aziende / Brand</p>
+    <h1>Servizi aziende e brand</h1>
+    <div class="split-layout top-gap">
+      <article class="admin-card">
+        <h2>Nuovo servizio</h2>
+        <form class="stack-form" method="post" action="/admin/brands">
+          <%- include("partials/csrf-fields") %>
+          <label>Titolo<input name="title" required /></label>
+          <label>Slug<input name="slug" /></label>
+          <label>Descrizione<textarea name="description"></textarea></label>
+          <label>Benefici uno per riga<textarea name="benefits"></textarea></label>
+          <div class="grid-2"><label>CTA label<input name="cta_label" value="Richiedi informazioni" /></label><label>CTA URL<input name="cta_url" value="/richiedi-informazioni" /></label></div>
+          <label>Media<select name="media_asset_id"><option value="">Nessuno</option><% data.mediaOptions.forEach(function(media) { %><option value="<%= media.id %>"><%= media.title %></option><% }) %></select></label>
+          <div class="grid-2"><label>Stato<select name="status"><option value="active">active</option><option value="draft">draft</option><option value="hidden">hidden</option></select></label><label>Ordine<input type="number" name="sort_order" value="0" /></label></div>
+          <button class="button secondary" type="submit">Salva servizio</button>
+        </form>
+      </article>
+      <div class="table-list">
+        <% data.services.forEach(function(service) { %>
+          <article class="admin-card">
+            <form class="stack-form" method="post" action="/admin/brands">
+              <%- include("partials/csrf-fields") %>
+              <input type="hidden" name="id" value="<%= service.id %>" />
+              <div class="grid-2"><label>Titolo<input name="title" value="<%= service.title %>" /></label><label>Slug<input name="slug" value="<%= service.slug %>" /></label></div>
+              <label>Descrizione<textarea name="description"><%= service.description || '' %></textarea></label>
+              <label>Benefici<textarea name="benefits"><%= (service.benefits || []).join('\n') %></textarea></label>
+              <div class="grid-2"><label>Stato<input name="status" value="<%= service.status %>" /></label><label>Ordine<input type="number" name="sort_order" value="<%= service.sort_order %>" /></label></div>
+              <input type="hidden" name="media_asset_id" value="<%= service.media_asset_id || '' %>" />
+              <label>CTA label<input name="cta_label" value="<%= service.cta_label %>" /></label>
+              <label>CTA URL<input name="cta_url" value="<%= service.cta_url %>" /></label>
+              <button class="ghost-button compact-ghost" type="submit">Aggiorna</button>
+            </form>
+          </article>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</section>

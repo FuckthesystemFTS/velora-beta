@@ -1,0 +1,28 @@
+{
+  "schema": "https://velora.dev/schemas/velora-site.v1.json",
+  "zone": "happy.meter",
+  "title": "HappyMeter",
+  "description": "Feliciometro adattato per Velora con accesso tramite identita unica",
+  "entry": "index.html",
+  "type": "static-site",
+  "version": "0.1.0-beta",
+  "publisher": {
+    "name": "HappyMeter",
+    "requiresVeloraIdentity": true
+  },
+  "auth": {
+    "provider": "velora",
+    "registerUrl": "velora://auth/register?app=happy.meter",
+    "loginUrl": "velora://auth/login?app=happy.meter"
+  },
+  "permissions": {
+    "network": false,
+    "storage": "local"
+  },
+  "routes": [
+    {
+      "path": "/",
+      "file": "index.html"
+    }
+  ]
+}

@@ -1,0 +1,588 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  VERIFIED_USER
+  MODERATOR
+  ADMIN
+  SUPERADMIN
+}
+
+enum Visibility {
+  PUBLIC
+  FOLLOWERS_ONLY
+  PRIVATE
+}
+
+enum PostStatus {
+  ACTIVE
+  TEMP_SUSPENDED
+  REMOVED
+  DELETED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  REPLY
+  FOLLOW
+  REPORT_OUTCOME
+  MODERATION_TASK
+  TEAM_TASK
+  SYSTEM
+}
+
+enum ReportReason {
+  HARASSMENT
+  HATE
+  VIOLENCE
+  SEXUAL_CONTENT
+  MISINFORMATION
+  ILLEGAL_CONTENT
+  SPAM
+  PRIVACY
+  OTHER
+}
+
+enum ModerationCaseStatus {
+  OPEN
+  LEVEL1_PENDING
+  LEVEL1_CLOSED_KEEP
+  LEVEL2_PENDING
+  LEVEL2_CLOSED_KEEP
+  TEAM_PENDING
+  SUSPENDED_TEMP
+  REMOVED_FINAL
+  RESTORED
+  EXPIRED
+}
+
+enum ModerationAssignmentLevel {
+  LEVEL1
+  LEVEL2
+  TEAM
+}
+
+enum ModerationAssignmentStatus {
+  PENDING
+  VOTED
+  EXPIRED
+  REPLACED
+}
+
+enum VoteDecision {
+  REMOVE
+  KEEP
+  CONFIRM_REMOVE
+  RESTORE
+}
+
+enum TeamDecisionOutcome {
+  CONFIRM_SUSPENSION
+  REMOVE_FINAL
+  RESTORE_CONTENT
+}
+
+enum AuditActorType {
+  USER
+  SYSTEM
+  TEAM
+}
+
+enum PolicyType {
+  TERMS
+  PRIVACY
+  COOKIE
+  COMMUNITY_RULES
+  MODERATION_RULES
+  DISTRIBUTED_CONTROL
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+enum LiveBroadcastStatus {
+  ACTIVE
+  ENDED
+}
+
+enum LiveBroadcastMode {
+  AUDIO_VIDEO
+  AUDIO_ONLY
+}
+
+model User {
+  id                    String                   @id @default(cuid())
+  email                 String                   @unique
+  username              String                   @unique
+  passwordHash          String
+  role                  Role                     @default(USER)
+  vPoints               Int                      @default(0)
+  isEmailVerified       Boolean                  @default(false)
+  isSuspended           Boolean                  @default(false)
+  reputationScore       Int                      @default(100)
+  juryEligibilityLocked Boolean                  @default(false)
+  lastLoginAt           DateTime?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  deletedAt             DateTime?
+  profile               UserProfile?
+  sessions              Session[]
+  authentications       Verification[]
+  posts                 Post[]
+  comments              Comment[]
+  postLikes             PostLike[]
+  commentLikes          CommentLike[]
+  followers             Follow[]                 @relation("followed")
+  following             Follow[]                 @relation("follower")
+  blockedUsers          Block[]                  @relation("blocker")
+  blockedByUsers        Block[]                  @relation("blocked")
+  mutedUsers            Mute[]                   @relation("muter")
+  mutedByUsers          Mute[]                   @relation("muted")
+  notificationsReceived Notification[]           @relation("notificationRecipient")
+  notificationsSent     Notification[]           @relation("notificationActor")
+  reports               Report[]                 @relation("reporter")
+  authoredModerationCases ModerationCase[]       @relation("CaseAuthor")
+  reportedModerationCases ModerationCase[]       @relation("CaseReporter")
+  assignedCases         ModerationAssignment[]
+  moderationVotes       ModerationVote[]
+  teamDecisions         TeamDecision[]
+  auditLogs             AuditLog[]
+  policyAcceptances     PolicyAcceptance[]
+  feedbacks             UserFeedback[]
+  savedPosts            SavedPost[]
+  adminActions          AdminAction[]
+  ownedMedia            PostMedia[]
+  invitesSent           Invitation[]             @relation("InviteSender")
+  acceptedInvitation    Invitation?              @relation("InviteAcceptedUser")
+  liveBroadcasts        LiveBroadcast[]
+
+  @@index([role, createdAt])
+  @@index([isSuspended, createdAt])
+}
+
+model UserProfile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  displayName    String
+  bio            String?  @db.Text
+  avatarUrl      String?
+  avatarPublicId String?
+  coverUrl       String?
+  coverPublicId  String?
+  location       String?
+  website        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  tokenHash    String   @unique
+  userAgent    String?
+  ipAddress    String?
+  csrfToken    String?
+  expiresAt    DateTime
+  lastSeenAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+  revokedAt    DateTime?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  userId     String?
+  type       String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  consumedAt DateTime?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followedId  String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followed    User     @relation("followed", fields: [followedId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followedId])
+  @@index([followedId])
+}
+
+model Block {
+  id         String   @id @default(cuid())
+  blockerId  String
+  blockedId  String
+  createdAt  DateTime @default(now())
+  blocker    User     @relation("blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked    User     @relation("blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+}
+
+model Mute {
+  id        String   @id @default(cuid())
+  muterId   String
+  mutedId   String
+  createdAt DateTime @default(now())
+  muter     User     @relation("muter", fields: [muterId], references: [id], onDelete: Cascade)
+  muted     User     @relation("muted", fields: [mutedId], references: [id], onDelete: Cascade)
+
+  @@unique([muterId, mutedId])
+}
+
+model Post {
+  id                String             @id @default(cuid())
+  authorId          String
+  content           String             @db.Text
+  sanitizedContent  String             @db.Text
+  visibility        Visibility         @default(PUBLIC)
+  status            PostStatus         @default(ACTIVE)
+  shareOfPostId     String?
+  linkUrl           String?
+  linkTitle         String?
+  linkDescription   String?
+  linkImageUrl      String?
+  hashtags          String[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  deletedAt         DateTime?
+  author            User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  shareOfPost       Post?              @relation("sharedPost", fields: [shareOfPostId], references: [id])
+  shares            Post[]             @relation("sharedPost")
+  media             PostMedia[]
+  comments          Comment[]
+  likes             PostLike[]
+  reports           Report[]
+  moderationCases   ModerationCase[]
+  savedByUsers      SavedPost[]
+  liveBroadcast     LiveBroadcast?
+
+  @@index([authorId, createdAt])
+  @@index([status, visibility, createdAt])
+}
+
+model PostMedia {
+  id           String    @id @default(cuid())
+  ownerId       String
+  postId        String
+  resourceType  MediaType
+  secureUrl     String
+  publicId      String
+  format        String?
+  width         Int?
+  height        Int?
+  duration      Int?
+  bytes         Int?
+  fingerprint   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  owner         User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  post          Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model Comment {
+  id               String        @id @default(cuid())
+  authorId         String
+  postId           String
+  parentCommentId  String?
+  content          String        @db.Text
+  sanitizedContent String        @db.Text
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  deletedAt        DateTime?
+  author           User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post             Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentComment    Comment?      @relation("commentReplies", fields: [parentCommentId], references: [id])
+  replies          Comment[]     @relation("commentReplies")
+  likes            CommentLike[]
+
+  @@index([postId, createdAt])
+}
+
+model PostLike {
+  id        String   @id @default(cuid())
+  userId     String
+  postId     String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+}
+
+model CommentLike {
+  id         String   @id @default(cuid())
+  userId     String
+  commentId  String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment    Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+}
+
+model SavedPost {
+  id         String   @id @default(cuid())
+  userId     String
+  postId     String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+}
+
+model Notification {
+  id           String           @id @default(cuid())
+  recipientId  String
+  actorId      String?
+  type         NotificationType
+  title        String
+  body         String
+  link         String?
+  metadata     Json?
+  isRead       Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  readAt       DateTime?
+  recipient    User             @relation("notificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor        User?            @relation("notificationActor", fields: [actorId], references: [id])
+
+  @@index([recipientId, createdAt])
+}
+
+model Report {
+  id           String       @id @default(cuid())
+  reporterId    String
+  postId        String
+  reason        ReportReason
+  reasonText    String?     @db.Text
+  createdAt     DateTime    @default(now())
+  moderationCaseId String?
+  reporter      User        @relation("reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  post          Post        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  moderationCase ModerationCase? @relation(fields: [moderationCaseId], references: [id])
+
+  @@index([postId, createdAt])
+  @@index([reporterId, createdAt])
+}
+
+model ModerationCase {
+  id                   String                      @id @default(cuid())
+  postId               String
+  authorId             String
+  reporterId           String
+  status               ModerationCaseStatus       @default(OPEN)
+  level                ModerationAssignmentLevel  @default(LEVEL1)
+  lastSelectionSeed    String?
+  level1DeadlineAt     DateTime?
+  level2DeadlineAt     DateTime?
+  teamDeadlineAt       DateTime?
+  tempSuspendedAt      DateTime?
+  finalReason          String?                    @db.Text
+  notes                String?                    @db.Text
+  decisionVersion      Int                        @default(1)
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  closedAt             DateTime?
+  post                 Post                       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author               User                       @relation("CaseAuthor", fields: [authorId], references: [id])
+  reporter             User                       @relation("CaseReporter", fields: [reporterId], references: [id])
+  reports              Report[]
+  assignments          ModerationAssignment[]
+  votes                ModerationVote[]
+  teamDecisions        TeamDecision[]
+  auditLogs            AuditLog[]
+
+  @@index([status, createdAt])
+  @@index([postId, status])
+}
+
+model ModerationAssignment {
+  id              String                      @id @default(cuid())
+  moderationCaseId String
+  userId          String
+  level           ModerationAssignmentLevel
+  status          ModerationAssignmentStatus  @default(PENDING)
+  expiresAt       DateTime
+  reminderSentAt  DateTime?
+  replacedById    String?
+  selectedAt      DateTime                    @default(now())
+  votedAt         DateTime?
+  moderationCase  ModerationCase              @relation(fields: [moderationCaseId], references: [id], onDelete: Cascade)
+  user            User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vote            ModerationVote?
+
+  @@unique([moderationCaseId, userId, level])
+  @@index([userId, level, status])
+}
+
+model ModerationVote {
+  id                 String                     @id @default(cuid())
+  moderationCaseId   String
+  assignmentId       String                     @unique
+  voterId            String
+  level              ModerationAssignmentLevel
+  decision           VoteDecision
+  note               String?                    @db.Text
+  createdAt          DateTime                   @default(now())
+  moderationCase     ModerationCase             @relation(fields: [moderationCaseId], references: [id], onDelete: Cascade)
+  assignment         ModerationAssignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  voter              User                       @relation(fields: [voterId], references: [id], onDelete: Cascade)
+
+  @@index([moderationCaseId, level])
+}
+
+model TeamDecision {
+  id                String               @id @default(cuid())
+  moderationCaseId  String
+  reviewerId        String
+  outcome           TeamDecisionOutcome
+  note              String?              @db.Text
+  createdAt         DateTime             @default(now())
+  moderationCase    ModerationCase       @relation(fields: [moderationCaseId], references: [id], onDelete: Cascade)
+  reviewer          User                 @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  @@unique([moderationCaseId, reviewerId])
+}
+
+model AuditLog {
+  id                String           @id @default(cuid())
+  actorId           String?
+  actorType         AuditActorType
+  action            String
+  entityType        String
+  entityId          String
+  moderationCaseId  String?
+  metadata          Json?
+  createdAt         DateTime         @default(now())
+  actor             User?            @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  moderationCase    ModerationCase?  @relation(fields: [moderationCaseId], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([moderationCaseId, createdAt])
+}
+
+model PolicyAcceptance {
+  id          String      @id @default(cuid())
+  userId      String
+  policy      PolicyType
+  version     String
+  acceptedAt  DateTime    @default(now())
+  ipAddress   String?
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, policy, version])
+}
+
+model UserFeedback {
+  id             String    @id @default(cuid())
+  userId         String
+  moderationCaseId String?
+  message        String    @db.Text
+  createdAt      DateTime  @default(now())
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Invitation {
+  id            String       @id @default(cuid())
+  inviterId     String
+  acceptedById  String?      @unique
+  code          String       @unique
+  email         String?
+  status        InviteStatus @default(PENDING)
+  expiresAt     DateTime?
+  acceptedAt    DateTime?
+  emailSentAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  inviter       User         @relation("InviteSender", fields: [inviterId], references: [id], onDelete: Cascade)
+  acceptedBy    User?        @relation("InviteAcceptedUser", fields: [acceptedById], references: [id], onDelete: SetNull)
+
+  @@index([inviterId, createdAt])
+  @@index([status, createdAt])
+}
+
+model LiveBroadcast {
+  id                String              @id @default(cuid())
+  creatorId         String
+  postId            String              @unique
+  mode              LiveBroadcastMode
+  status            LiveBroadcastStatus @default(ACTIVE)
+  recordingUrl      String?
+  recordingPublicId String?
+  thumbnailUrl      String?
+  thumbnailPublicId String?
+  durationSeconds   Int?
+  bytes             Int?
+  startedAt         DateTime            @default(now())
+  endedAt           DateTime?
+  expiresAt         DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  creator           User                @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  post              Post                @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId, startedAt])
+  @@index([status, startedAt])
+  @@index([expiresAt])
+}
+
+model SystemConfig {
+  id                      String   @id @default("default")
+  numJurorsLevel1         Int      @default(10)
+  numJurorsLevel2         Int      @default(5)
+  numTeamReviewers        Int      @default(3)
+  level1Threshold         Int      @default(6)
+  level2Threshold         Int      @default(3)
+  teamThreshold           Int      @default(2)
+  voteTimeoutMinutes      Int      @default(1440)
+  reminderTimeoutMinutes  Int      @default(720)
+  tempSuspensionEnabled   Boolean  @default(true)
+  reportCooldownMinutes   Int      @default(30)
+  maxReportsPerDay        Int      @default(10)
+  maxVotesPendingPerUser  Int      @default(5)
+  minAccountAgeHoursJury  Int      @default(72)
+  minVerifiedAgeHours     Int      @default(168)
+  allowSingleSuperadminDecision Boolean @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+model AdminAction {
+  id          String   @id @default(cuid())
+  actorId     String
+  action      String
+  targetType  String
+  targetId    String
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  actor       User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([targetType, targetId, createdAt])
+}

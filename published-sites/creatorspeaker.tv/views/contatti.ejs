@@ -1,0 +1,53 @@
+<section class="page-hero">
+  <div class="shell hero-grid hero-grid-media">
+    <div class="hero-copy">
+      <p class="eyebrow"><%= page.eyebrow %></p>
+      <h1><%= page.title %></h1>
+      <p class="lead"><%= page.intro %></p>
+    </div>
+    <div class="hero-media-card">
+      <img src="<%= data.site.emblemImage %>" alt="CreatorSpeaker TV" />
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell two-column">
+    <form class="info-panel stack-form" action="<%= currentPath %>" method="post">
+      <%- include("partials/csrf-fields") %>
+      <label>Nome<input type="text" name="name" required /></label>
+      <label>Email<input type="email" name="email" required /></label>
+      <label>Telefono<input type="text" name="phone" /></label>
+      <label>Tipo progetto
+        <select name="project_type">
+          <option value="Creator Video">Creator Video</option>
+          <option value="Speaker / Podcast">Speaker / Podcast</option>
+          <option value="Azienda / Brand">Azienda / Brand</option>
+          <option value="Produttore / Format">Produttore / Format</option>
+          <option value="Altro">Altro</option>
+        </select>
+      </label>
+      <label>Messaggio<textarea name="message" required></textarea></label>
+      <label class="checkbox"><input type="checkbox" name="accept_privacy" required /> Acconsento al trattamento dati secondo la privacy policy</label>
+      <button class="button" type="submit">Invia richiesta</button>
+    </form>
+    <aside class="info-panel">
+      <p class="eyebrow">Contatto diretto</p>
+      <h2>Parla con lo staff</h2>
+      <p>
+        Se il tuo progetto riguarda video, podcast, comunicazione aziendale, interviste o distribuzione multicanale, qui trovi il punto giusto per iniziare
+      </p>
+      <ul class="mini-list">
+        <li><a href="mailto:<%= contactEmails.info %>"><%= contactEmails.info %></a></li>
+        <li><a href="mailto:<%= contactEmails.service %>"><%= contactEmails.service %></a></li>
+        <li><a href="mailto:<%= contactEmails.network %>"><%= contactEmails.network %></a></li>
+      </ul>
+      <ul class="mini-list">
+        <li>Creator video e format editoriali</li>
+        <li>Speaker, podcast e voce</li>
+        <li>Aziende, brand e storytelling</li>
+        <li>Smart TV, Web TV e distribuzione</li>
+      </ul>
+    </aside>
+  </div>
+</section>

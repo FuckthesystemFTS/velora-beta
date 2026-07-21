@@ -1,0 +1,125 @@
+<section class="admin-hero">
+  <div>
+    <span class="eyebrow">Centro operativo</span>
+    <h2>Panoramica HappyMeter</h2>
+    <p>Controllo rapido di utenti, test, diario, chat globale, badge e configurazione email</p>
+  </div>
+  <div class="admin-health-card">
+    <span>SMTP</span>
+    <strong class="<%= emailConfig.hasPassword ? 'status-ok' : 'status-warn' %>"><%= emailConfig.hasPassword ? 'Configurato' : 'Password mancante' %></strong>
+    <small><%= emailConfig.user || 'Nessun account email impostato' %></small>
+  </div>
+</section>
+
+<section class="admin-panel">
+  <h2>Numeri principali</h2>
+  <div class="admin-stat-grid">
+    <div><span>Utenti</span><strong><%= stats.users.count %></strong></div>
+    <div><span>Test quotidiani</span><strong><%= stats.entries.count %></strong></div>
+    <div><span>Test A/B/C</span><strong><%= stats.testResults.count %></strong></div>
+    <div><span>Attivita completate</span><strong><%= stats.activities.count %></strong></div>
+    <div><span>Badge assegnati</span><strong><%= stats.badges.count %></strong></div>
+    <div><span>Gesti attivi</span><strong><%= stats.gestures.count %></strong></div>
+    <div><span>Chat visibili</span><strong><%= stats.visiblePosts.count %></strong></div>
+    <div><span>Chat nascoste</span><strong><%= stats.hiddenPosts.count %></strong></div>
+    <div><span>Reset aperti</span><strong><%= stats.resets.count %></strong></div>
+  </div>
+</section>
+
+<section class="admin-grid-two">
+  <article class="admin-panel">
+    <div class="admin-panel-head">
+      <h2>Ultimi utenti</h2>
+      <a href="/admin/users">Gestisci</a>
+    </div>
+    <div class="admin-list">
+      <% latestUsers.forEach((item) => { %>
+        <div class="admin-list-item">
+          <div>
+            <strong><%= item.name %></strong>
+            <small><%= item.email %> · <%= item.preferred_language %></small>
+          </div>
+          <span class="status-pill <%= item.ban_status && item.ban_status !== 'active' ? 'status-pill--warn' : 'status-pill--ok' %>"><%= item.ban_status || 'active' %></span>
+        </div>
+      <% }) %>
+      <% if (!latestUsers.length) { %>
+        <p class="admin-empty">Nessun utente registrato</p>
+      <% } %>
+    </div>
+  </article>
+
+  <article class="admin-panel">
+    <div class="admin-panel-head">
+      <h2>Ultimi Happy Score</h2>
+      <a href="/admin/tests">Vedi test</a>
+    </div>
+    <div class="admin-list">
+      <% latestEntries.forEach((item) => { %>
+        <div class="admin-list-item">
+          <div>
+            <strong><%= item.name || item.email || 'Utente' %></strong>
+            <small><%= item.entry_date %> · <%= item.result_label || item.score_band %></small>
+          </div>
+          <span class="score-badge"><%= item.happy_score %>/100</span>
+        </div>
+      <% }) %>
+      <% if (!latestEntries.length) { %>
+        <p class="admin-empty">Nessun test quotidiano salvato</p>
+      <% } %>
+    </div>
+  </article>
+</section>
+
+<section class="admin-grid-two">
+  <article class="admin-panel">
+    <div class="admin-panel-head">
+      <h2>Chat globale</h2>
+      <a href="/admin/community">Modera</a>
+    </div>
+    <div class="admin-list">
+      <% latestPosts.forEach((item) => { %>
+        <div class="admin-list-item admin-list-item--stack">
+          <div>
+            <strong><%= item.author_name %></strong>
+            <small><%= item.email || 'senza email' %> · <%= item.language %> · <%= Number(item.is_hidden) === 1 ? 'nascosto' : 'visibile' %></small>
+          </div>
+          <p><%= item.content %></p>
+        </div>
+      <% }) %>
+      <% if (!latestPosts.length) { %>
+        <p class="admin-empty">La chat non ha ancora messaggi reali</p>
+      <% } %>
+    </div>
+  </article>
+
+  <article class="admin-panel">
+    <div class="admin-panel-head">
+      <h2>Test pubblici</h2>
+      <a href="/admin/tests">Analizza</a>
+    </div>
+    <div class="admin-list">
+      <% latestResults.forEach((item) => { %>
+        <div class="admin-list-item">
+          <div>
+            <strong>Test <%= item.test_code %></strong>
+            <small><%= item.name || item.email || 'Visitatore' %> · <%= item.date %></small>
+          </div>
+          <span class="score-badge"><%= item.score %>/100</span>
+        </div>
+      <% }) %>
+      <% if (!latestResults.length) { %>
+        <p class="admin-empty">Nessun risultato pubblico salvato</p>
+      <% } %>
+    </div>
+  </article>
+</section>
+
+<section class="admin-panel">
+  <h2>Configurazione email</h2>
+  <div class="admin-config-grid">
+    <div><span>Host SMTP</span><strong><%= emailConfig.host || 'Non impostato' %></strong></div>
+    <div><span>Account</span><strong><%= emailConfig.user || 'Non impostato' %></strong></div>
+    <div><span>Mittente</span><strong><%= emailConfig.from || 'Non impostato' %></strong></div>
+    <div><span>Password SMTP</span><strong class="<%= emailConfig.hasPassword ? 'status-ok' : 'status-warn' %>"><%= emailConfig.hasPassword ? 'Presente' : 'Da impostare su Heroku' %></strong></div>
+  </div>
+</section>

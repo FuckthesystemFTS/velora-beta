@@ -1,0 +1,40 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <p class="eyebrow">Richieste utenti</p>
+    <h1>Contatti, richieste e attivazioni</h1>
+    <p class="muted">Gestisci contatti arrivati dal sito, richieste operative e richieste abbonamenti senza uscire dal pannello</p>
+
+    <div class="admin-action-row">
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/clients') %>">Elenco clienti</a>
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/orders') %>">Ordini e attivazioni</a>
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/abbonamenti/richieste') %>">Richieste abbonamenti</a>
+    </div>
+
+    <div class="table-list top-gap">
+      <% if (!data.requests.length) { %>
+        <div class="admin-empty-state">
+          <strong>Nessuna richiesta da lavorare</strong>
+          <span>Quando arrivano contatti, richieste di attivazione o abbonamenti appariranno qui con stato e azioni</span>
+        </div>
+      <% } %>
+      <% data.requests.forEach(function(item) { %>
+        <article class="admin-row split-admin-row">
+          <div>
+            <strong><%= item.subject %></strong>
+            <p class="muted"><%= item.type %> - <%= item.status %> - <%= item.created_at %></p>
+            <pre class="muted"><%= item.body %></pre>
+          </div>
+          <form class="inline-actions" method="post" action="<%= panelPath('/admin/requests/' + item.id + '/status') %>">
+            <%- include("partials/csrf-fields") %>
+            <select name="status">
+              <% ['nuova','in lavorazione','in attesa pagamento','pagamento ricevuto','attivata','rifiutata','archiviata'].forEach(function(status) { %>
+                <option value="<%= status %>" <%= item.status === status ? 'selected' : '' %>><%= status %></option>
+              <% }) %>
+            </select>
+            <button class="ghost-button compact-ghost" type="submit">Salva stato</button>
+          </form>
+        </article>
+      <% }) %>
+    </div>
+  </div>
+</section>

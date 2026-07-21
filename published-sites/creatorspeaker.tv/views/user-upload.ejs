@@ -1,0 +1,36 @@
+<section class="page-section">
+  <div class="shell two-column">
+    <form class="info-panel stack-form" action="/dashboard/upload" method="post" enctype="multipart/form-data" data-upload-form data-max-upload-mb="250">
+      <%- include("partials/csrf-fields") %>
+      <p class="eyebrow">Caricamento contenuti</p>
+      <h1>Invia un nuovo contenuto</h1>
+      <label>Titolo<input type="text" name="title" required /></label>
+      <label>Tipo contenuto
+        <select name="type">
+          <option value="video">Video</option>
+          <option value="audio">Audio</option>
+          <option value="image">Immagine</option>
+          <option value="document">Documento</option>
+          <option value="episode">Episodio</option>
+        </select>
+      </label>
+      <label>Descrizione<textarea name="description"></textarea></label>
+      <label>Data pubblicazione desiderata<input type="date" name="publication_date" /></label>
+      <label>File<input type="file" name="file" required /></label>
+      <p class="muted">Limite consigliato 250 MB. Se il file e molto pesante, attendi la barra di avanzamento senza cambiare pagina</p>
+      <div class="upload-progress" data-upload-progress hidden>
+        <div class="upload-progress-bar" data-upload-progress-bar></div>
+      </div>
+      <p class="muted" data-upload-progress-text hidden>Preparazione upload</p>
+      <button class="button" type="submit" data-upload-submit>Carica contenuto</button>
+    </form>
+    <aside class="info-panel">
+      <h2>Flusso operativo</h2>
+      <ul class="mini-list">
+        <li>Il file viene salvato nel database e non dipende dal filesystem del deploy</li>
+        <li>Lo stato iniziale e Caricato e puo passare a In revisione, Programmato o Pubblicato</li>
+        <li>Admin e utente vedono lo stesso record con note e storico coerenti</li>
+      </ul>
+    </aside>
+  </div>
+</section>

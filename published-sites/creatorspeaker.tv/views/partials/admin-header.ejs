@@ -1,0 +1,255 @@
+<%
+  const pathFor = typeof panelPath === "function" ? panelPath : function(path) { return path; };
+  const canAccess = typeof canPanelPermission === "function"
+    ? canPanelPermission
+    : function(permission) {
+        if (!currentAdmin || currentAdmin.status !== "active") {
+          return false;
+        }
+        if (currentAdmin.role === "admin") {
+          return true;
+        }
+        return Boolean(currentAdmin.permissions && currentAdmin.permissions[permission]);
+      };
+  const isStaff = currentAdmin && currentAdmin.role === "staff";
+
+  const sectionGroups = [
+    {
+      title: "Operativita",
+      items: [
+        { permission: "dashboard", label: "Dashboard", href: "/admin/dashboard", icon: "D" },
+        {
+          permission: "requests",
+          label: "Richieste e clienti",
+          href: "/admin/requests",
+          icon: "R",
+          children: [
+            { permission: "requests", label: "Richieste", href: "/admin/requests" },
+            { permission: "users", label: "Clienti e utenti", href: "/admin/clients" },
+            { permission: "orders", label: "Ordini e attivazioni", href: "/admin/orders" },
+            { permission: "orders", label: "Pagamenti", href: "/admin/payments" },
+            { permission: "subscriptions", label: "Abbonamenti condivisi", href: "/admin/abbonamenti" }
+          ]
+        }
+      ]
+    },
+    {
+      title: "Contenuti",
+      items: [
+        {
+          permission: "content",
+          label: "Contenuti e media",
+          href: "/admin/content",
+          icon: "C",
+          children: [
+            { permission: "content", label: "Contenuti utenti", href: "/admin/content" },
+            { permission: "media", label: "Media Library", href: "/admin/media" },
+            { permission: "video_jobs", label: "Video jobs", href: "/admin/video-jobs" },
+            { permission: "video_jobs", label: "Archivio video", href: "/admin/videos" },
+            { permission: "video_jobs", label: "Profili video", href: "/admin/video-profiles" }
+          ]
+        },
+        {
+          permission: "cms_sections",
+          label: "Sito e catalogo",
+          href: "/admin/site",
+          icon: "S",
+          children: [
+            { permission: "cms_sections", label: "Home, pagine e sezioni", href: "/admin/site" },
+            { permission: "cms_packages", label: "Pacchetti e servizi", href: "/admin/cms-packages" },
+            { permission: "creators", label: "Creator", href: "/admin/creators" },
+            { permission: "speakers", label: "Speaker", href: "/admin/speakers" },
+            { permission: "brands", label: "Aziende e brand", href: "/admin/brands" },
+            { permission: "smart_tv", label: "Smart TV", href: "/admin/smart-tv" }
+          ]
+        }
+      ]
+    },
+    {
+      title: "Crescita",
+      items: [
+        { permission: "analytics", label: "Analytics", href: "/admin/analytics", icon: "AN" },
+        {
+          permission: "affiliate_deals.view",
+          label: "Offerte affiliate",
+          href: "/admin/affiliate-deals",
+          icon: "AF",
+          children: [
+            { permission: "affiliate_deals.view", label: "Panoramica", href: "/admin/affiliate-deals" },
+            { permission: "affiliate_deals.view", label: "Offerte trovate", href: "/admin/affiliate-deals/offers" },
+            { permission: "affiliate_deals.view", label: "Coda", href: "/admin/affiliate-deals/queue" },
+            { permission: "affiliate_deals.view", label: "Categorie", href: "/admin/affiliate-deals/categories" },
+            { permission: "affiliate_deals.settings_manage", label: "Template e impostazioni", href: "/admin/affiliate-deals/settings" }
+          ]
+        },
+        {
+          permission: "outreach.view",
+          label: "Mail e contatti",
+          href: "/admin/outreach",
+          icon: "MC",
+          children: [
+            { permission: "outreach.view", label: "Panoramica", href: "/admin/outreach" },
+            { permission: "outreach.search", label: "Nuova ricerca", href: "/admin/outreach/search" },
+            { permission: "outreach.search", label: "Ricerche", href: "/admin/outreach/searches" },
+            { permission: "outreach.contacts.manage", label: "Contatti", href: "/admin/outreach/contacts" },
+            { permission: "outreach.lists.manage", label: "Liste", href: "/admin/outreach/lists" },
+            { permission: "outreach.templates.manage", label: "Modelli email", href: "/admin/outreach/templates" },
+            { permission: "outreach.campaigns.create", label: "Campagne", href: "/admin/outreach/campaigns" },
+            { permission: "outreach.settings.manage", label: "Configurazione", href: "/admin/outreach/settings" },
+            { permission: "outreach.logs.view", label: "Log attivita", href: "/admin/outreach/logs" }
+          ]
+        },
+        {
+          permission: "offers",
+          label: "Offerte pubbliche",
+          href: "/admin/offers",
+          icon: "OF",
+          children: [
+            { permission: "offers", label: "Offerte", href: "/admin/offers" },
+            { permission: "offers", label: "Regole offerte", href: "/admin/offer-settings" }
+          ]
+        }
+      ]
+    },
+    {
+      title: "Configurazione",
+      items: [
+        {
+          permission: "settings",
+          label: "Impostazioni",
+          href: "/admin/settings",
+          icon: "I",
+          children: [
+            { permission: "settings", label: "Impostazioni sito", href: "/admin/settings" },
+            { permission: "database", label: "Database", href: "/admin/database" },
+            { permission: "integrations", label: "Telegram", href: "/admin/telegram" },
+            { permission: "integrations", label: "Facebook", href: "/admin/facebook" },
+            { permission: "integrations", label: "Amazon", href: "/admin/amazon" },
+            { permission: "credits", label: "Crediti", href: "/admin/credits" },
+            { permission: "logs", label: "Log attivita", href: "/admin/logs" }
+          ]
+        }
+      ]
+    }
+  ];
+
+  function isCurrent(path) {
+    const mapped = pathFor(path);
+    return currentPath === mapped || currentPath.startsWith(mapped + "/");
+  }
+
+  function itemVisible(item) {
+    if (!item) {
+      return false;
+    }
+    if (!isStaff) {
+      return true;
+    }
+    if (item.children && item.children.length) {
+      return item.children.some(itemVisible) || canAccess(item.permission);
+    }
+    return canAccess(item.permission);
+  }
+
+  function itemOpen(item) {
+    if (!item || !item.children || !item.children.length) {
+      return false;
+    }
+    return item.children.some(function(child) { return isCurrent(child.href); }) || isCurrent(item.href);
+  }
+%>
+<aside class="admin-sidebar" data-admin-nav>
+  <div class="admin-sidebar-head">
+    <a class="brand brand-admin" href="<%= pathFor('/admin/dashboard') %>">
+      <img src="/assets/brand/creatorspeaker-brand-emblem.jpg" alt="CreatorSpeaker TV Admin" />
+      <span>
+        <strong>CreatorSpeaker TV</strong>
+        <small><%= isStaff ? "Area staff" : "Pannello admin" %></small>
+      </span>
+    </a>
+    <button class="menu-toggle admin-toggle" type="button" data-admin-toggle aria-expanded="false" aria-controls="admin-sidebar-nav">Menu</button>
+  </div>
+
+  <% if (currentAdmin) { %>
+    <div class="admin-user-card">
+      <strong><%= currentAdmin.display_name || currentAdmin.username %></strong>
+      <span><%= isStaff ? "Staff operativo" : "Admin principale" %></span>
+    </div>
+
+    <div class="admin-sidebar-tools">
+      <a class="ghost-button compact-ghost sidebar-back-button" href="<%= pathFor('/admin/dashboard') %>">Torna al pannello</a>
+      <% if (!isStaff) { %>
+        <form action="/logout" method="post">
+          <%- include("csrf-fields") %>
+          <input type="hidden" name="return_to" value="/staff/login" />
+          <button type="submit" class="ghost-button compact-ghost">Prova staff</button>
+        </form>
+      <% } else { %>
+        <form action="/logout" method="post">
+          <%- include("csrf-fields") %>
+          <input type="hidden" name="return_to" value="/admin/login" />
+          <button type="submit" class="ghost-button compact-ghost">Login admin</button>
+        </form>
+      <% } %>
+    </div>
+
+    <nav class="admin-nav" id="admin-sidebar-nav" aria-label="Navigazione pannello">
+      <% sectionGroups.forEach(function(group) { %>
+        <% const visibleItems = group.items.filter(itemVisible); %>
+        <% if (visibleItems.length) { %>
+          <div class="admin-nav-group">
+            <p><%= group.title %></p>
+            <% visibleItems.forEach(function(item) { %>
+              <% if (item.children && item.children.length) { %>
+                <details class="admin-nav-folder" <%= itemOpen(item) ? "open" : "" %>>
+                  <summary class="<%= itemOpen(item) ? 'active' : '' %>">
+                    <span class="admin-nav-icon"><%= item.icon %></span>
+                    <span class="admin-nav-labels">
+                      <span><%= item.label %></span>
+                      <small>Apri sottomenu</small>
+                    </span>
+                    <span class="admin-nav-caret" aria-hidden="true">+</span>
+                  </summary>
+                  <div class="admin-nav-submenu">
+                    <% item.children.filter(itemVisible).forEach(function(child) { %>
+                      <a class="<%= isCurrent(child.href) ? 'active' : '' %>" href="<%= pathFor(child.href) %>">
+                        <span class="admin-nav-subtext"><%= child.label %></span>
+                      </a>
+                    <% }) %>
+                  </div>
+                </details>
+              <% } else { %>
+                <a class="<%= isCurrent(item.href) ? 'active' : '' %>" href="<%= pathFor(item.href) %>">
+                  <span class="admin-nav-icon"><%= item.icon %></span>
+                  <span><%= item.label %></span>
+                </a>
+              <% } %>
+            <% }) %>
+          </div>
+        <% } %>
+      <% }) %>
+      <% if (!isStaff) { %>
+        <div class="admin-nav-group">
+          <p>Accessi</p>
+          <a class="<%= isCurrent('/admin/staff') ? 'active' : '' %>" href="<%= pathFor('/admin/staff') %>">
+            <span class="admin-nav-icon">ST</span>
+            <span>Staff e permessi</span>
+          </a>
+        </div>
+      <% } %>
+      <div class="admin-nav-group">
+        <p>Account</p>
+        <a class="<%= isCurrent('/admin/password') ? 'active' : '' %>" href="<%= pathFor('/admin/password') %>">
+          <span class="admin-nav-icon">PW</span>
+          <span>Password</span>
+        </a>
+      </div>
+    </nav>
+
+    <form class="admin-logout" action="/logout" method="post">
+      <%- include("csrf-fields") %>
+      <input type="hidden" name="return_to" value="<%= isStaff ? '/staff/login' : '/admin/login' %>" />
+      <button type="submit" class="ghost-button">Esci</button>
+    </form>
+  <% } %>
+</aside>

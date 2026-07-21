@@ -1,0 +1,10 @@
+<section class="admin-login-card">
+  <% const formErrors = typeof errors !== "undefined" ? errors : []; %>
+  <h1>Accesso admin</h1>
+  <% if (formErrors.length) { %><div class="error-box"><%= formErrors.join(" ") %></div><% } %>
+  <form method="post" action="/admin/login" class="stack-form">
+    <label>Username<input type="text" name="username" required /></label>
+    <label>Password<input type="password" name="password" required /></label>
+    <button type="submit" class="primary-btn">Accedi</button>
+  </form>
+</section>

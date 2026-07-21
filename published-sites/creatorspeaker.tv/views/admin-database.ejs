@@ -1,0 +1,84 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <div class="streaming-heading">
+      <div>
+        <p class="eyebrow">Controllo database</p>
+        <h1>Database piattaforma</h1>
+        <p class="muted">Utenti registrati, tabelle operative e copia PDF aggiornata al momento del download</p>
+      </div>
+      <div class="admin-system-state">
+        <span>Driver <strong><%= data.snapshot.driver %></strong></span>
+        <span>Tabelle <strong><%= data.snapshot.tableCount %></strong></span>
+        <span>Record <strong><%= data.snapshot.totalRows %></strong></span>
+      </div>
+    </div>
+
+    <div class="admin-action-row top-gap">
+      <a class="button compact" href="<%= panelPath('/admin/database/download') %>">Scarica PDF database</a>
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/users') %>">Gestisci utenti</a>
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/orders') %>">Ordini</a>
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/content') %>">Contenuti utenti</a>
+    </div>
+
+    <div class="admin-summary-strip top-gap">
+      <article><span>Utenti registrati</span><strong><%= data.snapshot.users.length %></strong></article>
+      <article><span>Tabelle database</span><strong><%= data.snapshot.tableCount %></strong></article>
+      <article><span>Record complessivi</span><strong><%= data.snapshot.totalRows %></strong></article>
+      <article><span>Generato</span><strong><%= data.snapshot.generatedAt.slice(0, 16).replace('T', ' ') %></strong></article>
+    </div>
+
+    <article class="info-panel top-gap">
+      <h2>Utenti registrati</h2>
+      <div class="table-list top-gap">
+        <% if (!data.snapshot.users.length) { %>
+          <div class="admin-empty-state">
+            <strong>Nessun utente registrato</strong>
+            <span>Quando arriveranno registrazioni saranno visibili qui</span>
+          </div>
+        <% } %>
+        <% data.snapshot.users.forEach(function(user) { %>
+          <div class="admin-row split-admin-row">
+            <div>
+              <strong><%= user.name || user.email %></strong>
+              <p><%= user.email %></p>
+              <p>Stato <%= user.status %> - Crediti <%= user.credits %></p>
+              <p>Ordini <%= user.orders_total %> - Upload <%= user.uploads_total %> - Video jobs <%= user.video_jobs_total %></p>
+            </div>
+            <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/users') %>">Apri gestione</a>
+          </div>
+        <% }) %>
+      </div>
+    </article>
+
+    <article class="info-panel top-gap">
+      <h2>Tabelle e record</h2>
+      <p class="muted">Anteprima fino a 30 record per tabella. Il PDF viene rigenerato a ogni download e include i record esportabili con campi sensibili e binari mascherati</p>
+      <div class="table-list top-gap">
+        <% data.snapshot.tables.forEach(function(table) { %>
+          <details class="admin-row">
+            <summary>
+              <strong><%= table.name %></strong>
+              <span class="muted">record <%= table.total %><%= table.previewOnly ? ' - anteprima parziale' : '' %></span>
+            </summary>
+            <% if (!table.rows.length) { %>
+              <p class="muted top-gap">Nessun record</p>
+            <% } %>
+            <% table.rows.forEach(function(row, index) { %>
+              <div class="info-panel top-gap">
+                <strong>Record <%= index + 1 %></strong>
+                <div class="database-record-grid top-gap">
+                  <% Object.keys(row).forEach(function(key) { %>
+                    <div>
+                      <span class="muted"><%= key %></span>
+                      <p><%= row[key] %></p>
+                    </div>
+                  <% }) %>
+                </div>
+              </div>
+            <% }) %>
+          </details>
+        <% }) %>
+      </div>
+    </article>
+  </div>
+</section>

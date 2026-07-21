@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= title %></title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/assets/favicon.png" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body class="admin-body">
+    <div class="admin-shell" data-admin-shell>
+      <button class="admin-nav-overlay" type="button" data-admin-overlay aria-label="Chiudi menu"></button>
+      <%- include("partials/admin-header", { data, currentAdmin, currentPath }) %>
+      <div class="admin-main">
+        <% if (flash) { %>
+          <div class="flash flash-<%= flash.type %>">
+            <div class="shell admin-shell-inner"><%= flash.message %></div>
+          </div>
+        <% } %>
+        <% if (currentAdmin && currentAdmin.must_change_password) { %>
+          <div class="admin-password-banner" data-dismissible-banner>
+            <div class="shell admin-shell-inner admin-password-inner">
+              <div>
+                <strong>Password iniziale ancora attiva</strong>
+                <span>Per sicurezza cambia la password dell account admin</span>
+              </div>
+              <div class="inline-actions">
+                <a class="button compact" href="<%= panelPath('/admin/password') %>">Cambia password</a>
+                <button class="ghost-button compact-ghost" type="button" data-dismiss-banner>Nascondi</button>
+              </div>
+            </div>
+          </div>
+        <% } %>
+        <main class="admin-content">
+          <% if (currentAdmin) { %>
+            <div class="shell admin-shell-inner admin-page-nav">
+              <nav class="admin-breadcrumb" aria-label="Percorso">
+                <a href="<%= panelPath('/admin/dashboard') %>">Dashboard</a>
+                <% if (currentPath !== panelPath('/admin/dashboard')) { %>
+                  <span><%= title.replace('Admin ', '').replace('admin', '') %></span>
+                <% } %>
+              </nav>
+              <% if (currentPath !== panelPath('/admin/dashboard')) { %>
+                <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/dashboard') %>">Torna al pannello</a>
+              <% } %>
+            </div>
+          <% } %>
+          <%- include(bodyTemplate, { data, page, currentAdmin }) %>
+        </main>
+      </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/admin.js"></script>
+    <% if (currentPath.startsWith(panelPath('/admin/video-jobs')) || currentPath.startsWith(panelPath('/admin/videos'))) { %>
+      <script src="/js/video-studio.js"></script>
+    <% } %>
+  </body>
+</html>

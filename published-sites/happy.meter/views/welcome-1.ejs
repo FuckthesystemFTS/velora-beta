@@ -1,0 +1,35 @@
+<section class="welcome-screen">
+  <div class="welcome-card">
+    <div class="welcome-visual">
+      <img src="<%= lang === 'de' ? '/images/prepagina-1-de.jpg' : '/images/prepagina-1.jpg' %>" alt="Prepagina 1 HappyMeter" class="welcome-image" loading="eager" />
+      <% if (lang === 'en') { %>
+        <div class="welcome-image-overlay welcome-image-overlay--intro">
+          <div class="welcome-image-overlay__intro-mask"></div>
+          <div class="welcome-image-overlay__intro-copy">
+            <span>Welcome to</span>
+            <strong>HappyMeter</strong>
+            <p>Small actions - Big changes</p>
+          </div>
+        </div>
+      <% } %>
+    </div>
+    <div class="welcome-copy">
+      <img src="/images/logo-happy.png" alt="Logo HappyMeter" class="welcome-logo" loading="eager" />
+      <span class="eyebrow">HappyMeter / Feliciometro</span>
+      <h1><%= t("homeClaimDisplay") %></h1>
+      <p class="welcome-lead"><%= copy('Ogni giorno conta, e il tuo benessere merita uno spazio semplice, bello e chiaro', 'Every day matters, and your wellbeing deserves a simple, beautiful and clear space', 'Jeder Tag zaehlt und dein Wohlbefinden verdient einen einfachen, schoenen und klaren Ort') %></p>
+      <form class="language-switcher" data-language-form action="/welcome" method="get">
+        <label for="welcome-language"><%= copy('Lingua', 'Language', 'Sprache') %></label>
+        <select id="welcome-language" name="lang" data-language-select>
+          <option value="it" <%= lang === 'it' ? 'selected' : '' %>>Italiano</option>
+          <option value="en" <%= lang === 'en' ? 'selected' : '' %>>English</option>
+          <option value="de" <%= lang === 'de' ? 'selected' : '' %>>Deutsch</option>
+        </select>
+      </form>
+      <div class="welcome-actions">
+        <a href="/welcome/2<%= lang ? `?lang=${lang}` : '' %>" class="primary-btn" data-lang-link="/welcome/2"><%= copy('Avanti', 'Next', 'Weiter') %></a>
+        <a href="/test<%= lang ? `?lang=${lang}` : '' %>" class="ghost-btn" data-lang-link="/test"><%= copy('Vai al test rapido', 'Go to the quick test', 'Zum Schnelltest') %></a>
+      </div>
+    </div>
+  </div>
+</section>

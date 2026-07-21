@@ -1,0 +1,91 @@
+<section class="page-hero">
+  <div class="shell hero-grid hero-grid-media">
+    <div class="hero-copy">
+      <p class="eyebrow"><%= page.eyebrow %></p>
+      <h1><%= page.title %></h1>
+      <p class="lead"><%= page.intro %></p>
+    </div>
+    <div class="hero-media-card">
+      <img src="<%= page.heroImage || data.site.heroImage %>" alt="<%= page.title %>" />
+    </div>
+  </div>
+</section>
+
+<% if (currentPath === '/creator-network' && data.creatorProfiles && data.creatorProfiles.length) { %>
+  <section class="section">
+    <div class="shell">
+      <div class="section-heading"><p class="eyebrow">Creator pubblicati</p><h2>Profili creator</h2></div>
+      <div class="card-grid">
+        <% data.creatorProfiles.forEach(function(profile) { %>
+          <article class="featured-card">
+            <% if (profile.avatar_url) { %><div class="featured-visual"><img class="featured-visual-image" src="<%= profile.avatar_url %>" alt="<%= profile.name %>" loading="lazy" /></div><% } %>
+            <div class="featured-copy"><h3><%= profile.name %></h3><p class="tag"><%= profile.role || 'Creator' %></p><p><%= profile.bio || profile.description %></p></div>
+          </article>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+<% } %>
+
+<% if (currentPath === '/speaker-network' && data.speakerProfiles && data.speakerProfiles.length) { %>
+  <section class="section">
+    <div class="shell">
+      <div class="section-heading"><p class="eyebrow">Speaker pubblicati</p><h2>Profili speaker</h2></div>
+      <div class="card-grid">
+        <% data.speakerProfiles.forEach(function(profile) { %>
+          <article class="featured-card">
+            <% if (profile.avatar_url) { %><div class="featured-visual"><img class="featured-visual-image" src="<%= profile.avatar_url %>" alt="<%= profile.name %>" loading="lazy" /></div><% } %>
+            <div class="featured-copy"><h3><%= profile.name %></h3><p class="tag"><%= profile.topic || 'Speaker' %></p><p><%= profile.bio || profile.description %></p></div>
+          </article>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+<% } %>
+
+<section class="section">
+  <div class="shell content-stack">
+    <% (page.sections || []).forEach(function(section) { %>
+      <article class="info-panel content-panel">
+        <h2><%= section.title %></h2>
+        <p><%= section.text %></p>
+      </article>
+    <% }) %>
+
+    <% (page.packageGroups || []).forEach(function(group) { %>
+      <section class="content-group">
+        <div class="section-heading">
+          <p class="eyebrow">Percorsi</p>
+          <h2><%= group.title %></h2>
+          <p><%= group.intro %></p>
+        </div>
+        <div class="card-grid">
+          <% group.packages.forEach(function(item) { %>
+            <article class="product-card">
+              <p class="tag"><%= item.billing_type === "monthly" ? "Percorso mensile" : "Soluzione dedicata" %></p>
+              <h3><%= item.name %></h3>
+              <p class="price"><%= item.price_cents ? formatMoney(item.price_cents) : "In definizione" %><span><%= item.billing_type === "monthly" && item.price_cents ? "/mese" : "" %></span></p>
+              <p><%= item.longDescription || item.description %></p>
+              <ul>
+                <% item.features.forEach(function(feature) { %><li><%= feature %></li><% }) %>
+              </ul>
+              <% if (item.price_cents) { %>
+                <button class="button add-to-cart" data-package-id="<%= item.id %>" data-package-name="<%= item.name %>" data-package-price="<%= item.price_cents %>"><%= item.ctaLabel || "Richiedi attivazione" %></button>
+              <% } else { %>
+                <form action="/request-info" method="post" class="stack-form top-gap">
+                  <%- include("partials/csrf-fields") %>
+                  <input type="hidden" name="package_name" value="<%= item.name %>" />
+                  <input type="hidden" name="redirect_to" value="/richiedi-informazioni" />
+                  <input type="text" name="name" placeholder="Nome e cognome" required />
+                  <input type="email" name="email" placeholder="Email" required />
+                  <label class="checkbox"><input type="checkbox" name="accept_privacy" required /> Accetto la privacy</label>
+                  <button class="button" type="submit"><%= item.ctaLabel || "Richiedi informazioni" %></button>
+                </form>
+              <% } %>
+            </article>
+          <% }) %>
+        </div>
+      </section>
+    <% }) %>
+  </div>
+</section>

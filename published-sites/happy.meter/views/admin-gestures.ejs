@@ -1,0 +1,31 @@
+<section class="admin-panel">
+  <h2>Nuovo gesto felice</h2>
+  <form method="post" action="/admin/gestures" class="stack-form two-col">
+    <label>Testo IT<input type="text" name="text_it" required /></label>
+    <label>Testo EN<input type="text" name="text_en" /></label>
+    <label>Punti<input type="number" name="points" value="15" min="1" max="100" /></label>
+    <label><input type="checkbox" name="active" value="1" checked /> Attivo</label>
+    <button type="submit" class="primary-btn">Crea gesto</button>
+  </form>
+</section>
+
+<section class="admin-panel">
+  <h2>Gesti disponibili</h2>
+  <table class="admin-table">
+    <thead><tr><th>Testo</th><th>Punti</th><th>Stato</th><th></th></tr></thead>
+    <tbody>
+      <% gestures.forEach((item) => { %>
+        <tr>
+          <td><%= item.text_it %></td>
+          <td><%= item.points %></td>
+          <td><%= Number(item.active) === 1 ? 'Attivo' : 'Disattivo' %></td>
+          <td>
+            <form method="post" action="/admin/gestures/<%= item.id %>/toggle">
+              <button type="submit" class="ghost-btn">Toggle</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>

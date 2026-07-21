@@ -1,0 +1,213 @@
+<% const section = data.section || "overview"; %>
+<section class="admin-section">
+  <div class="shell">
+    <div class="streaming-heading">
+      <div>
+        <h1>Ricerca contatti e Outreach</h1>
+        <p class="muted">Ricerca tramite API ufficiali, fonti pubbliche, approvazione manuale e invio SMTP controllato</p>
+      </div>
+    </div>
+    <% if (section === "overview") { %>
+      <div class="admin-card-grid top-gap">
+        <article class="admin-card"><strong>Ricerche completate</strong><span><%= data.summary.searchesCompleted %></span></article>
+        <article class="admin-card"><strong>Contatti trovati</strong><span><%= data.summary.contactsTotal %></span></article>
+        <article class="admin-card"><strong>Contatti approvati</strong><span><%= data.summary.contactsApproved %></span></article>
+        <article class="admin-card"><strong>Liste attive</strong><span><%= data.summary.listsActive %></span></article>
+        <article class="admin-card"><strong>Campagne aperte</strong><span><%= data.summary.campaignsOpen %></span></article>
+        <article class="admin-card"><strong>Inviate oggi</strong><span><%= data.summary.sentToday %> / <%= data.summary.dailyLimit %></span></article>
+        <article class="admin-card"><strong>Errori invio</strong><span><%= data.summary.sendErrors %></span></article>
+        <article class="admin-card"><strong>Cancellazioni</strong><span><%= data.summary.unsubscribes %></span></article>
+      </div>
+      <article class="admin-card top-gap">
+        <h2>Stato configurazione</h2>
+        <p>Modulo outreach <strong><%= data.summary.moduleEnabled ? "abilitato" : "disattivato" %></strong></p>
+        <p>SMTP <strong><%= data.summary.smtpConfigured ? "configurato" : "non configurato" %></strong></p>
+        <p>SPF <strong><%= data.dns.spf.status %></strong> - DKIM <strong><%= data.dns.dkim.status %></strong> - DMARC <strong><%= data.dns.dmarc.status %></strong> - MX <strong><%= data.dns.mx.status %></strong></p>
+      </article>
+    <% } %>
+
+    <% if (section === "search") { %>
+      <div class="two-column top-gap">
+        <form class="admin-card stack-form" method="post" action="<%= panelPath('/admin/outreach/search') %>">
+          <%- include("partials/csrf-fields") %>
+          <h2>Nuova ricerca</h2>
+          <label>Ricerca mirata nome azienda o persona<input name="target_query" placeholder="Nova TV Produzione, Simone Rivarola" /></label>
+          <label>Settore o attivita<input name="sector" placeholder="ristoranti, palestre, agenzie immobiliari" /></label>
+          <label>Localita<input name="location" placeholder="Milano, Bologna, Ticino" /></label>
+          <label>Paese<input name="country" value="Italia" /></label>
+          <label>Lingua<input name="language" value="it" /></label>
+          <label>Numero massimo contatti
+            <select name="requested_limit">
+              <option>10</option><option>25</option><option>50</option><option>75</option><option>100</option>
+            </select>
+          </label>
+          <label><input type="checkbox" name="create_list" checked /> Crea automaticamente una lista</label>
+          <label><input type="checkbox" name="include_named" /> Salva nominativi in revisione manuale</label>
+          <label><input type="checkbox" name="exclude_personal" checked /> Escludi provider personali</label>
+          <label><input type="checkbox" name="exclude_pec" checked /> Escludi PEC</label>
+          <p class="muted">Usa ricerca mirata per nomi specifici oppure settore e localita per ricerca ampia. Il tool usa Google Custom Search quando disponibile, fallback web senza chiavi tramite Bing per ricerche mirate e fonti pubbliche OpenStreetMap per le ricerche territoriali, poi analizza solo pagine pubbliche del sito ufficiale con limite 5 pagine per dominio</p>
+          <button class="button compact" type="submit">Avvia ricerca</button>
+        </form>
+        <article class="admin-card">
+          <h2>Regole operative</h2>
+          <p>Non viene fatto scraping di Google o Google Maps</p>
+          <p>Se Google Custom Search non concede accesso JSON, il tool continua con OpenStreetMap e siti ufficiali pubblicati</p>
+          <p>Ogni email viene salvata con fonte, validazione e stato di approvazione</p>
+          <p>I contatti non approvati non possono entrare nelle campagne</p>
+          <p>User-Agent crawler: <strong>CreatorSpeakerContactResearch/1.0</strong></p>
+        </article>
+      </div>
+    <% } %>
+
+    <% if (section === "searches") { %>
+      <div class="table-list top-gap">
+        <% data.searches.forEach(function(item) { %>
+          <div class="admin-row split-admin-row">
+            <div><strong><%= item.location ? (item.sector + ' - ' + item.location) : item.query %></strong><p><%= item.status %> - trovate <%= item.emails_found %> email - siti <%= item.websites_scanned %></p><p class="muted"><%= item.error_message || "" %></p></div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <% if (section === "lists") { %>
+      <form class="admin-card stack-form top-gap" method="post" action="<%= panelPath('/admin/outreach/lists') %>">
+        <%- include("partials/csrf-fields") %>
+        <h2>Crea lista</h2>
+        <label>Nome<input name="name" required /></label>
+        <label>Descrizione<textarea name="description"></textarea></label>
+        <button class="button compact" type="submit">Crea lista</button>
+      </form>
+      <div class="table-list top-gap">
+        <% data.lists.forEach(function(item) { %><div class="admin-row"><strong><%= item.name %></strong><p><%= item.contact_count %> contatti - <%= item.status %></p><p class="muted"><%= item.description %></p></div><% }) %>
+      </div>
+    <% } %>
+
+    <% if (section === "contacts") { %>
+      <form class="admin-card stack-form top-gap" method="post" action="<%= panelPath('/admin/outreach/import') %>">
+        <%- include("partials/csrf-fields") %>
+        <h2>Importazione manuale</h2>
+        <label>Email<textarea name="emails" placeholder="info@azienda.it, commerciale@azienda.it"></textarea></label>
+        <label>Fonte<input name="source_url" placeholder="https://sito-ufficiale.it/contatti" /></label>
+        <label>Nota autorizzazione<textarea name="authorization_note"></textarea></label>
+        <button class="button compact" type="submit">Importa</button>
+      </form>
+      <div class="table-list top-gap">
+        <% data.contacts.forEach(function(item) { %>
+          <div class="admin-row split-admin-row">
+            <div>
+              <strong><%= item.email %></strong>
+              <p><%= item.business_name || "Contatto" %> - <%= item.contact_type %> - <%= item.validation_status %> - <%= item.approval_status %></p>
+              <p class="muted">Fonte <a href="<%= item.source_url %>" target="_blank" rel="noreferrer"><%= item.source_url %></a></p>
+            </div>
+            <div class="inline-actions">
+              <form method="post" action="<%= panelPath('/admin/outreach/contacts/' + item.id + '/approve') %>">
+                <%- include("partials/csrf-fields") %>
+                <input type="hidden" name="legal_basis_note" value="Verifica manuale fonte pubblica e autorizzazione documentata" />
+                <input type="hidden" name="consent_reference" value="verifica manuale admin/staff" />
+                <input type="hidden" name="confirm_authorization" value="on" />
+                <button class="ghost-button compact-ghost" type="submit">Approva</button>
+              </form>
+              <form method="post" action="<%= panelPath('/admin/outreach/contacts/' + item.id + '/reject') %>">
+                <%- include("partials/csrf-fields") %>
+                <input type="hidden" name="reason" value="Non utilizzabile" />
+                <button class="ghost-button compact-ghost" type="submit">Rifiuta</button>
+              </form>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <% if (section === "templates") { %>
+      <form class="admin-card stack-form top-gap" method="post" action="<%= panelPath('/admin/outreach/templates') %>">
+        <%- include("partials/csrf-fields") %>
+        <h2>Nuovo modello</h2>
+        <label>Nome<input name="name" required /></label>
+        <label>Categoria<select name="category"><option>presentazione</option><option>creator</option><option>speaker</option><option>aziende</option><option>smart_tv</option><option>servizi</option><option>follow_up</option><option>personalizzata</option></select></label>
+        <label>Nome mittente<input name="sender_name" value="CreatorSpeaker TV" /></label>
+        <label>Reply-To<input name="reply_to" value="service@creatorspeakertv.it" /></label>
+        <label>Oggetto<input name="subject" value="Una proposta per {{business_name}}" /></label>
+        <label>Corpo HTML<textarea name="html_body" rows="8"></textarea></label>
+        <label>Corpo testo<textarea name="text_body" rows="8"></textarea></label>
+        <label><input type="checkbox" name="is_default" /> Imposta come predefinito</label>
+        <button class="button compact" type="submit">Salva modello</button>
+      </form>
+      <div class="table-list top-gap">
+        <% data.templates.forEach(function(item) { %><div class="admin-row"><strong><%= item.name %></strong><p><%= item.category %> - <%= item.status %> <%= item.is_default ? "- default" : "" %></p><p class="muted"><%= item.subject %></p></div><% }) %>
+      </div>
+    <% } %>
+
+    <% if (section === "campaigns") { %>
+      <form class="admin-card stack-form top-gap" method="post" action="<%= panelPath('/admin/outreach/campaigns') %>">
+        <%- include("partials/csrf-fields") %>
+        <h2>Nuova campagna</h2>
+        <label>Nome<input name="name" required /></label>
+        <label>Lista<select name="list_id"><% data.lists.forEach(function(item) { %><option value="<%= item.id %>"><%= item.name %></option><% }) %></select></label>
+        <label>Modello<select name="template_id"><% data.templates.forEach(function(item) { %><option value="<%= item.id %>"><%= item.name %></option><% }) %></select></label>
+        <label>Oggetto alternativo<input name="subject_override" /></label>
+        <label>Limite giornaliero<input type="number" name="daily_limit" value="<%= data.config.dailyLimit %>" /></label>
+        <label>Ritardo secondi<input type="number" name="delay_seconds" value="<%= data.config.minDelaySeconds %>" /></label>
+        <button class="button compact" type="submit">Crea campagna</button>
+      </form>
+      <div class="table-list top-gap">
+        <% data.campaigns.forEach(function(item) { %>
+          <div class="admin-row split-admin-row">
+            <div><strong><%= item.name %></strong><p><%= item.status %> - approvati <%= item.approved_recipient_count %> - inviati <%= item.sent_count %> - errori <%= item.failed_count %></p></div>
+            <form method="post" action="<%= panelPath('/admin/outreach/campaigns/' + item.id + '/start') %>"><%- include("partials/csrf-fields") %><button class="ghost-button compact-ghost" type="submit">Avvia</button></form>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <% if (section === "queue") { %>
+      <div class="table-list top-gap">
+        <% data.queue.forEach(function(item) { %><div class="admin-row"><strong><%= item.email %></strong><p><%= item.status %> - tentativi <%= item.attempt_count %></p><p class="muted"><%= item.error_message %></p></div><% }) %>
+      </div>
+    <% } %>
+
+    <% if (section === "suppression") { %>
+      <form class="admin-card stack-form top-gap" method="post" action="<%= panelPath('/admin/outreach/suppression') %>">
+        <%- include("partials/csrf-fields") %>
+        <h2>Aggiungi esclusione</h2>
+        <label>Email<input name="email" required /></label>
+        <label>Motivo<select name="reason"><option>manual</option><option>unsubscribe</option><option>complaint</option><option>bounce</option><option>invalid</option><option>privacy_request</option></select></label>
+        <button class="button compact" type="submit">Escludi</button>
+      </form>
+      <div class="table-list top-gap"><% data.suppression.forEach(function(item) { %><div class="admin-row"><strong><%= item.email %></strong><p><%= item.reason %> - <%= item.source %></p></div><% }) %></div>
+    <% } %>
+
+    <% if (section === "settings") { %>
+      <div class="two-column top-gap">
+        <article class="admin-card">
+          <h2>Google e SMTP</h2>
+          <p>GOOGLE_CSE_API_KEY <strong><%= data.masked.googleCseKey || "mancante" %></strong></p>
+          <p>GOOGLE_CSE_ID <strong><%= data.masked.googleCseId || "mancante" %></strong></p>
+          <p>GOOGLE_PLACES_API_KEY <strong><%= data.masked.placesKey || "opzionale non configurata" %></strong></p>
+          <p>SMTP host <strong><%= data.config.smtpHost || "mancante" %></strong></p>
+          <p>SMTP user <strong><%= data.config.smtpUser %></strong></p>
+          <p>Password SMTP <strong><%= data.masked.smtpPass || "mancante" %></strong></p>
+          <p>OUTREACH_ENABLED <strong><%= data.config.enabled ? "true" : "false" %></strong></p>
+          <form class="stack-form" method="post" action="<%= panelPath('/admin/outreach/smtp-test') %>">
+            <%- include("partials/csrf-fields") %>
+            <label>Email test<input name="to_email" placeholder="tua@email.it" /></label>
+            <button class="ghost-button compact-ghost" type="submit">Verifica configurazione SMTP</button>
+          </form>
+        </article>
+        <article class="admin-card">
+          <h2>DNS Register.it</h2>
+          <p>Host SMTP suggerito 1 <strong>authsmtp.securemail.pro</strong></p>
+          <p>Host SMTP suggerito 2 <strong>authsmtp.creatorspeakertv.it</strong></p>
+          <p>Verifica nel pannello Register.it quale server SMTP e associato alla casella service@creatorspeakertv.it</p>
+          <p>MX <strong><%= data.dns.mx.status %></strong> <%= (data.dns.mx.records || []).join(", ") %></p>
+          <p>SPF <strong><%= data.dns.spf.status %></strong> <%= data.dns.spf.record || "v=spf1 include:spf.webapps.net ~all" %></p>
+          <p>DKIM <strong><%= data.dns.dkim.status %></strong> selector <%= data.config.dkimSelector || "da copiare da Register" %></p>
+          <p>DMARC <strong><%= data.dns.dmarc.status %></strong> <%= data.dns.dmarc.record || "v=DMARC1; p=none; rua=mailto:dmarc@creatorspeakertv.it; adkim=r; aspf=r; pct=100" %></p>
+        </article>
+      </div>
+    <% } %>
+
+    <% if (section === "logs") { %>
+      <div class="table-list top-gap"><% data.logs.forEach(function(item) { %><div class="admin-row"><strong><%= item.action %></strong><p><%= item.entity_type %> #<%= item.entity_id || "" %> - <%= item.created_at %></p><p class="muted"><%= item.details_json %></p></div><% }) %></div>
+    <% } %>
+  </div>
+</section>

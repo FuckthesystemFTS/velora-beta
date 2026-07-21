@@ -1,0 +1,35 @@
+<section class="page-section">
+  <div class="shell">
+    <div class="split-layout">
+      <article class="info-panel">
+        <p class="eyebrow">Abbonamento digitale</p>
+        <h1><%= page.platform.name %></h1>
+        <p class="lead"><%= page.platform.description %></p>
+        <div class="status-pills top-gap">
+          <span class="status-pill">Disponibile su approvazione</span>
+          <span class="status-pill">Durata <%= page.platform.duration_days %> giorni</span>
+          <span class="status-pill">Posti disponibili <%= page.platform.spots_left %></span>
+        </div>
+      </article>
+
+      <article class="info-panel">
+        <h3>Come funziona</h3>
+        <ol class="ordered-list">
+          <li>invii la richiesta</li>
+          <li>l admin verifica la richiesta</li>
+          <li>l admin conferma eventuale pagamento o autorizzazione</li>
+          <li>l admin attiva il tuo accesso</li>
+          <li>trovi <%= page.platform.name %> nella tua dashboard</li>
+          <li>accedi manualmente usando le credenziali rese visibili solo dopo l attivazione</li>
+        </ol>
+        <div class="cta-row top-gap">
+          <% if (currentUser) { %>
+            <a class="button secondary" href="/abbonamenti/<%= page.platform.slug %>/richiedi">Richiedi accesso a <%= page.platform.name %></a>
+          <% } else { %>
+            <a class="button secondary" href="/login">Accedi per richiedere l accesso</a>
+          <% } %>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>

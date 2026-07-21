@@ -1,0 +1,87 @@
+<section class="auth-wrap">
+  <div class="test-variant-stack" data-live-score-card="B">
+    <div class="variant-header-grid">
+      <article class="test-variant-hero variant-score-panel">
+        <span class="eyebrow"><%= copy('Percorso azioni felici', 'Happy actions path', 'Weg der Gluecksaktionen') %></span>
+        <h1><%= copy('Missioni Felici', 'Happy Missions', 'Gluecksmissionen') %></h1>
+        <p><%= copy('Venti missioni leggere da spuntare oggi. Ogni scelta contribuisce al tuo punteggio e mette al centro i gesti concreti', 'Twenty light missions to tick off today. Each choice contributes to your score and puts concrete actions at the center', 'Zwanzig leichte Missionen fuer heute zum Abhaken. Jede Wahl traegt zu deinem Score bei und rueckt konkrete Gesten in den Mittelpunkt') %></p>
+        <div class="variant-meta variant-meta--compact">
+          <article>
+            <small><%= copy('Missioni', 'Missions', 'Missionen') %></small>
+            <strong>20</strong>
+          </article>
+          <article>
+            <small><%= copy('Massimo', 'Maximum', 'Maximum') %></small>
+            <strong>95 + 5</strong>
+          </article>
+        </div>
+        <div class="test-like-row">
+          <button
+            type="button"
+            class="test-like-button <%= liked ? 'is-liked' : '' %>"
+            data-test-like="B"
+            aria-pressed="<%= liked ? 'true' : 'false' %>"
+            data-auth-title="<%= copy('Accedi per votare il Test B', 'Log in to vote for Test B', 'Melde dich an, um fuer Test B zu stimmen') %>"
+            data-auth-body="<%= copy('Accedi o registrati per votare il test che preferisci', 'Log in or sign up to vote for the test you prefer', 'Melde dich an oder registriere dich, um fuer deinen bevorzugten Test zu stimmen') %>"
+            data-error-text="<%= copy('Il voto non e stato salvato', 'The vote could not be saved', 'Die Stimme konnte nicht gespeichert werden') %>"
+          ><%= copy('Mi piace questo test', 'I like this test', 'Dieser Test gefaellt mir') %></button>
+          <span><%= copy('Voto test', 'Test vote', 'Teststimme') %> <strong data-test-like-count="B"><%= likeCount || 0 %></strong></span>
+        </div>
+        <div class="test-like-feedback" data-test-like-feedback></div>
+      </article>
+
+      <aside class="variant-score-panel variant-score-panel--sticky">
+        <small><%= copy('Anteprima punteggio', 'Score preview', 'Score Vorschau') %></small>
+        <div class="variant-score-panel__value"><span data-live-total><%= result ? result.score : 0 %></span>/100</div>
+        <p data-live-label><%= result ? '' : `0/95 + 0/5` %></p>
+      </aside>
+    </div>
+
+    <form method="post" action="/test/b/save" class="variant-missions-card">
+      <div class="variant-intro">
+        <h2><%= copy('Le 20 missioni di oggi', 'Today s 20 missions', 'Die 20 Missionen von heute') %></h2>
+        <p><%= copy('Ogni missione ha un peso dedicato, per un massimo di 95 punti. Una riflessione finale aggiunge fino a 5 punti', 'Each mission has its own weight, for a maximum of 95 points. A final reflection adds up to 5 more points', 'Jede Mission hat ihr eigenes Gewicht bis zu 95 Punkten. Eine abschliessende Reflexion fuegt bis zu 5 weitere Punkte hinzu') %></p>
+      </div>
+      <div class="mission-grid">
+        <% missions.forEach((mission) => { const selected = Array.isArray(values.missions) ? values.missions.includes(String(mission.id)) : String(values.missions || '') === String(mission.id); %>
+          <article class="mission-card">
+            <label>
+              <input type="checkbox" name="missions" value="<%= mission.id %>" data-mission-checkbox data-points="<%= mission.normalized_points %>" <%= selected ? 'checked' : '' %> />
+              <span>
+                <strong><%= mission.text %></strong>
+                <small><%= mission.normalized_points %> <%= copy('punti', 'points', 'Punkte') %></small>
+              </span>
+            </label>
+          </article>
+        <% }) %>
+      </div>
+      <label class="variant-note-field"><%= copy('Una riga su cosa ti ha fatto bene oggi', 'One line about what helped you today', 'Ein Satz darueber, was dir heute gutgetan hat') %><textarea name="reflection_text" rows="4" placeholder="<%= copy('Bastano poche parole vere', 'A few real words are enough', 'Ein paar echte Worte genuegen') %>"><%= values.reflection_text || '' %></textarea></label>
+      <button type="submit" class="primary-btn"><%= copy('Salva il risultato del Test B', 'Save Test B result', 'Ergebnis von Test B speichern') %></button>
+    </form>
+
+    <% if (result) { %>
+      <article class="variant-result-card">
+        <div class="score-ring" data-score-ring data-score="<%= result.score %>">
+          <div>
+            <small>Happy Score</small>
+            <strong><%= result.score %>/100</strong>
+          </div>
+        </div>
+        <h2><%= result.label %></h2>
+        <p><%= result.message %></p>
+        <div class="variant-breakdown">
+          <% result.breakdown.forEach((item) => { %>
+            <article>
+              <small><%= item.label %></small>
+              <strong><%= item.value %></strong>
+            </article>
+          <% }) %>
+        </div>
+        <div class="cta-row result-actions">
+          <a href="/test/c" class="secondary-btn"><%= copy('Prova anche il Test C', 'Try Test C too', 'Probiere auch Test C') %></a>
+          <a href="/daily-test" class="primary-btn"><%= copy('Vai al test quotidiano completo', 'Go to the full daily test', 'Zum vollstaendigen Tagestest') %></a>
+        </div>
+      </article>
+    <% } %>
+  </div>
+</section>

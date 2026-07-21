@@ -1,0 +1,96 @@
+<section class="admin-section">
+  <div class="shell">
+    <div class="dashboard-hero admin-hero">
+      <div>
+        <p class="eyebrow">Gestione staff</p>
+        <h1>Account staff e permessi</h1>
+        <p class="muted">L admin principale puo creare account staff, sospenderli temporaneamente e decidere quali sezioni possono usare</p>
+      </div>
+    </div>
+
+    <div class="admin-summary-strip top-gap">
+      <article><span>Account staff</span><strong><%= (data.staffAccounts || []).length %></strong></article>
+      <article><span>Permessi modificabili</span><strong><%= (page.permissionKeys || []).length %></strong></article>
+      <article><span>Area accesso</span><strong>/staff</strong></article>
+      <article><span>Controllo</span><strong>admin</strong></article>
+    </div>
+
+    <article class="info-panel top-gap">
+      <h2>Come usare lo staff</h2>
+      <div class="mini-card-grid">
+        <div class="mini-card"><strong>Contenuti</strong><p>Consenti media, sezioni, creator, speaker e brand a chi deve lavorare sulle pagine pubbliche</p></div>
+        <div class="mini-card"><strong>Operativita</strong><p>Consenti richieste, ordini, utenti e contenuti caricati solo a chi deve gestire clienti e attivazioni</p></div>
+        <div class="mini-card"><strong>Sicurezza</strong><p>Blocca temporaneamente un account se non deve piu accedere e cambia password quando consegni un nuovo accesso</p></div>
+      </div>
+    </article>
+
+    <article class="info-panel top-gap">
+      <h2>Crea nuovo staff</h2>
+      <form class="stack-form top-gap" action="/admin/staff" method="post">
+        <%- include("partials/csrf-fields") %>
+        <div class="grid-3">
+          <label>Username<input type="text" name="username" required /></label>
+          <label>Nome visibile<input type="text" name="display_name" required /></label>
+          <label>Password iniziale<input type="text" name="password" minlength="10" required /></label>
+        </div>
+        <label>Stato
+          <select name="status">
+            <option value="active">attivo</option>
+            <option value="blocked">bloccato</option>
+          </select>
+        </label>
+        <p class="muted">Seleziona solo cio che serve davvero. Lo staff vedra nel pannello solo le aree consentite</p>
+        <div class="grid-auto">
+          <% (page.permissionKeys || []).forEach(function(key) { %>
+            <label class="checkbox"><input type="checkbox" name="permission_<%= key %>" <%= key === 'dashboard' ? 'checked' : '' %> /> <%= (page.permissionLabels && page.permissionLabels[key]) || key %></label>
+          <% }) %>
+        </div>
+        <button class="button" type="submit">Crea account staff</button>
+      </form>
+    </article>
+
+    <div class="top-gap">
+      <% (data.staffAccounts || []).forEach(function(account) { %>
+        <article class="info-panel top-gap">
+          <div class="streaming-heading">
+            <div>
+              <h2><%= account.display_name || account.username %></h2>
+              <p class="muted"><%= account.username %> - stato <strong><%= account.status %></strong><%= account.must_change_password ? ' - cambio password richiesto' : '' %></p>
+            </div>
+          </div>
+
+          <form class="stack-form top-gap" action="/admin/staff/<%= account.id %>" method="post">
+            <%- include("partials/csrf-fields") %>
+            <div class="grid-3">
+              <label>Username<input type="text" name="username" value="<%= account.username %>" required /></label>
+              <label>Nome visibile<input type="text" name="display_name" value="<%= account.display_name || '' %>" required /></label>
+              <label>Stato
+                <select name="status">
+                  <option value="active" <%= account.status === 'active' ? 'selected' : '' %>>attivo</option>
+                  <option value="blocked" <%= account.status === 'blocked' ? 'selected' : '' %>>bloccato</option>
+                </select>
+              </label>
+            </div>
+            <p class="muted">I permessi salvati modificano subito il menu e le rotte disponibili per questo account</p>
+            <div class="grid-auto">
+              <% (page.permissionKeys || []).forEach(function(key) { %>
+                <label class="checkbox"><input type="checkbox" name="permission_<%= key %>" <%= account.permissions[key] ? 'checked' : '' %> /> <%= (page.permissionLabels && page.permissionLabels[key]) || key %></label>
+              <% }) %>
+            </div>
+            <button class="button secondary" type="submit">Salva dati e permessi</button>
+          </form>
+
+          <form class="stack-form top-gap" action="/admin/staff/<%= account.id %>/password" method="post">
+            <%- include("partials/csrf-fields") %>
+            <div class="grid-2">
+              <label>Nuova password<input type="text" name="new_password" minlength="10" required /></label>
+              <div class="inline-actions" style="align-self:end">
+                <button class="ghost-button" type="submit">Aggiorna password</button>
+              </div>
+            </div>
+          </form>
+        </article>
+      <% }) %>
+    </div>
+  </div>
+</section>

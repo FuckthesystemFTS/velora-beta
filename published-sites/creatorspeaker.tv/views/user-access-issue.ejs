@@ -1,0 +1,21 @@
+<section class="auth-section">
+  <div class="shell narrow">
+    <article class="auth-card">
+      <p class="eyebrow">Segnala problema</p>
+      <h1><%= page.access.name %></h1>
+      <form class="stack-form top-gap" method="post" action="/dashboard/accessi/<%= page.access.slug %>/problema">
+        <%- include("partials/csrf-fields") %>
+        <label>Tipo problema
+          <select name="issue_type" required>
+            <option value="">Seleziona</option>
+            <% page.issueTypes.forEach(function(type) { %>
+              <option value="<%= type %>"><%= type %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Messaggio<textarea name="message" required></textarea></label>
+        <button class="button secondary" type="submit">Invia segnalazione</button>
+      </form>
+    </article>
+  </div>
+</section>

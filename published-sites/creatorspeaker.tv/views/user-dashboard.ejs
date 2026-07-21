@@ -1,0 +1,91 @@
+<section class="page-section">
+  <div class="shell">
+    <div class="dashboard-hero">
+      <div>
+        <p class="eyebrow">Area utente</p>
+        <h1>Ciao <%= data.user.name %></h1>
+        <p>Qui controlli richieste, contenuti, crediti e lavorazioni senza perdere lo storico</p>
+      </div>
+      <div class="cta-row">
+        <a class="button" href="/dashboard/upload">Carica contenuto</a>
+        <a class="button secondary" href="/dashboard/video-studio">Apri Video Studio</a>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <article class="stat-card"><span>Stato account</span><strong><%= data.user.status %></strong></article>
+      <article class="stat-card"><span>Crediti</span><strong><%= data.user.credits %></strong></article>
+      <article class="stat-card"><span>Percorsi attivi</span><strong><%= data.subscriptions.length %></strong></article>
+      <article class="stat-card"><span>Richieste</span><strong><%= data.orders.length %></strong></article>
+    </div>
+
+    <div class="two-column dashboard-columns">
+      <article class="info-panel">
+        <h2>Ultime richieste</h2>
+        <% if (!data.orders.length) { %><p class="muted">Nessuna richiesta associata</p><% } %>
+        <% data.orders.slice(0, 6).forEach(function(order) { %>
+          <div class="row-card">
+            <strong><%= order.order_code %></strong>
+            <span><%= order.payment_method_label %> - <%= order.status %> - <%= formatMoney(order.total_cents) %></span>
+          </div>
+        <% }) %>
+      </article>
+
+      <article class="info-panel">
+        <h2>Percorsi e stato</h2>
+        <% if (!data.subscriptions.length) { %><p class="muted">Nessun percorso attivo</p><% } %>
+        <% data.subscriptions.slice(0, 6).forEach(function(item) { %>
+          <div class="row-card">
+            <strong><%= item.package_name %></strong>
+            <span><%= item.status %> - attivo dal <%= String(item.starts_at).slice(0, 10) %></span>
+          </div>
+        <% }) %>
+      </article>
+    </div>
+
+    <div class="two-column dashboard-columns">
+      <article class="info-panel">
+        <h2>Contenuti caricati</h2>
+        <% if (!data.uploads.length) { %><p class="muted">Ancora nessun contenuto caricato</p><% } %>
+        <% data.uploads.slice(0, 8).forEach(function(item) { %>
+          <div class="row-card">
+            <strong><a href="<%= item.file_url %>" target="_blank" rel="noreferrer"><%= item.title %></a></strong>
+            <span><%= item.type %> - <%= item.status_label %> - <%= item.file_label %></span>
+          </div>
+        <% }) %>
+      </article>
+      <article class="info-panel">
+        <h2>Video Studio</h2>
+        <% if (!data.videoJobs.length) { %><p class="muted">Nessun job video ancora creato</p><% } %>
+        <% data.videoJobs.slice(0, 8).forEach(function(job) { %>
+          <div class="row-card">
+            <strong><a href="/dashboard/video-jobs/<%= job.id %>"><%= job.title %></a></strong>
+            <span><%= job.status_label %> - <%= job.progress_percent %>% - <%= job.credits_cost %> crediti</span>
+          </div>
+        <% }) %>
+      </article>
+    </div>
+
+    <div class="two-column dashboard-columns">
+      <article class="info-panel">
+        <h2>Servizi extra</h2>
+        <div class="mini-card-grid">
+          <% data.extras.forEach(function(item) { %>
+            <div class="mini-card">
+              <strong><%= item.name %></strong>
+              <span><%= formatMoney(item.price_cents) %></span>
+            </div>
+          <% }) %>
+        </div>
+      </article>
+      <article class="info-panel">
+        <h2>Contatti rapidi</h2>
+        <ul class="mini-list">
+          <li><a href="mailto:<%= contactEmails.info %>"><%= contactEmails.info %></a></li>
+          <li><a href="mailto:<%= contactEmails.service %>"><%= contactEmails.service %></a></li>
+          <li><a href="mailto:<%= contactEmails.network %>"><%= contactEmails.network %></a></li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,75 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <div class="split-layout">
+      <article class="admin-card">
+        <p class="eyebrow">Dettaglio richiesta</p>
+        <h1><%= page.request.platform_name %></h1>
+        <p class="muted"><%= page.request.user_name || page.request.full_name %> · <%= page.request.email %></p>
+        <div class="status-pills top-gap">
+          <span class="status-pill"><%= page.request.status_label %></span>
+          <span class="status-pill"><%= page.request.payment_status_label %></span>
+        </div>
+        <div class="info-panel top-gap">
+          <p class="muted">Telefono: <%= page.request.phone || 'non indicato' %></p>
+          <p class="muted">Messaggio utente: <%= page.request.message || 'nessun messaggio' %></p>
+          <p class="muted">Note pagamento: <%= page.request.payment_note || 'non presenti' %></p>
+          <p class="muted">Note admin: <%= page.request.admin_note || 'non presenti' %></p>
+        </div>
+
+        <div class="grid-2 top-gap">
+          <form class="admin-card" method="post" action="/admin/abbonamenti/richieste/<%= page.request.id %>/payment-received">
+            <%- include("partials/csrf-fields") %>
+            <h3>Segna pagamento ricevuto</h3>
+            <label>Nota pagamento<textarea name="payment_note"></textarea></label>
+            <button class="button secondary" type="submit">Segna pagamento ricevuto</button>
+          </form>
+          <form class="admin-card" method="post" action="/admin/abbonamenti/richieste/<%= page.request.id %>/authorize">
+            <%- include("partials/csrf-fields") %>
+            <h3>Autorizza senza pagamento</h3>
+            <label>Nota autorizzazione<textarea name="payment_note"></textarea></label>
+            <button class="button secondary" type="submit">Autorizza senza pagamento</button>
+          </form>
+        </div>
+      </article>
+
+      <article class="admin-card">
+        <h2>Attiva o aggiorna</h2>
+        <form class="stack-form top-gap" method="post" action="/admin/abbonamenti/richieste/<%= page.request.id %>/activate">
+          <%- include("partials/csrf-fields") %>
+          <label>Data inizio<input type="datetime-local" name="starts_at" /></label>
+          <label>Data scadenza<input type="datetime-local" name="expires_at" /></label>
+          <label>Nota visibile all utente<textarea name="user_visible_note"></textarea></label>
+          <label>Nota privata admin<textarea name="admin_private_note"></textarea></label>
+          <button class="button secondary" type="submit">Attiva accesso</button>
+        </form>
+
+        <form class="stack-form top-gap" method="post" action="/admin/abbonamenti/richieste/<%= page.request.id %>/note">
+          <%- include("partials/csrf-fields") %>
+          <label>Aggiungi nota admin<textarea name="admin_note"><%= page.request.admin_note || '' %></textarea></label>
+          <button class="ghost-button" type="submit">Salva nota</button>
+        </form>
+
+        <form class="stack-form top-gap" method="post" action="/admin/abbonamenti/richieste/<%= page.request.id %>/reject">
+          <%- include("partials/csrf-fields") %>
+          <label>Motivo rifiuto<textarea name="admin_note"></textarea></label>
+          <button class="ghost-button" type="submit">Rifiuta richiesta</button>
+        </form>
+
+        <% if (page.request.logs && page.request.logs.length) { %>
+          <div class="info-panel top-gap">
+            <h3>Storico azioni</h3>
+            <% page.request.logs.forEach(function(log) { %>
+              <div class="admin-row split-admin-row">
+                <div>
+                  <strong><%= log.action %></strong>
+                  <p class="muted"><%= log.admin_username || 'admin' %> · <%= log.created_at %></p>
+                </div>
+                <p class="muted"><%= log.details || '' %></p>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </article>
+    </div>
+  </div>
+</section>

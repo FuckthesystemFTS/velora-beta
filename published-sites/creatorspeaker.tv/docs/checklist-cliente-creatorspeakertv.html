@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <title>CreatorSpeakerTV - Checklist chiusura lavoro</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 18mm;
+      }
+
+      body {
+        margin: 0;
+        color: #151515;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0 0 8px;
+      }
+
+      h1 {
+        font-size: 24px;
+        line-height: 1.2;
+      }
+
+      h2 {
+        margin-top: 24px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #d9d9d9;
+        font-size: 17px;
+      }
+
+      h3 {
+        margin-top: 14px;
+        font-size: 13px;
+      }
+
+      ul {
+        margin: 8px 0 14px 18px;
+        padding: 0;
+      }
+
+      li {
+        margin: 3px 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0 16px;
+      }
+
+      th,
+      td {
+        padding: 8px;
+        border: 1px solid #dddddd;
+        vertical-align: top;
+        text-align: left;
+      }
+
+      th {
+        width: 30%;
+        background: #f3f3f3;
+      }
+
+      code {
+        font-family: Consolas, monospace;
+        font-size: 11px;
+      }
+
+      .cover {
+        padding: 18px;
+        border: 2px solid #111111;
+        margin-bottom: 18px;
+      }
+
+      .tag {
+        display: inline-block;
+        padding: 2px 8px;
+        background: #111111;
+        color: #ffffff;
+        font-size: 10px;
+        text-transform: uppercase;
+      }
+
+      .warning {
+        margin: 10px 0 16px;
+        padding: 10px 12px;
+        border-left: 4px solid #b91c1c;
+        background: #fff4f4;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="cover">
+      <p class="tag">Documento operativo</p>
+      <h1>CreatorSpeakerTV - stato lavoro e dati da chiedere al cliente</h1>
+      <p>Data documento: 14 giugno 2026</p>
+      <p>Progetto: CreatorSpeaker TV / creatorspeakertv.it</p>
+      <p>App Heroku: <code>creatorspeaker-tv</code></p>
+      <p>Dominio canonico: <code>https://www.creatorspeakertv.it</code></p>
+    </section>
+
+    <div class="warning">
+      <strong>Nota credenziali</strong>
+      Le password qui riportate sono solo quelle iniziali documentate nel repository o nel seed. Se sono state cambiate nel pannello, non sono recuperabili perche salvate come hash
+    </div>
+
+    <h2>Stato attuale del lavoro</h2>
+    <table>
+      <tr><th>Deploy</th><td>Ultimo commit rilevato: <code>3fded79 Strengthen branded SEO signals</code> - Ultimo deploy operativo noto: <code>v25</code></td></tr>
+      <tr><th>Repository</th><td>Working tree pulito al momento dell analisi</td></tr>
+      <tr><th>Dominio</th><td>Redirect canonico attivo verso <code>https://www.creatorspeakertv.it</code></td></tr>
+      <tr><th>Certificati</th><td>Heroku ACM gia risultato <code>Cert issued</code> per <code>creatorspeakertv.it</code> e <code>www.creatorspeakertv.it</code></td></tr>
+      <tr><th>Database</th><td>Codice predisposto per PostgreSQL in produzione tramite <code>DATABASE_URL</code> - fallback locale SQLite</td></tr>
+      <tr><th>Persistenza</th><td>Upload contenuti e asset video salvati in database, non su filesystem temporaneo</td></tr>
+      <tr><th>Sicurezza form</th><td>CSRF, honeypot, sanitizzazione input, filtri MIME upload, Helmet, redirect HTTPS e canonical attivi</td></tr>
+      <tr><th>SEO</th><td>Canonical, sitemap XML, robots.txt, mappa sito HTML, favicon brand, Organization schema e WebSite schema attivi</td></tr>
+      <tr><th>Pagamenti</th><td>Flussi predisposti per bonifico, PayPal e Stripe - mancano chiavi e dati reali</td></tr>
+      <tr><th>Email</th><td>SMTP non ancora integrato nel flusso reale - email simulate come log interno finche non viene fornita configurazione SMTP</td></tr>
+    </table>
+
+    <h2>Accessi e dati creati o dichiarati</h2>
+    <table>
+      <tr><th>URL sito</th><td><code>https://www.creatorspeakertv.it</code></td></tr>
+      <tr><th>URL admin</th><td><code>https://www.creatorspeakertv.it/admin/login</code></td></tr>
+      <tr><th>URL login utente</th><td><code>https://www.creatorspeakertv.it/login</code></td></tr>
+      <tr><th>Admin iniziale</th><td>Username: <code>admin</code><br />Password iniziale documentata: <code>CreatorSpeakerTV!2026-ChangeMe</code><br />Stato locale rilevato: password da cambiare obbligatoriamente</td></tr>
+      <tr><th>Utente demo iniziale</th><td>Email: <code>demo@creatorspeaker.local</code><br />Password iniziale documentata: <code>DemoUser!2026</code><br />Da disattivare o sostituire prima della consegna finale</td></tr>
+      <tr><th>Email ufficiali inserite</th><td><code>info@creatorspeakertv.it</code><br /><code>service@creatorspeakertv.it</code><br /><code>netwrok@creatorspeakertv.it</code></td></tr>
+      <tr><th>Nota email network</th><td><code>netwrok@creatorspeakertv.it</code> e stata inserita esattamente come richiesta - verificare se il cliente intendeva <code>network@creatorspeakertv.it</code></td></tr>
+      <tr><th>DNS configurati su Heroku</th><td><code>www</code> CNAME verso <code>floral-crawdad-3rutstxk68xxvxye6kin8m11.herokudns.com</code><br /><code>@</code> ALIAS/ANAME verso <code>classical-reindeer-3ykmfm1ewr39abveyle99fr9.herokudns.com</code></td></tr>
+    </table>
+
+    <h2>Cose da chiedere al cliente per chiudere il lavoro</h2>
+    <h3>Dati aziendali e legali</h3>
+    <ul>
+      <li>Ragione sociale o nome titolare</li>
+      <li>Partita IVA o codice fiscale</li>
+      <li>Sede legale completa</li>
+      <li>PEC</li>
+      <li>Codice SDI se necessario</li>
+      <li>Referente privacy e email privacy ufficiale</li>
+      <li>Conferma titolare trattamento dati</li>
+      <li>Eventuale DPO se presente</li>
+      <li>Testi definitivi privacy, cookie e termini se gia validati</li>
+    </ul>
+
+    <h3>Dominio, SEO e indicizzazione</h3>
+    <ul>
+      <li>Accesso al pannello Register.it del dominio</li>
+      <li>Account Google da usare per Google Search Console</li>
+      <li>Account Bing Webmaster Tools</li>
+      <li>Account Google Analytics 4 se si vuole tracking statistico</li>
+      <li>Account Google Tag Manager se si vogliono script marketing futuri</li>
+      <li>Conferma se il brand corretto e <code>CreatorSpeaker TV</code>, <code>CreatorSpeakerTV</code> o entrambi</li>
+    </ul>
+
+    <h3>Email e SMTP</h3>
+    <ul>
+      <li>Casella Register <code>info@creatorspeakertv.it</code> da usare per invio email</li>
+      <li>Password SMTP della casella Register da inserire in Heroku come <code>SMTP_PASS</code></li>
+      <li><code>SMTP_HOST</code></li>
+      <li><code>SMTP_PORT</code></li>
+      <li><code>SMTP_USER</code></li>
+      <li><code>SMTP_PASS</code></li>
+      <li><code>SMTP_FROM</code></li>
+      <li>Email per recupero password</li>
+      <li>Email per notifiche ordini</li>
+      <li>Email per assistenza clienti</li>
+    </ul>
+
+    <h3>Bonifico</h3>
+    <ul>
+      <li>Intestatario conto reale</li>
+      <li>IBAN reale</li>
+      <li>BIC/SWIFT se richiesto</li>
+      <li>Causale base da usare negli ordini</li>
+      <li>Tempi ufficiali di attivazione dopo pagamento</li>
+      <li>Regole di fatturazione o ricevuta</li>
+    </ul>
+
+    <h3>Stripe</h3>
+    <ul>
+      <li><code>STRIPE_PUBLISHABLE_KEY</code></li>
+      <li><code>STRIPE_SECRET_KEY</code></li>
+      <li><code>STRIPE_WEBHOOK_SECRET</code></li>
+      <li>Account Stripe verificato</li>
+      <li>Valuta principale</li>
+      <li>Paese account</li>
+      <li>Regole fiscali IVA o reverse charge se applicabili</li>
+      <li>URL webhook da configurare quando il flusso reale sara attivato</li>
+    </ul>
+
+    <h3>PayPal</h3>
+    <ul>
+      <li>Email account PayPal Business</li>
+      <li><code>PAYPAL_CLIENT_ID</code></li>
+      <li><code>PAYPAL_CLIENT_SECRET</code></li>
+      <li>Ambiente: sandbox o live</li>
+      <li>Webhook ID se usato</li>
+      <li>Conferma conto business verificato</li>
+    </ul>
+
+    <h3>Referral, affiliate e automazioni</h3>
+    <ul>
+      <li>Amazon Associate Tag</li>
+      <li>Amazon Tracking ID</li>
+      <li>Amazon Product Advertising API Access Key</li>
+      <li>Amazon Product Advertising API Secret Key</li>
+      <li>Marketplace Amazon da usare</li>
+      <li>Telegram Bot Token</li>
+      <li>Telegram Channel ID</li>
+      <li>Meta/Facebook Page ID</li>
+      <li>Meta/Facebook Page Access Token</li>
+      <li>URL pagina Facebook ufficiale</li>
+      <li>Regole editoriali per pubblicazione automatica offerte</li>
+    </ul>
+
+    <h2>Variabili da configurare o confermare</h2>
+    <table>
+      <tr><th>Core</th><td><code>NODE_ENV</code>, <code>SESSION_SECRET</code>, <code>DATABASE_URL</code>, <code>SITE_URL</code>, <code>CANONICAL_HOST</code>, <code>ROOT_DOMAIN</code></td></tr>
+      <tr><th>Email ufficiali</th><td><code>CONTACT_EMAIL_INFO</code>, <code>CONTACT_EMAIL_SERVICE</code>, <code>CONTACT_EMAIL_NETWORK</code></td></tr>
+      <tr><th>SMTP</th><td><code>SMTP_HOST</code>, <code>SMTP_PORT</code>, <code>SMTP_USER</code>, <code>SMTP_PASS</code>, <code>SMTP_FROM</code></td></tr>
+      <tr><th>Pagamenti</th><td><code>BANK_ACCOUNT_HOLDER</code>, <code>BANK_IBAN</code>, <code>BANK_CAUSAL_PREFIX</code>, <code>STRIPE_PUBLISHABLE_KEY</code>, <code>STRIPE_SECRET_KEY</code>, <code>STRIPE_WEBHOOK_SECRET</code>, <code>PAYPAL_CLIENT_ID</code>, <code>PAYPAL_CLIENT_SECRET</code>, <code>PAYPAL_ENV</code></td></tr>
+      <tr><th>Automazioni</th><td><code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHANNEL_ID</code>, <code>FACEBOOK_PAGE_ID</code>, <code>FACEBOOK_PAGE_ACCESS_TOKEN</code>, <code>AMAZON_ASSOCIATE_TAG</code>, <code>AMAZON_TRACKING_ID</code>, <code>AMAZON_API_CREDENTIAL_ID</code>, <code>AMAZON_API_CREDENTIAL_SECRET</code></td></tr>
+    </table>
+
+    <h2>Azioni consigliate prima della consegna finale</h2>
+    <ul>
+      <li>Cambiare password admin iniziale</li>
+      <li>Eliminare o disattivare utente demo</li>
+      <li>Correggere o confermare <code>netwrok@creatorspeakertv.it</code></li>
+      <li>Inserire IBAN reale</li>
+      <li>Configurare SMTP e recupero password</li>
+      <li>Configurare almeno un metodo pagamento reale tra Stripe e PayPal</li>
+      <li>Collegare Google Search Console e inviare sitemap</li>
+      <li>Collegare Bing Webmaster Tools</li>
+      <li>Verificare contenuti privacy e termini con consulente del cliente</li>
+      <li>Aggiornare Node a una versione supportata da Heroku per rimuovere avviso EOL</li>
+      <li>Definire policy backup database e piano Heroku Postgres</li>
+    </ul>
+  </body>
+</html>

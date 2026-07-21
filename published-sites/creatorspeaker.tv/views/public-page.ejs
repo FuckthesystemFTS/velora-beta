@@ -1,0 +1,99 @@
+<section class="page-hero">
+  <div class="shell hero-grid hero-grid-media">
+    <div class="hero-copy">
+      <p class="eyebrow"><%= page.eyebrow %></p>
+      <h1><%= page.title %></h1>
+      <p class="lead"><%= page.intro %></p>
+      <% if (page.ctaPrimary || page.ctaSecondary) { %>
+        <div class="cta-row">
+          <% if (page.ctaPrimary) { %><a class="button" href="<%= page.ctaPrimary.href %>"><%= page.ctaPrimary.label %></a><% } %>
+          <% if (page.ctaSecondary) { %><a class="button secondary" href="<%= page.ctaSecondary.href %>"><%= page.ctaSecondary.label %></a><% } %>
+        </div>
+      <% } %>
+    </div>
+    <div class="hero-media-card">
+      <img src="<%= page.heroImage || data.site.heroImage %>" alt="<%= page.title %>" />
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell content-stack">
+    <% (page.sections || []).forEach(function(section) { %>
+      <article class="info-panel content-panel">
+        <h2><%= section.title %></h2>
+        <p><%= section.text %></p>
+        <% if (section.bullets && section.bullets.length) { %>
+          <ul class="mini-list">
+            <% section.bullets.forEach(function(item) { %><li><%= item %></li><% }) %>
+          </ul>
+        <% } %>
+      </article>
+    <% }) %>
+
+    <% const dynamicMap = data.dynamicSections || {}; const dynamicKey = currentPath === '/smart-tv' ? 'smartTv' : currentPath === '/servizi' ? 'servizi' : currentPath === '/chi-siamo' ? 'chiSiamo' : currentPath === '/contatti' ? 'contatti' : currentPath === '/aziende-brand' ? 'aziende' : currentPath.replace('/', '').replace('-', '') ; %>
+    <% const dynamicSections = currentPath === '/network' ? [] : (dynamicMap[dynamicKey] || []); %>
+    <% dynamicSections.forEach(function(section) { %>
+      <article class="info-panel content-panel">
+        <% if (section.media_url) { %><img class="content-media" src="<%= section.media_url %>" alt="<%= section.media_alt || section.title %>" loading="lazy" /><% } %>
+        <% if (section.subtitle) { %><p class="eyebrow"><%= section.subtitle %></p><% } %>
+        <h2><%= section.title %></h2>
+        <p><%= section.body %></p>
+        <% if (section.cta_label && section.cta_url) { %><a class="button secondary" href="<%= section.cta_url %>"><%= section.cta_label %></a><% } %>
+      </article>
+    <% }) %>
+
+    <% if (currentPath === '/aziende-brand' && data.brandServices && data.brandServices.length) { %>
+      <article class="info-panel">
+        <h2>Servizi aziende e brand</h2>
+        <div class="mini-card-grid">
+          <% data.brandServices.forEach(function(item) { %>
+            <div class="mini-card">
+              <% if (item.media_url) { %><img class="content-media compact-media" src="<%= item.media_url %>" alt="<%= item.media_alt || item.title %>" loading="lazy" /><% } %>
+              <strong><%= item.title %></strong>
+              <p><%= item.description %></p>
+              <% if (item.cta_label) { %><a class="ghost-button compact-ghost" href="<%= item.cta_url %>"><%= item.cta_label %></a><% } %>
+            </div>
+          <% }) %>
+        </div>
+      </article>
+    <% } %>
+
+    <% if (page.featureList && page.featureList.length) { %>
+      <article class="info-panel">
+        <h2>Soluzioni e opportunità</h2>
+        <div class="feature-list-grid">
+          <% page.featureList.forEach(function(item) { %>
+            <div class="mini-card"><strong><%= item %></strong></div>
+          <% }) %>
+        </div>
+      </article>
+    <% } %>
+
+    <% if (page.extraCards && page.extraCards.length) { %>
+      <article class="info-panel">
+        <h2>Servizi collegati</h2>
+        <div class="mini-card-grid">
+          <% page.extraCards.forEach(function(item) { %>
+            <div class="mini-card">
+              <strong><%= item.title %></strong>
+              <span><%= item.badge %></span>
+              <p><%= item.text %></p>
+            </div>
+          <% }) %>
+        </div>
+      </article>
+    <% } %>
+
+    <% if (page.stats && page.stats.length) { %>
+      <div class="stat-grid">
+        <% page.stats.forEach(function(item) { %>
+          <article class="stat-card">
+            <span><%= item.label %></span>
+            <strong><%= item.value %></strong>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</section>

@@ -1,0 +1,33 @@
+{
+  "name": "happymeter-feliciometro",
+  "version": "1.0.0",
+  "description": "HappyMeter / Feliciometro diario digitale per benessere quotidiano e Happy Score",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node db/seed.js",
+    "smoke": "node scripts/smoke-test.js",
+    "check:chat": "node scripts/check-chat-auth-popup.js",
+    "check:tests": "node scripts/check-happymeter-tests-abc.js",
+    "check:home": "node scripts/check-home-localized-images.js",
+    "check:mail": "node scripts/check-mail.js",
+    "report:test-likes": "node scripts/report-test-likes.js"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.4.2",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-ejs-layouts": "^2.5.1",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.19.0",
+    "helmet": "^8.1.0",
+    "nodemailer": "^9.0.1",
+    "pg": "^8.16.3",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^6.0.1"
+  }
+}

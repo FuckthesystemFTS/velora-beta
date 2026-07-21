@@ -1,0 +1,21 @@
+{
+  "formatVersion": 1,
+  "address": "social.v",
+  "title": "V Social",
+  "description": "Social network adattato per Velora con account unico",
+  "category": "social",
+  "entryFile": "index.html",
+  "languages": ["it"],
+  "keywords": ["social", "feed", "community", "profili", "velora"],
+  "version": "1.0.0",
+  "ageRating": "13+",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

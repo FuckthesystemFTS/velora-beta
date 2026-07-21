@@ -1,0 +1,3 @@
+web: npm start
+worker: node workers/platformWorker.js
+clock: node workers/affiliateDealsScheduler.js

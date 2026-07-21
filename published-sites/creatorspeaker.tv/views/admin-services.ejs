@@ -1,0 +1,14 @@
+<section class="admin-section">
+  <div class="shell">
+    <h1>Servizi</h1>
+    <div class="mini-card-grid">
+      <% data.services.forEach(function(item) { %>
+        <article class="mini-card">
+          <strong><%= item.name %></strong>
+          <span><%= item.area %> · <%= formatMoney(item.price_cents) %></span>
+          <p><%= item.description %></p>
+        </article>
+      <% }) %>
+    </div>
+  </div>
+</section>

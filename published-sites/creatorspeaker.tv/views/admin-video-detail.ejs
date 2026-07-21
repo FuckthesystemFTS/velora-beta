@@ -1,0 +1,54 @@
+<section class="admin-section">
+  <div class="shell two-column">
+    <article class="admin-card job-status-card" data-job-status data-job-status-url="/admin/video-jobs/<%= data.job.id %>/status" data-job-refresh-ms="5000">
+      <p class="eyebrow">Video job</p>
+      <h1><%= data.job.title %></h1>
+      <p><%= data.job.user_name || data.job.user_email || "Utente" %> - <%= data.job.profile_name || data.job.style %> - <%= data.job.aspect_ratio || data.job.format %></p>
+      <p>Stato <span data-job-status-label><%= data.job.status %></span> - avanzamento <strong data-job-progress-text><%= data.job.progress_percent %>%</strong></p>
+      <div class="upload-progress">
+        <div class="upload-progress-bar" style="width: <%= data.job.progress_percent %>%" data-job-progress-bar role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= data.job.progress_percent %>"></div>
+      </div>
+      <p class="muted" data-job-status-detail><%= data.job.status_detail || "" %></p>
+      <% if (data.job.error_message) { %><p class="muted"><%= data.job.error_message %></p><% } %>
+      <% if (data.job.output_url) { %>
+        <video controls class="preview-video" src="<%= data.job.output_url %>"></video>
+        <a class="button secondary" href="<%= data.job.output_url %>" data-job-output-link>Scarica MP4</a>
+      <% } else { %>
+        <a class="button secondary" href="#" data-job-output-link hidden>Scarica MP4</a>
+      <% } %>
+      <div class="inline-actions top-gap">
+        <% if (data.job.status !== 'completed' && data.job.status !== 'refunded') { %>
+          <form action="/admin/video-jobs/<%= data.job.id %>/retry" method="post">
+            <%- include("partials/csrf-fields") %>
+            <button class="ghost-button compact-ghost" type="submit">Rilancia</button>
+          </form>
+        <% } %>
+        <% if (!data.job.refunded && data.job.status !== 'refunded') { %>
+          <form action="/admin/video-jobs/<%= data.job.id %>/refund" method="post">
+            <%- include("partials/csrf-fields") %>
+            <button class="button compact secondary" type="submit">Rimborsa e chiudi</button>
+          </form>
+        <% } %>
+      </div>
+    </article>
+
+    <aside class="admin-card">
+      <h2>Timeline e output</h2>
+      <p class="muted">File <%= data.job.output_filename || "non generato" %></p>
+      <p class="muted">Durata <%= data.job.output_duration_seconds || data.job.total_duration_seconds || 0 %> sec - peso <%= Math.round((data.job.output_bytes || 0) / 1024 / 1024) %> MB</p>
+      <div class="table-list compact-list">
+        <% if (!data.timeline.length) { %>
+          <p class="muted">Timeline non disponibile</p>
+        <% } %>
+        <% data.timeline.forEach(function(item) { %>
+          <div class="admin-row">
+            <strong><%= Number(item.sort_order || 0) + 1 %>. <%= item.original_name || "Immagine" %></strong>
+            <p><%= item.duration_seconds %> sec - <%= item.transition || "none" %></p>
+            <% if (item.caption) { %><p class="muted"><%= item.caption %></p><% } %>
+          </div>
+        <% }) %>
+      </div>
+      <a class="ghost-button compact-ghost top-gap" href="/admin/videos">Torna archivio</a>
+    </aside>
+  </div>
+</section>

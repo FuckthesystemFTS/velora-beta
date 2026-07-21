@@ -1,0 +1,32 @@
+<section class="admin-panel">
+  <h2>Nuovo badge</h2>
+  <form method="post" action="/admin/badges" class="stack-form two-col">
+    <label>Code<input type="text" name="code" required /></label>
+    <label>Nome IT<input type="text" name="name_it" required /></label>
+    <label>Descrizione IT<textarea name="description_it" rows="2" required></textarea></label>
+    <label>Icona<input type="text" name="icon" value="🏆" /></label>
+    <label><input type="checkbox" name="active" value="1" checked /> Attivo</label>
+    <button type="submit" class="primary-btn">Crea badge</button>
+  </form>
+</section>
+
+<section class="admin-panel">
+  <h2>Badge esistenti</h2>
+  <table class="admin-table">
+    <thead><tr><th>Badge</th><th>Code</th><th>Stato</th><th></th></tr></thead>
+    <tbody>
+      <% badges.forEach((item) => { %>
+        <tr>
+          <td><%= item.icon %> <%= item.name_it %></td>
+          <td><%= item.code %></td>
+          <td><%= Number(item.active) === 1 ? 'Attivo' : 'Disattivo' %></td>
+          <td>
+            <form method="post" action="/admin/badges/<%= item.id %>/toggle">
+              <button type="submit" class="ghost-btn">Toggle</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</section>

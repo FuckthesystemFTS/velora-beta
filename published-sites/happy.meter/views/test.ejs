@@ -1,0 +1,84 @@
+<section class="auth-wrap">
+  <div class="auth-card auth-card--wide">
+    <span class="eyebrow"><%= copy('Test pubblico introduttivo', 'Public introductory test', 'Oeffentlicher Einstiegstest') %></span>
+    <h1><%= copy('Inizia il tuo Feliciometro', 'Start your HappyMeter', 'Starte dein HappyMeter') %></h1>
+    <p><%= copy('Rispondi a poche domande e scopri il tuo primo Happy Score indicativo', 'Answer a few questions and discover your first indicative Happy Score', 'Beantworte einige Fragen und entdecke deinen ersten unverbindlichen Happy Score') %></p>
+
+    <form method="post" action="/test" class="stack-form slider-form">
+      <% const sliders = [
+        ["happiness", copy("Quanto ti senti felice oggi", "How happy do you feel today"), values.happiness || 6],
+        ["energy", copy("Quanta energia senti di avere", "How much energy do you feel you have"), values.energy || 6],
+        ["sleep", copy("Come hai dormito", "How did you sleep"), values.sleep || 6],
+        ["stress", copy("Quanto stress senti", "How much stress do you feel"), values.stress || 4],
+        ["social_relations", copy("Quanto ti senti connesso alle persone", "How connected do you feel to other people"), values.social_relations || 6],
+        ["gratitude", copy("Quanto ti senti grato per qualcosa oggi", "How grateful do you feel for something today"), values.gratitude || 6],
+        ["meaning", copy("Quanto senti di aver fatto qualcosa di utile o significativo", "How much do you feel you did something useful or meaningful"), values.meaning || 6],
+        ["day_satisfaction", copy("Quanto ti senti soddisfatto della giornata", "How satisfied do you feel with your day"), values.day_satisfaction || 6]
+      ]; %>
+
+      <% sliders.forEach((slider) => { %>
+        <label class="range-row">
+          <span><%= slider[1] %></span>
+          <strong data-range-value><%= slider[2] %></strong>
+          <input type="range" min="1" max="10" value="<%= slider[2] %>" name="<%= slider[0] %>" required />
+        </label>
+      <% }) %>
+
+      <label><%= copy('Se vuoi, lascia una nota breve', 'If you want, leave a short note', 'Wenn du magst, hinterlasse eine kurze Notiz') %><textarea name="summary_note" rows="3" placeholder="<%= copy('Come descriveresti questa giornata', 'How would you describe this day', 'Wie wuerdest du diesen Tag beschreiben') %>"><%= values.summary_note || '' %></textarea></label>
+
+      <% if (user) { %>
+        <label class="check-card">
+          <input type="checkbox" name="saveResult" value="1" />
+          <span><%= copy('Salva questo risultato nel diario di oggi', 'Save this result in today s diary', 'Speichere dieses Ergebnis im heutigen Tagebuch') %></span>
+        </label>
+      <% } %>
+
+      <button type="submit" class="primary-btn"><%= copy('Calcola Happy Score', 'Calculate Happy Score', 'Happy Score berechnen') %></button>
+    </form>
+
+    <% if (result) { %>
+      <div class="app-card result-card">
+        <div class="score-hero score-hero--compact">
+          <div class="score-ring" data-score-ring data-score="<%= result.score %>">
+            <div>
+              <small>Happy Score</small>
+              <strong><%= result.score %>/100</strong>
+            </div>
+          </div>
+          <div class="score-summary">
+            <h2><%= result.label %></h2>
+            <p><%= result.explanation %></p>
+          </div>
+        </div>
+        <div class="result-grid">
+          <article>
+            <h3><%= copy('Punti forti', 'Strengths', 'Staerken') %></h3>
+            <ul class="clean-list">
+              <% result.strengths.forEach((item) => { %>
+                <li><%= item %></li>
+              <% }) %>
+            </ul>
+          </article>
+          <article>
+            <h3><%= copy('Area da osservare', 'Watch area', 'Beobachtungsbereich') %></h3>
+            <ul class="clean-list">
+              <% result.watchAreas.forEach((item) => { %>
+                <li><%= item %></li>
+              <% }) %>
+            </ul>
+          </article>
+        </div>
+        <div class="cta-row">
+          <% if (user) { %>
+            <a href="/app/today" class="primary-btn"><%= copy('Crea il tuo test quotidiano', 'Create your daily test', 'Erstelle deinen taeglichen Test') %></a>
+            <a href="/app/diary" class="secondary-btn"><%= copy('Vai al diario', 'Go to diary', 'Zum Tagebuch') %></a>
+          <% } else { %>
+            <a href="/register?redirect=/app/today" class="primary-btn"><%= copy('Salva il risultato creando un account', 'Save your result by creating an account', 'Speichere dein Ergebnis, indem du ein Konto erstellst') %></a>
+            <a href="/login?redirect=/app/today" class="secondary-btn"><%= copy('Crea il tuo test quotidiano', 'Create your daily test', 'Erstelle deinen taeglichen Test') %></a>
+          <% } %>
+        </div>
+        <p class="micro-disclaimer"><%= copy('HappyMeter non e uno strumento medico, non formula diagnosi e non sostituisce il parere di professionisti sanitari. E un diario interattivo pensato per aiutarti a osservare meglio abitudini, emozioni e benessere quotidiano', 'HappyMeter is not a medical tool, does not provide diagnoses and does not replace the advice of healthcare professionals. It is an interactive journal designed to help you observe habits, emotions and daily wellbeing more clearly', 'HappyMeter ist kein medizinisches Instrument, stellt keine Diagnosen und ersetzt nicht den Rat von Gesundheitsfachkraeften. Es ist ein interaktives Tagebuch, das dir hilft, Gewohnheiten, Emotionen und taegliches Wohlbefinden klarer zu beobachten') %></p>
+      </div>
+    <% } %>
+  </div>
+</section>

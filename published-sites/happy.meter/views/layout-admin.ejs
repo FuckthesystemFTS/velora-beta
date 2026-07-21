@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= pageTitle %></title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Sora:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
+  </head>
+  <body class="admin-shell">
+    <div class="admin-layout">
+      <aside class="admin-sidebar">
+        <div>
+          <small>HappyMeter</small>
+          <h1>Admin</h1>
+        </div>
+        <nav>
+          <% const currentAdminPath = typeof adminPath !== 'undefined' ? adminPath : ''; %>
+          <a href="/admin/dashboard" class="<%= currentAdminPath === '/admin/dashboard' ? 'is-active' : '' %>">Dashboard</a>
+          <a href="/admin/users" class="<%= currentAdminPath === '/admin/users' ? 'is-active' : '' %>">Utenti</a>
+          <a href="/admin/activities" class="<%= currentAdminPath === '/admin/activities' ? 'is-active' : '' %>">Attivita</a>
+          <a href="/admin/gestures" class="<%= currentAdminPath === '/admin/gestures' ? 'is-active' : '' %>">Gesti</a>
+          <a href="/admin/badges" class="<%= currentAdminPath === '/admin/badges' ? 'is-active' : '' %>">Badge</a>
+          <a href="/admin/tests" class="<%= currentAdminPath === '/admin/tests' ? 'is-active' : '' %>">Test</a>
+          <a href="/admin/community" class="<%= currentAdminPath === '/admin/community' ? 'is-active' : '' %>">Community</a>
+          <a href="/admin/settings" class="<%= currentAdminPath === '/admin/settings' ? 'is-active' : '' %>">Settings</a>
+        </nav>
+        <% if (admin) { %>
+          <form method="post" action="/admin/logout">
+            <button type="submit" class="ghost-btn">Esci</button>
+          </form>
+        <% } %>
+      </aside>
+      <main class="admin-main">
+        <% if (flash) { %>
+          <div class="flash flash--<%= flash.type %>"><%= flash.text %></div>
+        <% } %>
+        <%- body %>
+      </main>
+    </div>
+  </body>
+</html>

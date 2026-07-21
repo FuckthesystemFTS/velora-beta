@@ -1,0 +1,31 @@
+<header class="site-header">
+  <div class="shell topbar">
+    <a class="brand" href="/">
+      <img src="<%= (data.site && data.site.logo) || '/assets/brand/creatorspeaker-brand-emblem.jpg' %>" alt="CreatorSpeaker TV" />
+      <span>
+        <strong><%= (data.site && data.site.name) || "creatorspeaker TV" %></strong>
+        <small>Network editoriale e multimediale</small>
+      </span>
+    </a>
+    <button class="menu-toggle" type="button" data-menu-toggle>Menu</button>
+    <nav class="site-nav" data-menu-panel>
+      <a href="/">Home</a>
+      <a href="/network">Network</a>
+      <a href="/#funzionalita">Funzionalita</a>
+      <a href="/#esplora">Esplora</a>
+      <a href="/abbonamenti">Abbonamenti</a>
+      <a href="/creator-network">Creator</a>
+      <a href="/speaker-network">Speaker</a>
+      <a href="/aziende-brand">Aziende</a>
+      <a href="/smart-tv">Smart TV</a>
+      <a href="/contatti">Contatti</a>
+      <% if (currentUser) { %>
+        <a href="/dashboard">Dashboard</a>
+        <form action="/logout" method="post"><%- include("csrf-fields") %><button type="submit" class="ghost-button">Esci</button></form>
+      <% } else { %>
+        <a href="/login">Accedi</a>
+        <a class="button compact button-red" href="/register">Registrati Ora</a>
+      <% } %>
+    </nav>
+  </div>
+</header>

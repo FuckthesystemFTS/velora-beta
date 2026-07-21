@@ -1,0 +1,272 @@
+.admin-shell {
+  min-height: 100vh;
+  padding: 16px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 218, 64, 0.32), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(98, 202, 129, 0.26), transparent 30%),
+    #f4fbf6;
+}
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 18px;
+}
+
+.admin-sidebar {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(6, 59, 69, 0.12);
+  border-radius: 28px;
+  padding: 22px;
+  box-shadow: var(--shadow);
+  height: fit-content;
+  position: sticky;
+  top: 16px;
+}
+
+.admin-sidebar nav {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.admin-sidebar nav a {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(243, 255, 248, 0.84);
+  font-weight: 800;
+}
+
+.admin-sidebar nav a.is-active,
+.admin-sidebar nav a:hover {
+  background: linear-gradient(135deg, #ffe26a, #82d882);
+  color: #063b45;
+}
+
+.admin-main {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+}
+
+.admin-hero,
+.admin-panel {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(6, 59, 69, 0.12);
+  border-radius: 28px;
+  padding: 22px;
+  box-shadow: var(--shadow);
+}
+
+.admin-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+}
+
+.admin-hero h2,
+.admin-panel h2 {
+  margin: 0 0 8px;
+}
+
+.admin-hero p,
+.admin-panel p {
+  margin: 0;
+  color: rgba(6, 59, 69, 0.72);
+}
+
+.admin-health-card {
+  min-width: 210px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(243, 255, 248, 0.95);
+  display: grid;
+  gap: 4px;
+}
+
+.admin-stat-grid,
+.admin-config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.admin-stat-grid div,
+.admin-config-grid div {
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(243, 255, 248, 0.9);
+  display: grid;
+  gap: 6px;
+}
+
+.admin-stat-grid span,
+.admin-config-grid span,
+.admin-health-card span {
+  font-size: 0.82rem;
+  color: rgba(6, 59, 69, 0.64);
+  font-weight: 800;
+}
+
+.admin-stat-grid strong {
+  font-size: 1.9rem;
+}
+
+.admin-grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.admin-panel-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.admin-panel-head a {
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.admin-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-list-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(6, 59, 69, 0.08);
+}
+
+.admin-list-item--stack {
+  display: grid;
+}
+
+.admin-list-item small {
+  display: block;
+  color: rgba(6, 59, 69, 0.62);
+}
+
+.score-badge,
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.score-badge {
+  background: #ffe26a;
+}
+
+.status-pill--ok,
+.status-ok {
+  color: #0b6b3a;
+}
+
+.status-pill--ok {
+  background: rgba(98, 202, 129, 0.2);
+}
+
+.status-pill--warn,
+.status-warn {
+  color: #9b4d00;
+}
+
+.status-pill--warn {
+  background: rgba(255, 165, 44, 0.24);
+}
+
+.admin-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(6, 59, 69, 0.1);
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-table th {
+  font-size: 0.82rem;
+  color: rgba(6, 59, 69, 0.62);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-content-cell {
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+.admin-inline-form {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) minmax(80px, 0.5fr) minmax(180px, 1.2fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-width: 520px;
+}
+
+.admin-inline-form input,
+.admin-inline-form select {
+  width: 100%;
+}
+
+.admin-empty {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(243, 255, 248, 0.9);
+  font-weight: 800;
+}
+
+.admin-login-card {
+  max-width: 480px;
+  margin: 10vh auto 0;
+}
+
+@media (max-width: 1100px) {
+  .admin-grid-two {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: static;
+  }
+
+  .admin-sidebar nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,112 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <p class="eyebrow">Pagine e sezioni</p>
+    <h1><%= data.pageKey ? 'Sezioni ' + data.pageKey : 'Tutte le sezioni' %></h1>
+    <% if (data.siteHub) { %>
+      <div class="admin-action-row">
+        <% ['home','creator-network','speaker-network','aziende','smart-tv','servizi','chi-siamo','contatti'].forEach(function(page) { %>
+          <a class="<%= data.pageKey === page ? 'button compact' : 'ghost-button compact-ghost' %>" href="<%= panelPath('/admin/site') %>?page=<%= page %>"><%= page %></a>
+        <% }) %>
+        <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/cms-packages') %>">Pacchetti</a>
+        <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/media') %>">Media</a>
+      </div>
+    <% } %>
+    <div class="split-layout top-gap">
+      <article class="admin-card">
+        <h2>Nuova sezione</h2>
+        <form class="stack-form" method="post" action="/admin/sections">
+          <%- include("partials/csrf-fields") %>
+          <input type="hidden" name="redirect_to" value="<%= currentPath %><%= data.pageKey ? '?page=' + data.pageKey : '' %>" />
+          <label>Pagina
+            <select name="page_key">
+              <% ['home','creator-network','speaker-network','aziende','smart-tv','servizi','chi-siamo','contatti'].forEach(function(page) { %>
+                <option value="<%= page %>" <%= data.pageKey === page ? 'selected' : '' %>><%= page %></option>
+              <% }) %>
+            </select>
+          </label>
+          <label>Chiave sezione<input type="text" name="section_key" /></label>
+          <label>Titolo<input type="text" name="title" required /></label>
+          <label>Sottotitolo<input type="text" name="subtitle" /></label>
+          <label>Testo<textarea name="body"></textarea></label>
+          <div class="grid-2">
+            <label>CTA label<input type="text" name="cta_label" /></label>
+            <label>CTA URL<input type="text" name="cta_url" /></label>
+          </div>
+          <div class="grid-2">
+            <label>Media
+              <select name="media_asset_id">
+                <option value="">Nessuno</option>
+                <% data.mediaOptions.forEach(function(media) { %><option value="<%= media.id %>"><%= media.title %></option><% }) %>
+              </select>
+            </label>
+            <label>Layout
+              <select name="layout_type">
+                <option value="text">text</option>
+                <option value="hero">hero</option>
+                <option value="cards">cards</option>
+                <option value="grid">grid</option>
+                <option value="media-left">media-left</option>
+                <option value="media-right">media-right</option>
+              </select>
+            </label>
+          </div>
+          <div class="grid-2">
+            <label>Stato<select name="status"><option value="published">published</option><option value="draft">draft</option><option value="hidden">hidden</option></select></label>
+            <label>Ordine<input type="number" name="sort_order" value="0" /></label>
+          </div>
+          <label>SEO title<input type="text" name="seo_title" /></label>
+          <label>SEO description<textarea name="seo_description"></textarea></label>
+          <button class="button secondary" type="submit">Salva sezione</button>
+        </form>
+      </article>
+
+      <div class="table-list">
+        <% if (!data.sections.length) { %>
+          <div class="admin-empty-state">
+            <strong>Nessuna sezione creata per questa pagina</strong>
+            <span>Crea una sezione con titolo, testo, media, CTA e stato pubblicazione</span>
+          </div>
+        <% } %>
+        <% data.sections.forEach(function(section) { %>
+          <article class="admin-card">
+            <form class="stack-form" method="post" action="/admin/sections">
+              <%- include("partials/csrf-fields") %>
+              <input type="hidden" name="id" value="<%= section.id %>" />
+              <input type="hidden" name="redirect_to" value="<%= currentPath %><%= data.pageKey ? '?page=' + data.pageKey : '' %>" />
+              <div class="grid-2">
+                <label>Pagina<input type="text" name="page_key" value="<%= section.page_key %>" /></label>
+                <label>Chiave<input type="text" name="section_key" value="<%= section.section_key %>" /></label>
+              </div>
+              <label>Titolo<input type="text" name="title" value="<%= section.title %>" /></label>
+              <label>Sottotitolo<input type="text" name="subtitle" value="<%= section.subtitle || '' %>" /></label>
+              <label>Testo<textarea name="body"><%= section.body || '' %></textarea></label>
+              <div class="grid-2">
+                <label>CTA label<input type="text" name="cta_label" value="<%= section.cta_label || '' %>" /></label>
+                <label>CTA URL<input type="text" name="cta_url" value="<%= section.cta_url || '' %>" /></label>
+              </div>
+              <div class="grid-2">
+                <label>Stato<input type="text" name="status" value="<%= section.status %>" /></label>
+                <label>Ordine<input type="number" name="sort_order" value="<%= section.sort_order %>" /></label>
+              </div>
+              <label>Media
+                <select name="media_asset_id">
+                  <option value="">Nessuno</option>
+                  <% data.mediaOptions.forEach(function(media) { %><option value="<%= media.id %>" <%= Number(section.media_asset_id) === Number(media.id) ? 'selected' : '' %>><%= media.title %></option><% }) %>
+                </select>
+              </label>
+              <label>Layout<input type="text" name="layout_type" value="<%= section.layout_type %>" /></label>
+              <label>SEO title<input type="text" name="seo_title" value="<%= section.seo_title || '' %>" /></label>
+              <label>SEO description<textarea name="seo_description"><%= section.seo_description || '' %></textarea></label>
+              <button class="ghost-button compact-ghost" type="submit">Aggiorna</button>
+            </form>
+            <form method="post" action="/admin/sections/<%= section.id %>/delete">
+              <%- include("partials/csrf-fields") %>
+              <input type="hidden" name="redirect_to" value="<%= currentPath %><%= data.pageKey ? '?page=' + data.pageKey : '' %>" />
+              <button class="ghost-button compact-ghost" type="submit">Nascondi</button>
+            </form>
+          </article>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</section>

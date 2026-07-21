@@ -1,0 +1,46 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <p class="eyebrow"><%= data.clientsMode ? 'Clienti' : 'Utenti registrati' %></p>
+    <h1><%= data.clientsMode ? 'Clienti e account attivi' : 'Utenti' %></h1>
+    <p class="muted">Stato account, ordini collegati, upload e crediti gestibili dall admin</p>
+
+    <div class="admin-action-row">
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/requests') %>">Richieste</a>
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/orders') %>">Ordini</a>
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/content') %>">Contenuti utenti</a>
+    </div>
+
+    <div class="table-list top-gap">
+      <% if (!data.users.length) { %>
+        <div class="admin-empty-state">
+          <strong>Nessun account in questa sezione</strong>
+          <span>I nuovi registrati e i clienti con ordini saranno mostrati qui</span>
+        </div>
+      <% } %>
+      <% data.users.forEach(function(user) { %>
+        <div class="admin-row split-admin-row">
+          <div>
+            <strong><%= user.name || user.email %></strong>
+            <p><%= user.email %></p>
+            <p>Stato <%= user.status %> - Crediti <%= user.credits %></p>
+            <p>Ordini <%= user.orders_total %> - Upload <%= user.uploads_total %> - Video jobs <%= user.video_jobs_total %></p>
+          </div>
+          <form class="stack-form compact-form" action="<%= panelPath('/admin/users/' + user.id + '/status') %>" method="post">
+            <%- include("partials/csrf-fields") %>
+            <select name="status">
+              <% ["pending","active","suspended"].forEach(function(status) { %>
+                <option value="<%= status %>" <%= user.status === status ? "selected" : "" %>><%= status %></option>
+              <% }) %>
+            </select>
+            <button class="button compact" type="submit">Aggiorna stato</button>
+          </form>
+          <form class="stack-form compact-form" action="<%= panelPath('/admin/users/' + user.id + '/credits') %>" method="post">
+            <%- include("partials/csrf-fields") %>
+            <input type="number" name="credits" value="<%= user.credits %>" min="0" />
+            <button class="button compact secondary" type="submit">Salva crediti</button>
+          </form>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>

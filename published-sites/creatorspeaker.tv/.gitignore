@@ -1,0 +1,11 @@
+node_modules/
+.env
+data.sqlite
+data.sqlite-*
+.heroku-app-name
+cookies.txt
+tmp-test.wav
+public/uploads/*
+public/generated/*
+!public/uploads/.gitkeep
+!public/generated/.gitkeep

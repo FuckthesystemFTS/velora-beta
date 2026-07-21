@@ -1,0 +1,25 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <p class="eyebrow">Accessi</p>
+    <h1>Gestione accessi attivi e sospesi</h1>
+    <div class="table-list top-gap">
+      <% page.accesses.forEach(function(access) { %>
+        <div class="admin-row split-admin-row">
+          <div>
+            <strong><%= access.user_name %> · <%= access.platform_name %></strong>
+            <p class="muted"><%= access.status_label %> · <%= access.starts_at_label %> <% if (access.expires_at_label) { %>→ <%= access.expires_at_label %><% } %></p>
+            <p class="muted">Visualizzazioni credenziali: <%= access.credentials_view_count || 0 %></p>
+          </div>
+          <form class="inline-actions" method="post" action="/admin/abbonamenti/accessi/<%= access.id %>/status">
+            <%- include("partials/csrf-fields") %>
+            <input type="hidden" name="user_visible_note" value="<%= access.user_visible_note || '' %>" />
+            <input type="hidden" name="admin_private_note" value="" />
+            <button class="ghost-button compact-ghost" type="submit" name="status" value="suspended">Sospendi</button>
+            <button class="ghost-button compact-ghost" type="submit" name="status" value="revoked">Revoca</button>
+            <button class="ghost-button compact-ghost" type="submit" name="status" value="active">Riattiva</button>
+          </form>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>

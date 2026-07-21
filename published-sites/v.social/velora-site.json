@@ -1,0 +1,28 @@
+{
+  "schema": "https://velora.dev/schemas/velora-site.v1.json",
+  "zone": "v.social",
+  "title": "V Social",
+  "description": "Social network adattato per Velora con account unico",
+  "entry": "index.html",
+  "type": "static-site",
+  "version": "0.1.0-beta",
+  "publisher": {
+    "name": "V Social",
+    "requiresVeloraIdentity": true
+  },
+  "auth": {
+    "provider": "velora",
+    "registerUrl": "velora://auth/register?app=v.social",
+    "loginUrl": "velora://auth/login?app=v.social"
+  },
+  "permissions": {
+    "network": false,
+    "storage": "local"
+  },
+  "routes": [
+    {
+      "path": "/",
+      "file": "index.html"
+    }
+  ]
+}

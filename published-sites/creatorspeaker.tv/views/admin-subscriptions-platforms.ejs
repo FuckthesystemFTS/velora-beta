@@ -1,0 +1,30 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <div class="streaming-heading">
+      <div>
+        <p class="eyebrow">Piattaforme</p>
+        <h1>Gestione abbonamenti condivisi</h1>
+      </div>
+      <a class="button secondary" href="/admin/abbonamenti/piattaforme/nuova">Nuova piattaforma</a>
+    </div>
+    <% if (!page.encryption.hasKey) { %>
+      <div class="flash flash-warning top-gap"><div class="shell admin-shell-inner"><%= page.encryption.message %></div></div>
+    <% } %>
+    <div class="table-list top-gap">
+      <% page.platforms.forEach(function(platform) { %>
+        <div class="admin-row split-admin-row">
+          <div>
+            <strong><%= platform.name %></strong>
+            <p class="muted"><%= platform.slug %> · <%= platform.status %> · utenti attivi <%= platform.active_users_count %>/<%= platform.max_users %></p>
+            <p class="muted">Email accesso: <%= platform.maskedEmail %> · Password accesso: <%= platform.maskedPassword %> · Note private: <%= platform.hasPrivateNotes ? 'presenti' : 'non presenti' %></p>
+          </div>
+          <div class="inline-actions">
+            <span class="status-pill">Prezzo <%= formatMoney(platform.price_per_user) %></span>
+            <span class="status-pill">Durata <%= platform.duration_days %> giorni</span>
+            <a class="ghost-button compact-ghost" href="/admin/abbonamenti/piattaforme/<%= platform.id %>">Apri</a>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>

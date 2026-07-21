@@ -1,0 +1,34 @@
+<section class="admin-section">
+  <div class="shell">
+    <form class="stack-form" action="/admin/offer-settings" method="post">
+      <%- include("partials/csrf-fields") %>
+      <div class="two-column">
+        <article class="info-panel">
+          <h1>Scheduler offerte</h1>
+          <label class="checkbox"><input type="checkbox" name="schedulerEnabled" <%= data.offerSettings.schedulerEnabled !== false ? "checked" : "" %> /> Scheduler attivo</label>
+          <label>Frequenza ricerca minuti<input type="number" name="searchFrequencyMinutes" value="<%= data.offerSettings.searchFrequencyMinutes || 60 %>" /></label>
+          <label>Frequenza Telegram minuti<input type="number" name="telegramFrequencyMinutes" value="<%= data.offerSettings.telegramFrequencyMinutes || 120 %>" /></label>
+          <label>Sconto minimo globale %<input type="number" name="minDiscountPercent" value="<%= data.offerSettings.minDiscountPercent || 10 %>" /></label>
+          <label>Score minimo<input type="number" name="minScore" value="<%= data.offerSettings.minScore || 55 %>" /></label>
+          <p class="muted">Provider attuale: <strong><%= data.amazonProvider.provider %></strong></p>
+        </article>
+        <article class="info-panel">
+          <h2>Categorie</h2>
+          <% data.categories.forEach(function(category) { %>
+            <div class="category-box">
+              <label class="checkbox"><input type="checkbox" name="category_active_<%= category.id %>" <%= category.active ? "checked" : "" %> /> <%= category.name %></label>
+              <input type="text" name="category_keywords_<%= category.id %>" value="<%= (category.meta.keywords || []).join(', ') %>" placeholder="keyword, keyword" />
+              <div class="grid-3">
+                <input type="number" name="category_min_discount_<%= category.id %>" value="<%= category.meta.minDiscountPercent || 10 %>" placeholder="Sconto %" />
+                <input type="number" name="category_min_price_<%= category.id %>" value="<%= category.meta.minPriceCents || 1000 %>" placeholder="Prezzo min cents" />
+                <input type="number" name="category_max_price_<%= category.id %>" value="<%= category.meta.maxPriceCents || 300000 %>" placeholder="Prezzo max cents" />
+              </div>
+              <input type="number" name="category_min_score_<%= category.id %>" value="<%= category.meta.minScore || 55 %>" placeholder="Score minimo" />
+            </div>
+          <% }) %>
+        </article>
+      </div>
+      <button class="button" type="submit">Salva impostazioni offerte</button>
+    </form>
+  </div>
+</section>

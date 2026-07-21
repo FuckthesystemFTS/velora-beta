@@ -1,0 +1,111 @@
+<section class="auth-wrap">
+  <div class="test-variant-stack">
+    <div class="variant-header-grid variant-header-grid--single">
+      <article class="test-variant-hero variant-score-panel">
+        <span class="eyebrow"><%= copy('Percorso rapido', 'Quick path', 'Schneller Weg') %></span>
+        <h1><%= copy('HappyMeter Classico', 'Classic HappyMeter', 'Klassisches HappyMeter') %></h1>
+        <p><%= copy('Otto domande dirette per ottenere subito un primo Happy Score indicativo', 'Eight direct questions to get an instant indicative Happy Score', 'Acht direkte Fragen fuer einen sofortigen unverbindlichen Happy Score') %></p>
+        <div class="variant-meta variant-meta--compact">
+          <article>
+            <small><%= copy('Formula', 'Formula', 'Formel') %></small>
+            <strong>8 <%= copy('domande', 'questions', 'Fragen') %></strong>
+          </article>
+          <article>
+            <small>Happy Score</small>
+            <strong>0-100</strong>
+          </article>
+        </div>
+        <div class="test-like-row">
+          <button
+            type="button"
+            class="test-like-button <%= liked ? 'is-liked' : '' %>"
+            data-test-like="A"
+            aria-pressed="<%= liked ? 'true' : 'false' %>"
+            data-auth-title="<%= copy('Accedi per votare il Test A', 'Log in to vote for Test A', 'Melde dich an, um fuer Test A zu stimmen') %>"
+            data-auth-body="<%= copy('Accedi o registrati per votare il test che preferisci', 'Log in or sign up to vote for the test you prefer', 'Melde dich an oder registriere dich, um fuer deinen bevorzugten Test zu stimmen') %>"
+            data-error-text="<%= copy('Il voto non e stato salvato', 'The vote could not be saved', 'Die Stimme konnte nicht gespeichert werden') %>"
+          ><%= copy('Mi piace questo test', 'I like this test', 'Dieser Test gefaellt mir') %></button>
+          <span><%= copy('Voto test', 'Test vote', 'Teststimme') %> <strong data-test-like-count="A"><%= likeCount || 0 %></strong></span>
+        </div>
+        <div class="test-like-feedback" data-test-like-feedback></div>
+      </article>
+    </div>
+
+    <div class="auth-card auth-card--wide variant-form-card">
+      <form method="post" action="/test/a/submit" class="stack-form slider-form slider-form--single">
+        <% const sliders = [
+          ["happiness", copy("Quanto ti senti felice oggi", "How happy do you feel today", "Wie gluecklich fuehlst du dich heute"), values.happiness || 6],
+          ["energy", copy("Quanta energia senti di avere", "How much energy do you feel you have", "Wie viel Energie spuerrst du heute"), values.energy || 6],
+          ["sleep", copy("Come hai dormito", "How did you sleep", "Wie hast du geschlafen"), values.sleep || 6],
+          ["stress", copy("Quanto stress senti", "How much stress do you feel", "Wie viel Stress spuerrst du"), values.stress || 4],
+          ["social_relations", copy("Quanto ti senti connesso alle persone", "How connected do you feel to other people", "Wie verbunden fuehlst du dich mit anderen Menschen"), values.social_relations || 6],
+          ["gratitude", copy("Quanto ti senti grato per qualcosa oggi", "How grateful do you feel for something today", "Wie dankbar fuehlst du dich heute fuer etwas"), values.gratitude || 6],
+          ["meaning", copy("Quanto senti di aver fatto qualcosa di utile o significativo", "How much do you feel you did something useful or meaningful", "Wie sehr hast du heute etwas Sinnvolles oder Nuetzliches getan"), values.meaning || 6],
+          ["day_satisfaction", copy("Quanto ti senti soddisfatto della giornata", "How satisfied do you feel with your day", "Wie zufrieden bist du mit deinem Tag"), values.day_satisfaction || 6]
+        ]; %>
+
+        <div class="slider-grid slider-grid--single">
+          <% sliders.forEach((slider) => { %>
+            <label class="range-row">
+              <span class="range-row__label"><%= slider[1] %></span>
+              <strong class="range-row__value" data-range-value><%= slider[2] %></strong>
+              <input type="range" min="1" max="10" value="<%= slider[2] %>" name="<%= slider[0] %>" required />
+              <small class="range-row__scale">1 - 10</small>
+            </label>
+          <% }) %>
+        </div>
+
+        <label class="variant-note-field"><%= copy('Una riga sul tono della giornata', 'One line about the tone of your day', 'Ein Satz ueber die Stimmung deines Tages') %><textarea name="summary_note" rows="3" placeholder="<%= copy('Che sensazione ti resta addosso', 'What feeling stays with you', 'Welches Gefuehl bleibt bei dir') %>"><%= values.summary_note || '' %></textarea></label>
+
+        <% if (user) { %>
+          <label class="check-card">
+            <input type="checkbox" name="saveResult" value="1" />
+            <span><%= copy('Salva questo risultato nel diario di oggi', 'Save this result in today s diary', 'Speichere dieses Ergebnis im heutigen Tagebuch') %></span>
+          </label>
+        <% } %>
+
+        <button type="submit" class="primary-btn"><%= copy('Calcola Happy Score', 'Calculate Happy Score', 'Happy Score berechnen') %></button>
+      </form>
+    </div>
+
+    <% if (result) { %>
+      <article class="variant-result-card">
+        <div class="score-ring" data-score-ring data-score="<%= result.score %>">
+          <div>
+            <small>Happy Score</small>
+            <strong><%= result.score %>/100</strong>
+          </div>
+        </div>
+        <h2><%= result.label %></h2>
+        <p><%= result.message %></p>
+        <div class="variant-breakdown">
+          <% result.breakdown.forEach((item) => { %>
+            <article>
+              <small><%= item.label %></small>
+              <strong><%= item.value %></strong>
+            </article>
+          <% }) %>
+        </div>
+        <div class="variant-meta">
+          <article>
+            <small><%= copy('Punti forti', 'Strong points', 'Staerken') %></small>
+            <strong><%= result.strengths.join(' / ') %></strong>
+          </article>
+          <article>
+            <small><%= copy('Da osservare', 'To watch', 'Zum Beobachten') %></small>
+            <strong><%= result.watchAreas.join(' / ') %></strong>
+          </article>
+        </div>
+        <div class="cta-row result-actions">
+          <% if (user) { %>
+            <a href="/app/today" class="primary-btn"><%= copy('Vai al test quotidiano', 'Go to the daily test', 'Zum Tagestest') %></a>
+            <a href="/app/diary" class="secondary-btn"><%= copy('Apri il diario', 'Open diary', 'Tagebuch oeffnen') %></a>
+          <% } else { %>
+            <a href="/register?redirect=/app/today" class="primary-btn"><%= copy('Salva creando un account', 'Save by creating an account', 'Speichern und Konto erstellen') %></a>
+            <a href="/login?redirect=/app/today" class="secondary-btn"><%= copy('Crea il tuo test quotidiano', 'Create your daily test', 'Erstelle deinen taeglichen Test') %></a>
+          <% } %>
+        </div>
+      </article>
+    <% } %>
+  </div>
+</section>

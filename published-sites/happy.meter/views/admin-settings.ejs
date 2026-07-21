@@ -1,0 +1,49 @@
+<section class="admin-grid-two">
+  <article class="admin-panel">
+    <h2>Impostazioni base</h2>
+    <form method="post" action="/admin/settings" class="stack-form">
+      <label>Nome sito<input type="text" name="siteName" value="HappyMeter" /></label>
+      <label>Stato premium<input type="text" name="premiumStatus" value="coming-soon" /></label>
+      <label>Email supporto<input type="email" name="supportEmail" value="info@happymeter.it" /></label>
+      <button type="submit" class="primary-btn">Salva impostazioni</button>
+    </form>
+  </article>
+
+  <article class="admin-panel">
+    <h2>Cambia password admin</h2>
+    <form method="post" action="/admin/password" class="stack-form">
+      <label>Nuova password<input type="password" name="password" minlength="8" required /></label>
+      <button type="submit" class="primary-btn">Aggiorna password</button>
+    </form>
+  </article>
+</section>
+
+<section class="admin-panel">
+  <h2>Email di servizio</h2>
+  <div class="admin-config-grid">
+    <div><span>Host SMTP</span><strong><%= emailConfig.host || 'Non impostato' %></strong></div>
+    <div><span>Porta</span><strong><%= emailConfig.port || 'Non impostata' %></strong></div>
+    <div><span>Sicurezza</span><strong><%= emailConfig.secure || 'Non impostata' %></strong></div>
+    <div><span>Account</span><strong><%= emailConfig.user || 'Non impostato' %></strong></div>
+    <div><span>Mittente</span><strong><%= emailConfig.from || 'Non impostato' %></strong></div>
+    <div><span>Rispondi a</span><strong><%= emailConfig.replyTo || 'Non impostato' %></strong></div>
+    <div><span>Password SMTP</span><strong class="<%= emailConfig.hasPassword ? 'status-ok' : 'status-warn' %>"><%= emailConfig.hasPassword ? 'Presente' : 'Da impostare su Heroku' %></strong></div>
+  </div>
+</section>
+
+<section class="admin-panel">
+  <h2>Configurazioni salvate</h2>
+  <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Chiave</th><th>Valore</th></tr></thead>
+      <tbody>
+        <% settings.forEach((item) => { %>
+          <tr><td><%= item.key %></td><td class="admin-content-cell"><%= item.value_json %></td></tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% if (!settings.length) { %>
+    <p class="admin-empty">Nessuna configurazione salvata</p>
+  <% } %>
+</section>

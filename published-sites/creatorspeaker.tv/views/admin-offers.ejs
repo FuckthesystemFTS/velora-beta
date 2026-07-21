@@ -1,0 +1,67 @@
+<section class="admin-section">
+  <div class="shell">
+    <div class="two-column">
+      <form class="info-panel stack-form" method="get" action="/admin/offers">
+        <h1>Filtro offerte</h1>
+        <label>Cerca titolo<input type="text" name="q" value="<%= (data.filters && data.filters.q) || "" %>" /></label>
+        <label>Categoria
+          <select name="category">
+            <option value="">Tutte</option>
+            <% data.categories.forEach(function(category) { %>
+              <option value="<%= category.slug %>" <%= data.filters && data.filters.category === category.slug ? "selected" : "" %>><%= category.name %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Stato
+          <select name="status">
+            <option value="">Tutti</option>
+            <% ["discovered","approved","rejected","published_telegram","published_facebook","archived"].forEach(function(status) { %>
+              <option value="<%= status %>" <%= data.filters && data.filters.status === status ? "selected" : "" %>><%= status %></option>
+            <% }) %>
+          </select>
+        </label>
+        <button class="button" type="submit">Applica filtri</button>
+      </form>
+
+      <form class="info-panel stack-form" action="/admin/offers/manual" method="post">
+        <%- include("partials/csrf-fields") %>
+        <h2>Inserisci offerta manuale</h2>
+        <label>Titolo<input type="text" name="title" required /></label>
+        <label>Categoria
+          <select name="category_id">
+            <% data.categories.forEach(function(category) { %>
+              <option value="<%= category.id %>"><%= category.name %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>URL prodotto<input type="url" name="product_url" required /></label>
+        <label>URL affiliato<input type="url" name="affiliate_url" /></label>
+        <label>Immagine<input type="url" name="image_url" /></label>
+        <label>Prezzo normale cents<input type="number" name="normal_price_cents" /></label>
+        <label>Prezzo offerta cents<input type="number" name="current_price_cents" required /></label>
+        <label>Score<input type="number" name="score" value="65" /></label>
+        <label class="checkbox"><input type="checkbox" name="prime_available" /> Prime disponibile</label>
+        <button class="button" type="submit">Salva offerta</button>
+      </form>
+    </div>
+
+    <div class="table-list top-gap">
+      <% data.offers.forEach(function(offer) { %>
+        <div class="admin-row split-admin-row">
+          <div>
+            <strong><%= offer.title %></strong>
+            <p><%= offer.category_name || "n/d" %> · score <%= offer.score %> · stato <%= offer.status %></p>
+            <p><%= formatMoney(offer.current_price_cents) %> · sconto <%= offer.discount_percent || 0 %>%</p>
+          </div>
+          <div class="inline-actions">
+            <form action="/admin/offers/<%= offer.id %>/approve" method="post"><%- include("partials/csrf-fields") %><button class="button compact secondary" type="submit">Approva</button></form>
+            <form action="/admin/offers/<%= offer.id %>/reject" method="post"><%- include("partials/csrf-fields") %><button class="ghost-button" type="submit">Rifiuta</button></form>
+            <form action="/admin/offers/<%= offer.id %>/publish-telegram" method="post"><%- include("partials/csrf-fields") %><button class="ghost-button" type="submit">Telegram</button></form>
+            <form action="/admin/offers/<%= offer.id %>/publish-facebook" method="post"><%- include("partials/csrf-fields") %><button class="ghost-button" type="submit">Facebook</button></form>
+            <form action="/admin/offers/<%= offer.id %>/archive" method="post"><%- include("partials/csrf-fields") %><button class="ghost-button" type="submit">Archivia</button></form>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>

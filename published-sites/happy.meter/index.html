@@ -1,0 +1,375 @@
+﻿<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HappyMeter su Velora</title>
+    <meta
+      name="description"
+      content="HappyMeter, il Feliciometro adattato per Velora con accesso tramite identita unica Velora"
+    />
+    <link rel="icon" href="public/favicon.ico" />
+    <style>
+      :root {
+        --ink: #152137;
+        --paper: #fff8ea;
+        --sun: #ffce4f;
+        --coral: #ff7a59;
+        --mint: #69d6ac;
+        --sky: #89c7ff;
+        --card: rgba(255, 255, 255, 0.82);
+        --shadow: 0 24px 70px rgba(38, 26, 12, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 15% 10%, rgba(255, 206, 79, 0.5), transparent 26rem),
+          radial-gradient(circle at 85% 15%, rgba(105, 214, 172, 0.4), transparent 24rem),
+          linear-gradient(135deg, #fff8ea 0%, #edf8ff 52%, #fff0e9 100%);
+        min-height: 100vh;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .shell {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 56px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 56px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+      }
+
+      .brand img {
+        width: 58px;
+        height: 58px;
+        border-radius: 18px;
+        object-fit: cover;
+        box-shadow: var(--shadow);
+      }
+
+      .velora-pill {
+        border: 1px solid rgba(21, 33, 55, 0.18);
+        border-radius: 999px;
+        padding: 10px 16px;
+        background: rgba(255, 255, 255, 0.62);
+        backdrop-filter: blur(12px);
+        font-size: 0.9rem;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.02fr 0.98fr;
+        gap: 34px;
+        align-items: center;
+      }
+
+      .hero-copy {
+        padding: 42px;
+        border: 1px solid rgba(21, 33, 55, 0.12);
+        border-radius: 38px;
+        background: var(--card);
+        box-shadow: var(--shadow);
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #7b4c00;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 0.78rem;
+      }
+
+      h1 {
+        margin: 18px 0 18px;
+        max-width: 760px;
+        font-size: clamp(3.3rem, 8vw, 7.7rem);
+        line-height: 0.82;
+        letter-spacing: -0.1em;
+      }
+
+      .lead {
+        font-size: clamp(1.08rem, 2vw, 1.42rem);
+        line-height: 1.55;
+        max-width: 680px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 26px;
+      }
+
+      .btn {
+        border: 0;
+        border-radius: 18px;
+        padding: 15px 20px;
+        font-weight: 900;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        background: var(--ink);
+        color: white;
+      }
+
+      .btn-soft {
+        background: #fff;
+        color: var(--ink);
+        border: 1px solid rgba(21, 33, 55, 0.14);
+      }
+
+      .visual {
+        position: relative;
+        min-height: 560px;
+        border-radius: 42px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: var(--shadow);
+      }
+
+      .visual img {
+        width: 100%;
+        height: 100%;
+        min-height: 560px;
+        object-fit: cover;
+        display: block;
+      }
+
+      .abstract-visual {
+        min-height: 560px;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at 30% 25%, rgba(255, 206, 79, 0.72), transparent 11rem),
+          radial-gradient(circle at 70% 35%, rgba(105, 214, 172, 0.65), transparent 12rem),
+          linear-gradient(135deg, #fff8ea, #e9fbf4);
+      }
+
+      .abstract-visual span {
+        grid-area: 1 / 1;
+        width: 190px;
+        height: 190px;
+        border-radius: 44px;
+        border: 1px solid rgba(21, 33, 55, 0.16);
+        background: rgba(255, 255, 255, 0.44);
+        transform: rotate(var(--turn, 0deg)) translateY(var(--shift, 0));
+      }
+
+      .abstract-visual span:nth-child(2) { --turn: 18deg; --shift: -36px; }
+      .abstract-visual span:nth-child(3) { --turn: -14deg; --shift: 38px; }
+
+      .score-card {
+        position: absolute;
+        left: 24px;
+        right: 24px;
+        bottom: 24px;
+        padding: 22px;
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(14px);
+      }
+
+      .meter {
+        height: 16px;
+        border-radius: 999px;
+        background: rgba(21, 33, 55, 0.12);
+        overflow: hidden;
+        margin: 14px 0 8px;
+      }
+
+      .meter span {
+        display: block;
+        width: 78%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--coral), var(--sun), var(--mint));
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-top: 34px;
+      }
+
+      .card {
+        padding: 26px;
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(21, 33, 55, 0.1);
+        box-shadow: 0 18px 50px rgba(38, 26, 12, 0.08);
+      }
+
+      .card h2 {
+        margin: 0 0 10px;
+        font-size: 1.28rem;
+      }
+
+      .card p,
+      .card li {
+        line-height: 1.55;
+      }
+
+      .demo {
+        margin-top: 34px;
+        padding: 30px;
+        border-radius: 34px;
+        background: #142036;
+        color: white;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .demo button {
+        background: var(--sun);
+        color: #1b2435;
+      }
+
+      .result {
+        font-weight: 900;
+        color: var(--sun);
+        min-height: 1.4em;
+      }
+
+      footer {
+        margin-top: 34px;
+        color: rgba(21, 33, 55, 0.64);
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 860px) {
+        .topbar,
+        .hero,
+        .demo {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .hero-copy {
+          padding: 28px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .visual,
+        .visual img {
+          min-height: 380px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <img src="public/images/logo-happy.png" alt="HappyMeter" />
+          <div>
+            <div>HappyMeter</div>
+            <small>Feliciometro per Velora</small>
+          </div>
+        </div>
+        <div class="velora-pill">Accesso tramite identita Velora</div>
+      </header>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow">Zona beta happy.meter</span>
+          <h1>Misura la tua felicita quotidiana</h1>
+          <p class="lead">
+            HappyMeter trasforma energia, sonno, stress, gratitudine e piccole abitudini in uno score semplice da leggere.
+            Questa versione e pronta per essere pubblicata su Velora come sito beta statico con accesso collegato all'identita unica Velora.
+          </p>
+          <div class="actions">
+            <a class="btn btn-primary" href="#" data-velora-auth="register">Registrati con Velora</a>
+            <a class="btn btn-soft" href="#" data-velora-auth="login">Accedi con Velora</a>
+            <a class="btn btn-soft" href="#demo">Prova il test demo</a>
+          </div>
+        </div>
+
+        <aside class="visual" aria-label="Anteprima HappyMeter">
+          <div class="abstract-visual" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div class="score-card">
+            <strong>Happy Score dimostrativo</strong>
+            <div class="meter"><span></span></div>
+            <small>78 su 100, dati salvabili dopo login Velora</small>
+          </div>
+        </aside>
+      </section>
+
+      <section class="grid" aria-label="Funzioni principali">
+        <article class="card">
+          <h2>Test rapido</h2>
+          <p>Un questionario leggero per capire lo stato di benessere del giorno prima di entrare nel diario personale.</p>
+        </article>
+        <article class="card">
+          <h2>Diario e abitudini</h2>
+          <p>Sonno, energia, stress, relazioni e gratitudine diventano indicatori chiari invece di note sparse.</p>
+        </article>
+        <article class="card">
+          <h2>Community protetta</h2>
+          <p>La parte sociale resta collegata all'identita Velora, con account verificato e funzioni abilitate dal backend.</p>
+        </article>
+      </section>
+
+      <section id="demo" class="demo">
+        <div>
+          <span class="eyebrow">Demo locale</span>
+          <h2>Calcola uno score provvisorio</h2>
+          <p>Il risultato resta nel browser. Salvataggio, profilo e community richiedono login Velora.</p>
+          <p class="result" data-result></p>
+        </div>
+        <button class="btn" type="button" data-calc>Calcola Happy Score</button>
+      </section>
+
+      <footer>
+        Versione Velora statica. Il sito originale Node/Express non e stato modificato.
+      </footer>
+    </main>
+
+    <script>
+      const scores = [64, 71, 78, 82, 89];
+      document.querySelector("[data-calc]").addEventListener("click", () => {
+        const score = scores[Math.floor(Math.random() * scores.length)];
+        document.querySelector("[data-result]").textContent =
+          `Happy Score provvisorio: ${score}/100`;
+      });
+    </script>
+  </body>
+</html>
+

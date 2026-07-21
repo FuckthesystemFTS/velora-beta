@@ -1,0 +1,325 @@
+﻿<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>V Social su Velora</title>
+    <meta
+      name="description"
+      content="V Social adattato per Velora con accesso tramite account unico"
+    />
+    <link rel="icon" href="app/favicon.ico" />
+    <style>
+      :root {
+        --bg: #06080f;
+        --panel: rgba(15, 20, 35, 0.84);
+        --line: rgba(255, 255, 255, 0.13);
+        --text: #f7fbff;
+        --muted: #aab7cc;
+        --green: #50f0a4;
+        --blue: #67c7ff;
+        --pink: #ff5fa2;
+        --gold: #f4c95d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at 10% 0%, rgba(80, 240, 164, 0.22), transparent 30rem),
+          radial-gradient(circle at 88% 8%, rgba(255, 95, 162, 0.2), transparent 28rem),
+          linear-gradient(135deg, #06080f 0%, #0b1424 54%, #101018 100%);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .shell {
+        width: min(1160px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 30px 0 58px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 52px;
+      }
+
+      .mark {
+        width: 58px;
+        height: 58px;
+        display: grid;
+        place-items: center;
+        border-radius: 20px;
+        color: #06110c;
+        background: linear-gradient(135deg, var(--green), var(--blue));
+        font-size: 2rem;
+        font-weight: 950;
+        box-shadow: 0 20px 60px rgba(80, 240, 164, 0.26);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-weight: 950;
+        letter-spacing: -0.04em;
+      }
+
+      .pill {
+        padding: 10px 16px;
+        border-radius: 999px;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(14px);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.06fr 0.94fr;
+        gap: 28px;
+        align-items: stretch;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 38px;
+        background: var(--panel);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.32);
+      }
+
+      .hero-copy {
+        padding: 42px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        color: var(--green);
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-size: 0.76rem;
+        font-weight: 950;
+      }
+
+      h1 {
+        margin: 18px 0;
+        font-size: clamp(3.4rem, 8vw, 8rem);
+        line-height: 0.82;
+        letter-spacing: -0.11em;
+      }
+
+      .lead {
+        max-width: 680px;
+        color: var(--muted);
+        font-size: clamp(1.05rem, 1.8vw, 1.34rem);
+        line-height: 1.58;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .btn {
+        border: 0;
+        border-radius: 16px;
+        padding: 15px 19px;
+        text-decoration: none;
+        font-weight: 950;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        color: #06110c;
+        background: linear-gradient(135deg, var(--green), var(--blue));
+      }
+
+      .btn-soft {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--line);
+      }
+
+      .feed {
+        padding: 24px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .post {
+        padding: 18px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid var(--line);
+      }
+
+      .post strong {
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .post p {
+        color: var(--muted);
+        line-height: 1.5;
+        margin: 0;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-top: 28px;
+      }
+
+      .card {
+        padding: 26px;
+      }
+
+      .card h2 {
+        margin: 0 0 10px;
+      }
+
+      .card p {
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .demo {
+        margin-top: 28px;
+        padding: 28px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .status {
+        min-height: 1.4em;
+        color: var(--gold);
+        font-weight: 950;
+      }
+
+      footer {
+        margin-top: 30px;
+        color: rgba(247, 251, 255, 0.56);
+      }
+
+      @media (max-width: 860px) {
+        .topbar,
+        .hero,
+        .demo {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .hero-copy {
+          padding: 28px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="mark">V</div>
+          <div>
+            <div>V Social</div>
+            <small>Social network per Velora</small>
+          </div>
+        </div>
+        <div class="pill">Account unico Velora richiesto</div>
+      </header>
+
+      <section class="hero">
+        <div class="panel hero-copy">
+          <span class="eyebrow">Zona beta v.social</span>
+          <h1>Il social nativo dell'Upper Web</h1>
+          <p class="lead">
+            V porta profili, feed, post, live, moderazione e community dentro Velora.
+            Questa versione e pronta per testare la pubblicazione statica e l'accesso tramite account Velora.
+          </p>
+          <div class="actions">
+            <a class="btn btn-primary" href="#" data-velora-auth="register">Registrati con Velora</a>
+            <a class="btn btn-soft" href="#" data-velora-auth="login">Accedi con Velora</a>
+            <a class="btn btn-soft" href="#demo">Verifica demo</a>
+          </div>
+        </div>
+
+        <aside class="panel feed" aria-label="Anteprima feed V">
+          <article class="post">
+            <strong>@velora</strong>
+            <p>Benvenuto in V Social, feed verificato per zone e identita Velora.</p>
+          </article>
+          <article class="post">
+            <strong>@creator</strong>
+            <p>Post, commenti, like e live richiederanno token Velora quando il backend app-specific sara collegato.</p>
+          </article>
+          <article class="post">
+            <strong>@moderazione</strong>
+            <p>Accesso, segnalazioni e giuria restano sotto account verificato Velora.</p>
+          </article>
+        </aside>
+      </section>
+
+      <section class="grid">
+        <article class="panel card">
+          <h2>Feed verificato</h2>
+          <p>Contenuti social separati dal web normale e pubblicati in una zona Velora dedicata.</p>
+        </article>
+        <article class="panel card">
+          <h2>Identita unica</h2>
+          <p>Login e registrazione puntano al sistema account Velora, non a moduli locali duplicati.</p>
+        </article>
+        <article class="panel card">
+          <h2>Moderazione</h2>
+          <p>Le funzioni sensibili sono predisposte per token, ruoli e consenso utente lato Velora.</p>
+        </article>
+      </section>
+
+      <section id="demo" class="panel demo">
+        <div>
+          <span class="eyebrow">Demo pubblicabile</span>
+          <h2>Controllo shell V Social</h2>
+          <p>Questa cartella verifica layout, manifest e collegamenti Velora prima dell'integrazione completa API.</p>
+          <p class="status" data-status></p>
+        </div>
+        <button class="btn btn-primary" type="button" data-check>Verifica demo</button>
+      </section>
+
+      <footer>
+        Versione Velora statica. La cartella originale V non e stata modificata.
+      </footer>
+    </main>
+
+    <script>
+      document.querySelector("[data-check]").addEventListener("click", () => {
+        document.querySelector("[data-status]").textContent =
+          "Demo pronta: zona v.social e login Velora configurati";
+      });
+    </script>
+  </body>
+</html>
+

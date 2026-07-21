@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="<%= lang %>">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= typeof seo !== 'undefined' && seo && seo.title ? seo.title : pageTitle %></title>
+    <meta
+      name="description"
+      content="<%= typeof seo !== 'undefined' && seo && seo.description ? seo.description : copy('HappyMeter e il Feliciometro digitale che ti aiuta a misurare il benessere quotidiano, scoprire cosa ti rende felice e costruire piccole abitudini positive', 'HappyMeter is the digital happiness meter that helps you measure daily wellbeing, understand what lifts you up and build positive habits') %>"
+    />
+    <meta
+      name="keywords"
+      content="happymeter, happy meter, happymeter.it, feliciometro, test felicita, test della felicita, diario felicita, diario della felicita, benessere percepito, benessere quotidiano, happy score, happiness meter, abitudini positive, attivita felici, diario benessere, misuratore felicita"
+    />
+    <meta name="author" content="HappyMeter" />
+    <meta name="theme-color" content="#f7d84b" />
+    <meta name="robots" content="<%= typeof seo !== 'undefined' && seo && seo.robots ? seo.robots : 'index,follow' %>" />
+    <link rel="canonical" href="<%= canonicalUrl %>" />
+    <% Object.entries(typeof localizedUrls !== 'undefined' && localizedUrls ? localizedUrls : {}).forEach(([code, url]) => { %>
+      <link rel="alternate" hreflang="<%= code %>" href="<%= url %>" />
+    <% }) %>
+    <link rel="alternate" hreflang="x-default" href="<%= typeof localizedUrls !== 'undefined' && localizedUrls && localizedUrls.it ? localizedUrls.it : canonicalUrl %>" />
+    <meta property="og:title" content="<%= typeof seo !== 'undefined' && seo && seo.title ? seo.title : pageTitle %>" />
+    <meta
+      property="og:description"
+      content="<%= typeof seo !== 'undefined' && seo && seo.description ? seo.description : copy('HappyMeter ti aiuta a osservare benessere, abitudini e andamento personale con un test quotidiano fluido e bilingue', 'HappyMeter helps you track wellbeing, habits and personal patterns with a smooth bilingual daily check') %>"
+    />
+    <meta property="og:image" content="<%= typeof seo !== 'undefined' && seo && seo.image ? seo.image : seoImage %>" />
+    <meta property="og:url" content="<%= canonicalUrl %>" />
+    <meta property="og:type" content="<%= typeof seo !== 'undefined' && seo && seo.type ? seo.type : 'website' %>" />
+    <meta property="og:locale" content="<%= lang === 'de' ? 'de_DE' : isEnglish ? 'en_US' : 'it_IT' %>" />
+    <meta property="og:locale:alternate" content="it_IT" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:locale:alternate" content="de_DE" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="<%= typeof seo !== 'undefined' && seo && seo.title ? seo.title : pageTitle %>" />
+    <meta
+      name="twitter:description"
+      content="<%= typeof seo !== 'undefined' && seo && seo.description ? seo.description : copy('Il Feliciometro digitale per il tuo benessere quotidiano', 'The digital happiness meter for your daily wellbeing') %>"
+    />
+    <meta name="twitter:image" content="<%= typeof seo !== 'undefined' && seo && seo.image ? seo.image : seoImage %>" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Sora:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <script type="application/ld+json">
+      <%- JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "HappyMeter",
+        alternateName: "Happy Meter",
+        url: siteUrl,
+        inLanguage: ["it", "en", "de"]
+      }) %>
+    </script>
+    <script type="application/ld+json">
+      <%- JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        name: "HappyMeter",
+        alternateName: "Happy Meter",
+        url: siteUrl,
+        applicationCategory: "LifestyleApplication",
+        operatingSystem: "Web",
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "EUR"
+        },
+        featureList: [
+          "Happy Score 0-100",
+          "Test quotidiano",
+          "Diario del benessere",
+          "Insight personali",
+          "Attivita felici",
+          "Badge e streak"
+        ],
+        description: copy(
+          "HappyMeter e il Feliciometro digitale per osservare il benessere quotidiano e scoprire cosa sostiene la tua felicita",
+          "HappyMeter is the digital happiness meter for observing daily wellbeing and understanding what supports your happiness",
+          "HappyMeter ist das digitale Gluecksmeter, um taegliches Wohlbefinden zu beobachten und besser zu verstehen, was dein Glueck staerkt"
+        ),
+        inLanguage: ["it", "en", "de"]
+      }) %>
+    </script>
+    <script type="application/ld+json">
+      <%- JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: "HappyMeter",
+        alternateName: "Happy Meter",
+        url: siteUrl,
+        logo: `${siteUrl}/images/logo-happy.png`
+      }) %>
+    </script>
+    <script type="application/ld+json">
+      <%- JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: copy("Che cos e HappyMeter", "What is HappyMeter", "Was ist HappyMeter"),
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: copy(
+                "HappyMeter e un Feliciometro digitale per osservare abitudini, emozioni, attivita felici e andamento personale attraverso un Happy Score indicativo",
+                "HappyMeter is a digital happiness meter for observing habits, emotions, happy activities and personal trends through an indicative Happy Score",
+                "HappyMeter ist ein digitales Gluecksmeter zur Beobachtung von Gewohnheiten, Emotionen, Gluecksaktivitaeten und persoenlichen Verlaeufen mit einem orientierenden Happy Score"
+              )
+            }
+          },
+          {
+            "@type": "Question",
+            name: copy("HappyMeter e uno strumento medico", "Is HappyMeter a medical tool", "Ist HappyMeter ein medizinisches Instrument"),
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: copy(
+                "No. HappyMeter non formula diagnosi e non sostituisce professionisti sanitari. Aiuta a osservare benessere percepito e abitudini quotidiane",
+                "No. HappyMeter does not provide diagnoses and does not replace healthcare professionals. It helps observe perceived wellbeing and daily habits",
+                "Nein. HappyMeter stellt keine Diagnosen und ersetzt keine medizinischen Fachkraefte. Es hilft, wahrgenommenes Wohlbefinden und taegliche Gewohnheiten zu beobachten"
+              )
+            }
+          }
+        ]
+      }) %>
+    </script>
+  </head>
+  <body class="public-shell" data-language="<%= lang %>">
+    <header class="public-header">
+      <a href="/" class="brand-mark brand-mark--image">
+        <img src="/images/logo-happy.png" alt="Logo HappyMeter" class="brand-logo" loading="eager" />
+        <span>
+          <strong>HappyMeter</strong>
+          <small>Feliciometro</small>
+        </span>
+      </a>
+      <nav class="public-nav">
+        <a href="/#features" data-lang-link="/#features"><%= copy('Funzioni', 'Features', 'Funktionen') %></a>
+        <a href="/#how" data-lang-link="/#how"><%= copy('Come funziona', 'How it works', 'So funktioniert es') %></a>
+        <a href="/welcome" data-lang-link="/welcome"><%= copy('Welcome', 'Welcome', 'Willkommen') %></a>
+        <a href="/test" data-lang-link="/test"><%= copy('Inizia test', 'Start test', 'Test starten') %></a>
+        <a href="/daily-test" data-lang-link="/daily-test"><%= copy('Test quotidiano', 'Daily test', 'Tagestest') %></a>
+        <a href="/community" data-lang-link="/community"><%= copy('Community', 'Community', 'Community') %></a>
+        <% if (user) { %>
+          <a href="/app" class="chip-link"><%= copy('La tua area', 'Your area', 'Dein Bereich') %></a>
+          <form method="post" action="/logout" class="inline-form">
+            <button type="submit" class="ghost-btn ghost-btn--chip"><%= t("logout") %></button>
+          </form>
+        <% } else { %>
+          <a href="/login" class="chip-link" data-lang-link="/login"><%= t("login") %></a>
+        <% } %>
+      </nav>
+    </header>
+    <% if (flash) { %>
+      <div class="flash flash--<%= flash.type %>"><%= flash.text %></div>
+    <% } %>
+    <main>
+      <%- body %>
+    </main>
+    <footer class="public-footer">
+      <div class="footer-brand">
+        <img src="/images/logo-happy.png" alt="Logo HappyMeter" class="footer-logo" loading="lazy" />
+        <div>
+          <strong>HappyMeter</strong>
+          <p><%= copy('Il Feliciometro digitale per osservare il benessere quotidiano con piu chiarezza', 'The digital happiness meter for observing daily wellbeing with more clarity', 'Das digitale Gluecksmeter, um taegliches Wohlbefinden klarer zu beobachten') %></p>
+          <p><%= copy('happymeter.it non e in alcun modo associato ad altri progetti o siti con nomi simili. E un progetto indipendente. Ogni riferimento simile e puramente casuale e senza finalita malevoli', 'happymeter.it is not associated in any way with other projects or websites with similar names. It is an independent project. Any similar reference is purely coincidental and without malicious intent', 'happymeter.it ist in keiner Weise mit anderen Projekten oder Websites mit aehnlichen Namen verbunden. Es ist ein unabhaengiges Projekt. Jede aehnliche Bezugnahme ist rein zufaellig und ohne boese Absicht') %></p>
+        </div>
+      </div>
+      <div class="footer-links">
+        <a href="/privacy"><%= t("privacyLabel") %></a>
+        <a href="/cookie"><%= t("cookieLabel") %></a>
+        <a href="/terms"><%= t("termsLabel") %></a>
+      </div>
+    </footer>
+    <aside
+      class="chat-widget"
+      data-chat-widget
+      data-authenticated="<%= user ? '1' : '0' %>"
+      data-login-url="/login?redirect=/app?chat=open"
+      data-redirect-to="/app?chat=open"
+      data-title="<%= copy('Chat globale', 'Global chat', 'Globaler Chat') %>"
+      data-subtitle="<%= copy('Live e sempre aperta', 'Live and always open', 'Live und immer offen') %>"
+      data-placeholder="<%= copy('Scrivi un messaggio reale', 'Write a real message', 'Schreibe eine echte Nachricht') %>"
+      data-send-label="<%= copy('Invia', 'Send', 'Senden') %>"
+      data-open-label="<%= copy('Apri chat', 'Open chat', 'Chat oeffnen') %>"
+      data-close-label="<%= copy('Riduci', 'Minimize', 'Minimieren') %>"
+      data-auth-title="<%= copy('Devi accedere per scrivere nella chat', 'You need to log in to write in the chat', 'Du musst dich anmelden, um in den Chat zu schreiben') %>"
+      data-login-message="<%= copy('Accedi o registrati per scrivere nella chat', 'Log in or sign up to write in the chat', 'Melde dich an oder registriere dich, um in die Chat zu schreiben') %>"
+      data-like-message="<%= copy('Accedi o registrati per lasciare una reazione nella chat', 'Log in or sign up to react in the chat', 'Melde dich an oder registriere dich, um im Chat zu reagieren') %>"
+      data-empty-message="<%= copy('La chat e pronta e aspetta i primi messaggi reali', 'The chat is ready and waiting for the first real messages', 'Der Chat ist bereit und wartet auf die ersten echten Nachrichten') %>"
+      data-login-label="<%= t('login') %>"
+      data-loading-label="<%= copy('Caricamento in corso', 'Loading messages', 'Nachrichten werden geladen') %>"
+      data-error-label="<%= copy('La chat non e disponibile in questo momento', 'The chat is not available right now', 'Der Chat ist im Moment nicht verfuegbar') %>"
+      data-like-label="<%= copy('Reazione', 'Reaction', 'Reaktion') %>"
+    >
+      <button type="button" class="chat-widget__toggle" data-chat-toggle>
+        <span>HappyMeter Chat</span>
+      </button>
+      <div class="chat-widget__panel">
+        <div class="chat-widget__head">
+          <div>
+            <strong><%= copy('Chat globale', 'Global chat', 'Globaler Chat') %></strong>
+            <small><%= copy('Live e sempre aperta', 'Live and always open', 'Live und immer offen') %></small>
+          </div>
+          <button type="button" class="chat-widget__minimize" data-chat-minimize><%= copy('Riduci', 'Minimize', 'Minimieren') %></button>
+        </div>
+        <div class="chat-widget__status" data-chat-status><%= copy('Caricamento in corso', 'Loading messages', 'Nachrichten werden geladen') %></div>
+        <div class="chat-widget__messages" data-chat-messages></div>
+        <form class="chat-widget__composer" data-chat-form>
+          <textarea name="content" rows="2" maxlength="500" placeholder="<%= copy('Scrivi un messaggio reale', 'Write a real message', 'Schreibe eine echte Nachricht') %>"></textarea>
+          <div class="chat-widget__actions">
+            <button type="submit" class="primary-btn"><%= copy('Invia', 'Send', 'Senden') %></button>
+          </div>
+        </form>
+      </div>
+    </aside>
+    <div
+      class="auth-modal"
+      data-auth-modal
+      data-default-title="<%= copy('Accedi per continuare', 'Log in to continue', 'Melde dich an, um fortzufahren') %>"
+      data-default-body="<%= copy('Accedi o registrati per continuare da questo punto', 'Log in or sign up to continue from here', 'Melde dich an oder registriere dich, um hier weiterzumachen') %>"
+    >
+      <div class="auth-modal__card">
+        <button type="button" class="auth-modal__close" data-auth-modal-close><%= copy('Chiudi', 'Close', 'Schliessen') %></button>
+        <span class="eyebrow"><%= copy('Accesso richiesto', 'Login required', 'Anmeldung erforderlich') %></span>
+        <h2 data-auth-modal-title><%= copy('Accedi per continuare', 'Log in to continue', 'Melde dich an, um fortzufahren') %></h2>
+        <p data-auth-modal-body><%= copy('Accedi o registrati per continuare da questo punto', 'Log in or sign up to continue from here', 'Melde dich an oder registriere dich, um hier weiterzumachen') %></p>
+        <div class="cta-row">
+          <a href="/login" class="primary-btn" data-auth-modal-login><%= t("login") %></a>
+          <a href="/register" class="secondary-btn" data-auth-modal-register><%= copy('Registrati', 'Sign up', 'Registrieren') %></a>
+          <button type="button" class="ghost-btn" data-auth-modal-close><%= copy('Continua a leggere', 'Keep reading', 'Weiterlesen') %></button>
+        </div>
+      </div>
+    </div>
+    <script src="/js/public.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/auth-modal.js"></script>
+    <script src="/js/chat-widget.js"></script>
+    <script src="/js/language.js"></script>
+    <%- typeof script !== "undefined" ? script : "" %>
+  </body>
+</html>

@@ -1,0 +1,130 @@
+<% const homeImageSrc = lang === 'en' ? '/images/happymeter/home-en-v2.png' : lang === 'de' ? '/images/happymeter/home-de-v2.png' : '/images/happymeter/home-it-v2.png'; %>
+<% const homeImageAlt = copy('Feliciometro, la tua felicità quotidiana', 'HappyMeter, your daily happiness', 'HappyMeter, dein tägliches Glück'); %>
+
+<section class="hero-claim-overlay" data-home-overlay>
+  <div class="hero-claim-overlay__box">
+    <img src="/images/logo-happy.png" alt="Logo HappyMeter" class="overlay-logo" loading="eager" />
+    <p><%= t("homeClaimDisplay") %></p>
+  </div>
+</section>
+
+<div class="home-slogan" aria-label="<%= t('homeClaimDisplay') %>">
+  <span><%= t("homeClaimDisplay") %></span>
+</div>
+
+<section class="hero hero--localized-home">
+  <div class="hero-copy">
+    <span class="eyebrow"><%= copy('Benessere quotidiano da osservare meglio', 'Daily wellbeing, observed with more clarity', 'Tägliches Wohlbefinden klarer beobachten') %></span>
+    <h1>HappyMeter</h1>
+    <form class="language-switcher language-switcher--home" data-language-form action="/" method="get">
+      <label for="home-language"><%= copy('Lingua del sito', 'Site language', 'Seitensprache') %></label>
+      <select id="home-language" name="lang" data-language-select>
+        <option value="it" <%= lang === 'it' ? 'selected' : '' %>>Italiano</option>
+        <option value="en" <%= lang === 'en' ? 'selected' : '' %>>English</option>
+        <option value="de" <%= lang === 'de' ? 'selected' : '' %>>Deutsch</option>
+      </select>
+    </form>
+    <p>
+      <%= copy(
+        'Inizia con un test rapido e continua con un diario quotidiano che unisce sonno, energia, stress, relazioni, gratitudine e piccole abitudini in uno score leggibile',
+        'Start with a quick test and continue with a daily journal that brings sleep, energy, stress, relationships, gratitude and small habits into one readable score',
+        'Starte mit einem Schnelltest und nutze danach ein tägliches Tagebuch, das Schlaf, Energie, Stress, Beziehungen, Dankbarkeit und kleine Gewohnheiten in einen klaren Score bringt'
+      ) %>
+    </p>
+    <div class="cta-row">
+      <a href="/test" class="primary-btn" data-lang-link="/test"><%= copy('Inizia test', 'Start test', 'Test starten') %></a>
+      <a href="/login" class="secondary-btn" data-lang-link="/login"><%= t("login") %></a>
+      <a href="/daily-test" class="secondary-btn" data-lang-link="/daily-test"><%= copy('Crea il tuo test quotidiano', 'Create your daily test', 'Erstelle deinen täglichen Test') %></a>
+    </div>
+  </div>
+  <div class="hero-visual hero-visual--localized">
+    <img src="<%= homeImageSrc %>" alt="<%= homeImageAlt %>" class="home-promo-image" loading="eager" fetchpriority="high" />
+  </div>
+</section>
+
+<section id="how" class="story-grid story-grid--home">
+  <article class="story-card">
+    <h2><%= copy('Cos’è il Feliciometro?', 'What is HappyMeter?', 'Was ist HappyMeter?') %></h2>
+    <p><%= copy('Un’app per misurare la felicità ogni giorno attraverso attività semplici', 'An app to measure happiness every day through simple activities', 'Eine App, um jeden Tag das Glück durch einfache Aktivitäten zu messen') %></p>
+  </article>
+  <article class="story-card">
+    <h2><%= copy('Funzionalità', 'Features', 'Funktionen') %></h2>
+    <ul class="clean-list">
+      <li><%= copy('Punteggio felicità (100 al giorno)', 'Happiness score (100 per day)', 'Glückspunktzahl (100 pro Tag)') %></li>
+      <li><%= copy('Attività da fare e possibilità di aggiungere attività', 'Activities to complete and the option to add your own', 'Aktivitäten zum Ausführen und eigene Aktivitäten hinzufügen') %></li>
+      <li><%= copy('Badge felicità e Diario della felicità', 'Happiness badges and Happiness Journal', 'Glücks-Badges und Glückstagebuch') %></li>
+      <li><%= copy('Chat della community', 'Community chat', 'Community-Chat') %></li>
+    </ul>
+  </article>
+  <article class="story-card">
+    <h2><%= copy('A chi serve?', 'Who is it for?', 'Für wen ist es gedacht?') %></h2>
+    <ul class="clean-list">
+      <li><%= copy('Chiunque voglia vivere con consapevolezza', 'Anyone who wants to live with awareness', 'Für alle, die bewusst leben möchten') %></li>
+      <li><%= copy('Team & Gruppi orientati al benessere', 'Teams & groups focused on wellbeing', 'Teams und Gruppen mit Fokus auf Wohlbefinden') %></li>
+      <li><%= copy('Accompagnatori di vita che vogliono fare la differenza', 'Life companions who want to make a difference', 'Lebensbegleiter, die etwas bewirken möchten') %></li>
+    </ul>
+  </article>
+</section>
+
+<section class="instant-test-panel">
+  <div>
+    <span class="eyebrow"><%= copy('Test immediato', 'Instant test', 'Schneller Test') %></span>
+    <h2><%= copy('Un test immediato per misurare l’attuale stato di felicità', 'An instant test to measure your current level of happiness', 'Ein schneller Test, um deinen aktuellen Glückszustand zu messen') %></h2>
+    <p><%= copy('Parti da poche domande pubbliche, scopri il tuo Happy Score indicativo e decidi se vuoi salvare il risultato creando il tuo spazio personale', 'Start with a few public questions, discover your indicative Happy Score and decide whether to save the result by creating your personal space', 'Starte mit ein paar öffentlichen Fragen, entdecke deinen ungefähren Happy Score und entscheide, ob du das Ergebnis speichern möchtest, indem du deinen persönlichen Bereich erstellst') %></p>
+  </div>
+  <a href="/?chat=open" class="primary-btn" data-lang-link="/?chat=open">HappyMeter Chat</a>
+</section>
+
+<section id="features" class="features-section">
+  <div class="section-heading">
+    <span class="eyebrow"><%= copy('Ogni giorno conta', 'Every day matters', 'Jeder Tag zählt') %></span>
+    <h2><%= copy('Uno spazio semplice per capire meglio la tua giornata', 'A simple space to understand your day more clearly', 'Ein einfacher Ort, um deinen Tag klarer zu verstehen') %></h2>
+  </div>
+  <div class="feature-grid">
+    <article class="feature-card"><strong>Happy Score 0-100</strong><p><%= copy('Il punteggio combina felicità, energia, sonno, stress invertito, movimento, relazioni, gratitudine e soddisfazione della giornata', 'The score combines happiness, energy, sleep, inverted stress, movement, relationships, gratitude and day satisfaction', 'Der Score verbindet Glück, Energie, Schlaf, umgekehrten Stress, Bewegung, Beziehungen, Dankbarkeit und Zufriedenheit mit dem Tag') %></p></article>
+    <article class="feature-card"><strong><%= copy('Test quotidiano completo', 'A complete daily test', 'Ein vollständiger Tagestest') %></strong><p><%= copy('Un percorso guidato che salva i dati, aggiorna la continuità e restituisce punti forti, aree da osservare e attività utili', 'A guided flow that saves data, updates continuity and returns strengths, watch areas and useful activities', 'Ein geführter Ablauf, der Daten speichert, Kontinuität aktualisiert und Stärken, Beobachtungspunkte sowie hilfreiche Aktivitäten zeigt') %></p></article>
+    <article class="feature-card"><strong><%= copy('Diario e note libere', 'Diary and free notes', 'Tagebuch und freie Notizen') %></strong><p><%= copy('Scrivi cosa ti ha fatto bene, cosa ha pesato e chi ha lasciato un segno nella tua giornata', 'Write what felt good, what felt heavy and who left a mark on your day', 'Schreibe auf, was dir gutgetan hat, was schwer war und wer Spuren in deinem Tag hinterlassen hat') %></p></article>
+    <article class="feature-card"><strong><%= copy('Gesto felice del giorno', 'Happy gesture of the day', 'Glücksgeste des Tages') %></strong><p><%= copy('Ogni giorno trovi uno spunto semplice da completare e trasformare in punti, serie e badge', 'Each day you get a simple gesture that can turn into points, streaks and badges', 'Jeden Tag findest du einen einfachen Impuls, den du in Punkte, Serien und Badges verwandeln kannst') %></p></article>
+    <article class="feature-card"><strong><%= copy('Insight personali', 'Personal insights', 'Persönliche Einblicke') %></strong><p><%= copy('Dopo pochi giorni iniziano a emergere le relazioni tra sonno, stress, gratitudine, relazioni sociali e giornate migliori', 'After a few days, links between sleep, stress, gratitude, social relationships and better days begin to appear', 'Nach einigen Tagen werden Zusammenhänge zwischen Schlaf, Stress, Dankbarkeit, sozialen Beziehungen und besseren Tagen sichtbar') %></p></article>
+    <article class="feature-card"><strong><%= copy('Badge e progressi', 'Badges and progress', 'Badges und Fortschritt') %></strong><p><%= copy('Primo test, settimane di continuità, energia in movimento e gratitudine crescente diventano traguardi visibili', 'First test, consistent weeks, moving energy and growing gratitude become visible milestones', 'Erster Test, beständige Wochen, bewegte Energie und wachsende Dankbarkeit werden zu sichtbaren Meilensteinen') %></p></article>
+  </div>
+</section>
+
+<section class="features-section">
+  <div class="section-heading">
+    <span class="eyebrow"><%= copy('Perché usarlo', 'Why use it', 'Warum nutzen') %></span>
+    <h2><%= copy('HappyMeter ti aiuta a leggere meglio ciò che succede davvero nelle tue giornate', 'HappyMeter helps you read what is really happening in your days more clearly', 'HappyMeter hilft dir, klarer zu erkennen, was in deinen Tagen wirklich passiert') %></h2>
+  </div>
+  <div class="feature-grid">
+    <article class="feature-card">
+      <strong><%= copy('Meno memoria vaga', 'Less vague memory', 'Weniger vage Erinnerung') %></strong>
+      <p><%= copy('Raccogli segnali semplici giorno per giorno e ritrovi una traccia concreta del tuo andamento personale', 'Collect simple signals day by day and keep a concrete trace of your personal trend', 'Sammle Tag für Tag einfache Signale und behalte eine konkrete Spur deiner persönlichen Entwicklung') %></p>
+    </article>
+    <article class="feature-card">
+      <strong><%= copy('Più attenzione alle abitudini', 'More attention to habits', 'Mehr Blick auf Gewohnheiten') %></strong>
+      <p><%= copy('Sonno, movimento, pause, relazioni e gratitudine diventano indicatori da osservare senza giudizio', 'Sleep, movement, breaks, relationships and gratitude become indicators to observe without judgement', 'Schlaf, Bewegung, Pausen, Beziehungen und Dankbarkeit werden zu Signalen, die du ohne Bewertung beobachten kannst') %></p>
+    </article>
+    <article class="feature-card">
+      <strong><%= copy('Insight che maturano con i dati', 'Insights that grow with data', 'Einblicke, die mit Daten wachsen') %></strong>
+      <p><%= copy('Dopo più giorni il diario inizia a mostrare quali elementi coincidono più spesso con le giornate migliori', 'After more days, the diary starts showing which elements most often appear with better days', 'Nach mehreren Tagen zeigt das Tagebuch, welche Elemente besonders oft mit besseren Tagen zusammenfallen') %></p>
+    </article>
+  </div>
+</section>
+
+<section class="media-strip">
+  <div class="media-copy">
+    <span class="eyebrow"><%= copy('Pensato per smartphone', 'Designed for smartphones', 'Für Smartphones gedacht') %></span>
+    <h2><%= copy('Grande abbastanza per capirti, semplice abbastanza da usare ogni giorno', 'Rich enough to understand you, simple enough to use every day', 'Vielseitig genug, um dich zu verstehen, und einfach genug für jeden Tag') %></h2>
+    <p><%= copy('Dashboard, test e insight restano fluidi anche da mobile con pulsanti grandi, card leggibili e nessun passaggio inutile', 'Dashboard, tests and insights stay smooth on mobile too with large buttons, readable cards and no unnecessary steps', 'Dashboard, Test und Einblicke bleiben auch mobil flüssig, mit großen Buttons, gut lesbaren Karten und ohne unnötige Schritte') %></p>
+  </div>
+  <img src="<%= lang === 'de' ? '/images/dashboard-preview-de.jpg' : lang === 'en' ? '/images/dashboard-preview-en.jpg' : '/images/dashboard-preview.jpg' %>" alt="<%= copy('Anteprima dashboard HappyMeter', 'HappyMeter dashboard preview', 'HappyMeter Dashboard Vorschau') %>" loading="lazy" />
+</section>
+
+<section class="two-up">
+  <article class="visual-panel">
+    <img src="<%= lang === 'de' ? '/images/happy-activities-de.jpg' : '/images/happy-activities.jpg' %>" alt="<%= copy('Attività felici', 'Happy activities', 'Glücksaktivitäten') %>" loading="lazy" />
+  </article>
+  <article class="visual-panel">
+    <img src="<%= lang === 'de' ? '/images/badges-preview-de.jpg' : lang === 'en' ? '/images/badges-preview-en.jpg' : '/images/badges-preview.jpg' %>" alt="<%= copy('Badge del Feliciometro', 'HappyMeter badges', 'HappyMeter Badges') %>" loading="lazy" />
+  </article>
+</section>

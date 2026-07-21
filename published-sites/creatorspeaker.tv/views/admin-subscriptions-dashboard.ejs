@@ -1,0 +1,51 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <div class="dashboard-hero admin-hero">
+      <div>
+        <p class="eyebrow">Abbonamenti</p>
+        <h1>Controllo accessi condivisi</h1>
+        <p class="muted">Gestione manuale di richieste, attivazioni, sospensioni e visualizzazioni credenziali</p>
+      </div>
+      <% if (!page.encryption.hasKey) { %>
+        <div class="info-panel">
+          <h3>Chiave di cifratura mancante</h3>
+          <p class="muted"><%= page.encryption.message %></p>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="grid-auto top-gap">
+      <div class="stat-card"><strong>Piattaforme attive</strong><span><%= page.dashboard.stats.activePlatforms %></span></div>
+      <div class="stat-card"><strong>Richieste in attesa</strong><span><%= page.dashboard.stats.pendingRequests %></span></div>
+      <div class="stat-card"><strong>Da verificare</strong><span><%= page.dashboard.stats.paymentChecks %></span></div>
+      <div class="stat-card"><strong>Accessi attivi</strong><span><%= page.dashboard.stats.activeAssignments %></span></div>
+      <div class="stat-card"><strong>Accessi sospesi</strong><span><%= page.dashboard.stats.suspendedAssignments %></span></div>
+      <div class="stat-card"><strong>Posti Canva</strong><span><%= page.dashboard.stats.canvaSpotsLeft %></span></div>
+      <div class="stat-card"><strong>Segnalazioni aperte</strong><span><%= page.dashboard.stats.openIssues %></span></div>
+      <div class="stat-card"><strong>Visualizzazioni 24h</strong><span><%= page.dashboard.stats.credentialsViews24h %></span></div>
+    </div>
+
+    <div class="info-panel top-gap">
+      <div class="streaming-heading">
+        <div>
+          <h2>Ultime richieste</h2>
+          <p class="muted">Azioni rapide dalla coda principale</p>
+        </div>
+        <a class="ghost-button compact-ghost" href="/admin/abbonamenti/richieste">Vedi tutte</a>
+      </div>
+      <div class="table-list top-gap">
+        <% page.dashboard.latestRequests.forEach(function(request) { %>
+          <div class="admin-row split-admin-row">
+            <div>
+              <strong><%= request.user_name || request.full_name %></strong>
+              <p class="muted"><%= request.platform_name %> · <%= request.status_label %> · <%= request.payment_status_label %></p>
+            </div>
+            <div class="inline-actions">
+              <a class="ghost-button compact-ghost" href="/admin/abbonamenti/richieste/<%= request.id %>">Apri</a>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</section>

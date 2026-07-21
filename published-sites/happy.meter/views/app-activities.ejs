@@ -1,0 +1,34 @@
+<section class="app-card">
+  <div class="section-heading app-heading">
+    <span class="eyebrow"><%= copy('Attivita felici', 'Happy activities') %></span>
+    <h2><%= copy('Piccoli gesti che ti fanno bene', 'Small actions that genuinely help') %></h2>
+    <p><%= copy(`Attivita iniziali disponibili: ${activities.length}`, `Starter activities available: ${activities.length}`) %></p>
+  </div>
+  <div class="activity-grid">
+    <% activities.forEach((activity) => { %>
+      <article class="activity-card">
+        <span class="activity-icon"><%= activity.icon %></span>
+        <h3><%= getLocalizedField(activity, "name", lang) %></h3>
+        <p><%= getLocalizedField(activity, "description", lang) %></p>
+        <strong>+<%= activity.points %> <%= copy('punti', 'points') %></strong>
+        <form method="post" action="/app/activities/complete" class="stack-form">
+          <input type="hidden" name="activity_id" value="<%= activity.id %>" />
+          <input type="text" name="note" placeholder="<%= copy('Se vuoi, aggiungi una nota', 'Optional note') %>" />
+          <button type="submit" class="primary-btn"><%= copy('Segna attivita', 'Mark activity') %></button>
+        </form>
+      </article>
+    <% }) %>
+  </div>
+</section>
+
+<section class="app-card">
+  <div class="section-heading app-heading">
+    <span class="eyebrow"><%= copy('La tua attivita', 'Your custom activity') %></span>
+    <h2><%= copy('Aggiungi un momento tutto tuo', 'Add a moment that is truly yours') %></h2>
+  </div>
+  <form method="post" action="/app/activities/custom" class="stack-form">
+    <label><%= copy('Nome attivita', 'Activity name') %><input type="text" name="custom_name" placeholder="<%= copy('Es. Camminata al sole', 'Example: Sunlit walk') %>" /></label>
+    <label><%= copy('Nota', 'Note') %><textarea name="note" rows="2" placeholder="<%= copy('Cosa ti ha lasciato questo momento', 'What did this moment leave you with') %>"></textarea></label>
+    <button type="submit" class="primary-btn"><%= copy('Aggiungi attivita', 'Add activity') %></button>
+  </form>
+</section>

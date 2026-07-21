@@ -1,0 +1,44 @@
+<section class="admin-panel">
+  <div class="admin-panel-head">
+    <div>
+      <h2>Community globale</h2>
+      <p>Moderazione dei messaggi reali pubblicati dagli utenti registrati</p>
+    </div>
+  </div>
+  <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>Autore</th><th>Email</th><th>Lingua</th><th>Contenuto</th><th>Stato</th><th>Moderazione</th></tr></thead>
+      <tbody>
+        <% posts.forEach((item) => { %>
+          <tr>
+            <td><strong><%= item.author_name %></strong></td>
+            <td><%= item.email || '-' %></td>
+            <td><%= item.language %></td>
+            <td class="admin-content-cell"><%= item.content %></td>
+            <td>
+              <span class="status-pill <%= Number(item.is_hidden) === 1 ? 'status-pill--warn' : 'status-pill--ok' %>"><%= Number(item.is_hidden) === 1 ? 'nascosto' : 'visibile' %></span>
+              <% if (item.hidden_reason) { %>
+                <div><small><%= item.hidden_reason %></small></div>
+              <% } %>
+            </td>
+            <td>
+              <% if (Number(item.is_hidden) === 1) { %>
+                <form method="post" action="/admin/community/<%= item.id %>/unhide">
+                  <button type="submit" class="primary-btn">Ripristina</button>
+                </form>
+              <% } else { %>
+                <form method="post" action="/admin/community/<%= item.id %>/hide" class="admin-inline-form">
+                  <input type="text" name="reason" placeholder="Motivo oscuramento" />
+                  <button type="submit" class="secondary-btn">Nascondi</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% if (!posts.length) { %>
+    <p class="admin-empty">Nessun messaggio reale da moderare</p>
+  <% } %>
+</section>

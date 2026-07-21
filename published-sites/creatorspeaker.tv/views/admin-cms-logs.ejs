@@ -1,0 +1,17 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <p class="eyebrow">Log attivita</p>
+    <h1>Modifiche amministrative</h1>
+    <div class="table-list top-gap">
+      <% data.logs.forEach(function(log) { %>
+        <div class="admin-row split-admin-row">
+          <div>
+            <strong><%= log.action %></strong>
+            <p class="muted"><%= log.entity_type %> #<%= log.entity_id || '-' %> · <%= log.username || 'admin' %> · <%= log.created_at %></p>
+          </div>
+          <p class="muted"><%= log.details || '' %></p>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>

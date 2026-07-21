@@ -1,0 +1,46 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <p class="eyebrow"><%= data.profileType === 'speaker' ? 'Speaker Network' : 'Creator Network' %></p>
+    <h1>Profili <%= data.profileType === 'speaker' ? 'speaker' : 'creator' %></h1>
+    <div class="split-layout top-gap">
+      <article class="admin-card">
+        <h2>Nuovo profilo</h2>
+        <form class="stack-form" method="post" action="/admin/<%= data.profileType === 'speaker' ? 'speakers' : 'creators' %>">
+          <%- include("partials/csrf-fields") %>
+          <label>Nome<input name="name" required /></label>
+          <label>Slug<input name="slug" /></label>
+          <% if (data.profileType === 'speaker') { %><label>Argomento principale<input name="topic" /></label><% } else { %><label>Ruolo<input name="role" /></label><% } %>
+          <label>Bio breve<textarea name="bio"></textarea></label>
+          <label>Descrizione lunga<textarea name="description"></textarea></label>
+          <label>Avatar<select name="avatar_media_id"><option value="">Nessuno</option><% data.mediaOptions.forEach(function(media) { %><option value="<%= media.id %>"><%= media.title %></option><% }) %></select></label>
+          <label>Cover<select name="cover_media_id"><option value="">Nessuno</option><% data.mediaOptions.forEach(function(media) { %><option value="<%= media.id %>"><%= media.title %></option><% }) %></select></label>
+          <% if (data.profileType === 'speaker') { %><label>Video<select name="video_media_id"><option value="">Nessuno</option><% data.mediaOptions.forEach(function(media) { %><option value="<%= media.id %>"><%= media.title %></option><% }) %></select></label><% } %>
+          <div class="grid-2"><label>Stato<select name="status"><option value="active">active</option><option value="draft">draft</option><option value="hidden">hidden</option></select></label><label>Ordine<input type="number" name="sort_order" value="0" /></label></div>
+          <label class="checkbox"><input type="checkbox" name="is_featured" /> In evidenza</label>
+          <button class="button secondary" type="submit">Salva profilo</button>
+        </form>
+      </article>
+      <div class="table-list">
+        <% data.profiles.forEach(function(profile) { %>
+          <article class="admin-card">
+            <% if (profile.avatar_url) { %><img class="media-preview small-preview" src="<%= profile.avatar_url %>" alt="<%= profile.name %>" loading="lazy" /><% } %>
+            <form class="stack-form" method="post" action="/admin/<%= data.profileType === 'speaker' ? 'speakers' : 'creators' %>">
+              <%- include("partials/csrf-fields") %>
+              <input type="hidden" name="id" value="<%= profile.id %>" />
+              <div class="grid-2"><label>Nome<input name="name" value="<%= profile.name %>" /></label><label>Slug<input name="slug" value="<%= profile.slug %>" /></label></div>
+              <% if (data.profileType === 'speaker') { %><label>Argomento<input name="topic" value="<%= profile.topic || '' %>" /></label><% } else { %><label>Ruolo<input name="role" value="<%= profile.role || '' %>" /></label><% } %>
+              <label>Bio<textarea name="bio"><%= profile.bio || '' %></textarea></label>
+              <label>Descrizione<textarea name="description"><%= profile.description || '' %></textarea></label>
+              <div class="grid-2"><label>Stato<input name="status" value="<%= profile.status %>" /></label><label>Ordine<input type="number" name="sort_order" value="<%= profile.sort_order %>" /></label></div>
+              <input type="hidden" name="avatar_media_id" value="<%= profile.avatar_media_id || '' %>" />
+              <input type="hidden" name="cover_media_id" value="<%= profile.cover_media_id || '' %>" />
+              <% if (data.profileType === 'speaker') { %><input type="hidden" name="video_media_id" value="<%= profile.video_media_id || '' %>" /><% } %>
+              <label class="checkbox"><input type="checkbox" name="is_featured" <%= profile.is_featured ? 'checked' : '' %> /> In evidenza</label>
+              <button class="ghost-button compact-ghost" type="submit">Aggiorna</button>
+            </form>
+          </article>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</section>

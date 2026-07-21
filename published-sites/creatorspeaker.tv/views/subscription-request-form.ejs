@@ -1,0 +1,21 @@
+<section class="auth-section">
+  <div class="shell narrow">
+    <article class="auth-card">
+      <p class="eyebrow">Richiesta accesso</p>
+      <h1><%= page.platform.name %></h1>
+      <p class="muted"><%= page.platform.public_description %></p>
+
+      <form class="stack-form top-gap" method="post" action="/abbonamenti/<%= page.platform.slug %>/richiedi">
+        <%- include("partials/csrf-fields") %>
+        <label>Nome completo<input type="text" name="full_name" value="<%= page.user.name %>" required /></label>
+        <label>Email<input type="email" name="email" value="<%= page.user.email %>" required /></label>
+        <label>Telefono opzionale<input type="text" name="phone" /></label>
+        <label>Messaggio opzionale<textarea name="message" placeholder="Se vuoi aggiungere una nota per l admin"></textarea></label>
+        <label class="checkbox"><input type="checkbox" name="accept_terms" required /> Accetto termini e condizioni</label>
+        <label class="checkbox"><input type="checkbox" name="confirm_personal_use" required /> Confermo che l uso sara personale</label>
+        <label class="checkbox"><input type="checkbox" name="confirm_no_share" required /> Confermo che non condividero credenziali con terzi</label>
+        <button class="button secondary" type="submit">Invia richiesta</button>
+      </form>
+    </article>
+  </div>
+</section>

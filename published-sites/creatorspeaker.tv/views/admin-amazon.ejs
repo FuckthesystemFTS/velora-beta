@@ -1,0 +1,28 @@
+<section class="admin-section">
+  <div class="shell two-column">
+    <form class="info-panel stack-form" action="/admin/amazon" method="post">
+      <%- include("partials/csrf-fields") %>
+      <h1>Amazon affiliate</h1>
+      <label>Provider
+        <select name="provider">
+          <% ["demo","manual","amazon_api_ready"].forEach(function(provider) { %>
+            <option value="<%= provider %>" <%= data.amazon.provider === provider ? "selected" : "" %>><%= provider %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>Associate tag<input type="text" name="associateTag" value="<%= data.amazon.associateTag || '' %>" /></label>
+      <label>Tracking ID<input type="text" name="trackingId" value="<%= data.amazon.trackingId || '' %>" /></label>
+      <label>Marketplace<input type="text" name="marketplace" value="<%= data.amazon.marketplace || 'IT' %>" /></label>
+      <label>Credential ID<input type="text" name="credentialId" value="<%= data.amazon.credentialId || '' %>" /></label>
+      <label>Credential secret<input type="password" name="credentialSecret" placeholder="<%= data.secretState %>" /></label>
+      <label>Region<input type="text" name="region" value="<%= data.amazon.region || 'EU' %>" /></label>
+      <button class="button" type="submit">Salva Amazon</button>
+    </form>
+    <form class="info-panel stack-form" action="/admin/amazon/test" method="post">
+      <%- include("partials/csrf-fields") %>
+      <h2>Compliance</h2>
+      <p class="muted">Nessuno scraping Amazon. Solo demo, manuale o futura integrazione API ufficiale.</p>
+      <button class="button secondary" type="submit">Test connessione</button>
+    </form>
+  </div>
+</section>

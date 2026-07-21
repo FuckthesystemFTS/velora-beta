@@ -1,0 +1,72 @@
+<section class="admin-panel">
+  <div class="section-heading app-heading">
+    <span class="eyebrow">HappyMeter</span>
+    <h2>Test A B C</h2>
+  </div>
+  <div class="result-grid">
+    <% tests.forEach((test) => { %>
+      <article class="app-card">
+        <small><%= test.code %></small>
+        <h3><%= test.title %></h3>
+        <p><%= test.description %></p>
+        <div class="mini-stats">
+          <div><span>Like</span><strong><%= test.likes_count %></strong></div>
+          <div><span>Completamenti</span><strong><%= test.completions %></strong></div>
+          <div><span>Media</span><strong><%= test.average_score %>/100</strong></div>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+</section>
+
+<section class="admin-panel">
+  <div class="section-heading app-heading">
+    <span class="eyebrow">Storico</span>
+    <h2>Ultimi risultati</h2>
+  </div>
+  <% if (!latestResults.length) { %>
+    <p>Nessun risultato registrato</p>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Test</th>
+            <th>Score</th>
+            <th>Utente</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% latestResults.forEach((row) => { %>
+            <tr>
+              <td><%= row.test_code %></td>
+              <td><%= row.score %>/100</td>
+              <td><%= row.name || 'Anonimo' %></td>
+              <td><%= String(row.date || row.created_at).slice(0, 10) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<section class="admin-panel">
+  <div class="section-heading app-heading">
+    <span class="eyebrow">Missioni</span>
+    <h2>Piu completate</h2>
+  </div>
+  <% if (!topMissions.length) { %>
+    <p>Nessuna missione completata finora</p>
+  <% } else { %>
+    <div class="result-grid">
+      <% topMissions.forEach((mission) => { %>
+        <article class="app-card">
+          <strong><%= mission.text %></strong>
+          <p><%= mission.completedCount %> completamenti</p>
+        </article>
+      <% }) %>
+    </div>
+  <% } %>
+</section>

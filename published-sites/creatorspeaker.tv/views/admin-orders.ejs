@@ -1,0 +1,42 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <p class="eyebrow"><%= data.paymentMode ? 'Pagamenti' : 'Ordini e attivazioni' %></p>
+    <h1><%= data.paymentMode ? 'Pagamenti manuali e conferme' : 'Ordini' %></h1>
+    <p class="muted">Aggiorna pagamenti, note amministrative e attivazioni da una lista unica</p>
+
+    <div class="admin-action-row">
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/requests') %>">Richieste</a>
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/clients') %>">Clienti</a>
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/abbonamenti/accessi') %>">Accessi condivisi</a>
+    </div>
+
+    <div class="table-list top-gap">
+      <% if (!data.orders.length) { %>
+        <div class="admin-empty-state">
+          <strong>Nessun ordine presente</strong>
+          <span>Gli acquisti, i bonifici da verificare e le attivazioni compariranno qui</span>
+        </div>
+      <% } %>
+      <% data.orders.forEach(function(order) { %>
+        <form class="admin-row stack-form compact-form" action="<%= panelPath('/admin/orders/' + order.id + '/status') %>" method="post">
+          <%- include("partials/csrf-fields") %>
+          <div>
+            <strong><%= order.order_code %></strong>
+            <p><%= order.customer_name %> - <%= order.customer_email %></p>
+            <p><%= formatMoney(order.total_cents) %> - <%= order.payment_method_label %> - stato pagamento <%= order.payment_status || "pending" %></p>
+            <p class="muted"><%= order.items.map(function(item){ return item.name + " x" + item.quantity; }).join(", ") %></p>
+          </div>
+          <label>Stato
+            <select name="status">
+              <% ["pending_bank_transfer","pending_payment_setup","paid","activated","cancelled"].forEach(function(status) { %>
+                <option value="<%= status %>" <%= order.status === status ? "selected" : "" %>><%= status %></option>
+              <% }) %>
+            </select>
+          </label>
+          <label>Note admin<textarea name="admin_notes"><%= order.admin_notes || "" %></textarea></label>
+          <button class="button compact" type="submit">Salva</button>
+        </form>
+      <% }) %>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,60 @@
+<section class="admin-section">
+  <div class="shell">
+    <div class="streaming-heading">
+      <div>
+        <h1>Profili video</h1>
+        <p class="muted">Costi crediti, limiti e funzioni disponibili nel Video Studio utente</p>
+      </div>
+      <a class="ghost-button compact-ghost" href="/admin/videos">Archivio video</a>
+    </div>
+
+    <div class="admin-card-grid">
+      <% data.profiles.forEach(function(profile) { %>
+        <form class="admin-card stack-form" method="post" action="/admin/video-profiles/<%= profile.id %>">
+          <%- include("partials/csrf-fields") %>
+          <h2><%= profile.name %></h2>
+          <p class="muted"><%= profile.slug %></p>
+          <label>Nome
+            <input type="text" name="name" value="<%= profile.name %>" required />
+          </label>
+          <label>Crediti
+            <input type="number" name="credits_cost" min="0" value="<%= profile.credits_cost %>" required />
+          </label>
+          <label>Descrizione
+            <textarea name="description" rows="3"><%= profile.description %></textarea>
+          </label>
+          <div class="form-grid two">
+            <label>Durata default sec
+              <input type="number" name="default_duration_seconds" min="1" max="60" step="0.5" value="<%= profile.default_duration_seconds %>" />
+            </label>
+            <label>Max immagini
+              <input type="number" name="max_images" min="1" max="20" value="<%= profile.max_images %>" />
+            </label>
+            <label>Limite upload MB
+              <input type="number" name="max_upload_mb" min="10" max="500" value="<%= profile.max_upload_mb %>" />
+            </label>
+            <label>Ordinamento
+              <input type="number" name="sort_order" value="<%= profile.sort_order %>" />
+            </label>
+          </div>
+          <label>Formato default
+            <select name="aspect_ratio">
+              <option value="16:9" <%= profile.aspect_ratio === "16:9" ? "selected" : "" %>>16:9</option>
+              <option value="9:16" <%= profile.aspect_ratio === "9:16" ? "selected" : "" %>>9:16</option>
+              <option value="1:1" <%= profile.aspect_ratio === "1:1" ? "selected" : "" %>>1:1</option>
+            </select>
+          </label>
+          <input type="hidden" name="resolution" value="<%= profile.resolution %>" />
+          <div class="check-grid">
+            <label><input type="checkbox" name="customDurations" <%= profile.feature_flags.customDurations ? "checked" : "" %> /> Durate scene</label>
+            <label><input type="checkbox" name="audioTrim" <%= profile.feature_flags.audioTrim ? "checked" : "" %> /> Taglio audio</label>
+            <label><input type="checkbox" name="captions" <%= profile.feature_flags.captions ? "checked" : "" %> /> Testi scena</label>
+            <label><input type="checkbox" name="transitions" <%= profile.feature_flags.transitions ? "checked" : "" %> /> Transizioni</label>
+            <label><input type="checkbox" name="active" <%= profile.active ? "checked" : "" %> /> Attivo</label>
+          </div>
+          <button class="button compact" type="submit">Salva profilo</button>
+        </form>
+      <% }) %>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,30 @@
+<section class="app-card">
+  <div class="section-heading app-heading">
+    <span class="eyebrow"><%= copy('Profilo', 'Profile', 'Profil') %></span>
+    <h2><%= copy('Preferenze, lingua e promemoria futuri', 'Preferences, language and future reminders', 'Einstellungen, Sprache und spaetere Erinnerungen') %></h2>
+  </div>
+  <form method="post" action="/app/profile/language" class="stack-form">
+    <label><%= copy('Nome', 'Name', 'Name') %><input type="text" name="name" value="<%= profileUser.name %>" disabled /></label>
+    <label>Email<input type="email" value="<%= profileUser.email %>" disabled /></label>
+    <label><%= copy('Lingua preferita', 'Preferred language', 'Bevorzugte Sprache') %>
+      <select name="preferred_language">
+        <option value="it" <%= profileUser.preferred_language === 'it' ? 'selected' : '' %>>Italiano</option>
+        <option value="en" <%= profileUser.preferred_language === 'en' ? 'selected' : '' %>>English</option>
+        <option value="de" <%= profileUser.preferred_language === 'de' ? 'selected' : '' %>>Deutsch</option>
+      </select>
+    </label>
+    <div class="mini-stats">
+      <div><span><%= copy('Punti', 'Points', 'Punkte') %></span><strong><%= profileUser.points %></strong></div>
+      <div><span><%= copy('Livello', 'Level', 'Level') %></span><strong><%= profileUser.level %></strong></div>
+      <div><span>Streak</span><strong><%= profileUser.current_streak %></strong></div>
+    </div>
+    <button type="submit" class="primary-btn"><%= copy('Aggiorna lingua', 'Update language', 'Sprache aktualisieren') %></button>
+  </form>
+  <div class="app-card reminder-card">
+    <h3><%= copy('Promemoria', 'Reminders', 'Erinnerungen') %></h3>
+    <p><%= copy('Le notifiche push saranno disponibili in una versione successiva', 'Push notifications will be available in a later version', 'Push Benachrichtigungen werden spaeter verfuegbar sein') %></p>
+  </div>
+  <form method="post" action="/logout">
+    <button type="submit" class="ghost-btn"><%= copy('Esci dall account', 'Log out', 'Abmelden') %></button>
+  </form>
+</section>

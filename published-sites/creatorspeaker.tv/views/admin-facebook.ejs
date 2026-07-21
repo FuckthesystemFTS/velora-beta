@@ -1,0 +1,24 @@
+<section class="admin-section">
+  <div class="shell two-column">
+    <form class="info-panel stack-form" action="/admin/facebook" method="post">
+      <%- include("partials/csrf-fields") %>
+      <%- include("partials/csrf-fields") %>
+      <h1>Facebook</h1>
+      <label class="checkbox"><input type="checkbox" name="enabled" <%= data.facebook.enabled ? "checked" : "" %> /> Abilita pubblicazione</label>
+      <label>Pagina URL<input type="url" name="pageUrl" value="<%= data.facebook.pageUrl || '' %>" /></label>
+      <label>Page ID<input type="text" name="pageId" value="<%= data.facebook.pageId || '' %>" /></label>
+      <label>Page access token<input type="password" name="accessToken" placeholder="<%= data.secretState %>" /></label>
+      <label>Orario post 1<input type="time" name="postTime1" value="<%= data.facebook.postTime1 || '07:00' %>" /></label>
+      <label>Orario post 2<input type="time" name="postTime2" value="<%= data.facebook.postTime2 || '19:00' %>" /></label>
+      <label>Distanza minima ore<input type="number" name="minHoursDistance" value="<%= data.facebook.minHoursDistance || 12 %>" /></label>
+      <button class="button" type="submit">Salva Facebook</button>
+    </form>
+    <form class="info-panel stack-form" action="/admin/facebook/test" method="post">
+      <%- include("partials/csrf-fields") %>
+      <h2>Test</h2>
+      <p>Stato segreto: <strong><%= data.secretState %></strong></p>
+      <p class="muted">La pubblicazione reale richiede token pagina, permessi adeguati e possibile review Meta.</p>
+      <button class="button secondary" type="submit">Pubblica test</button>
+    </form>
+  </div>
+</section>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="<%= lang %>">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= pageTitle %></title>
+    <meta
+      name="description"
+      content="<%= copy('HappyMeter ti accompagna tra score quotidiano, attivita felici, diario e insight personali', 'HappyMeter guides you through your daily score, happy activities, diary and personal insights') %>"
+    />
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Sora:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body class="app-shell" data-language="<%= lang %>">
+    <div class="phone-frame">
+      <header class="app-topbar">
+        <div class="app-topbar__brand">
+          <a href="/" class="topbar-home-link">
+            <img src="/images/logo-happy.png" alt="Logo HappyMeter" class="topbar-logo" loading="eager" />
+          </a>
+          <div class="app-topbar__copy">
+            <small>HappyMeter</small>
+            <h1><%= pageTitle %></h1>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <a href="/" class="chip-link"><%= copy('Home', 'Home', 'Start') %></a>
+          <a href="/community" class="chip-link"><%= copy('Chat', 'Chat', 'Chat') %></a>
+          <a href="/app/profile" class="topbar-avatar"><%= (user && user.name ? user.name[0] : "H").toUpperCase() %></a>
+        </div>
+      </header>
+      <% if (flash) { %>
+        <div class="flash flash--<%= flash.type %>"><%= flash.text %></div>
+      <% } %>
+      <main class="app-main">
+        <%- body %>
+      </main>
+      <footer class="app-mini-footer">
+        <p><%= copy('happymeter.it e un progetto indipendente non associato ad altri siti con nomi simili', 'happymeter.it is an independent project not associated with other similarly named sites', 'happymeter.it ist ein unabhaengiges Projekt und nicht mit anderen aehnlich benannten Seiten verbunden') %></p>
+      </footer>
+      <nav class="bottom-nav">
+        <a href="/app" class="<%= path === '/app' ? 'active' : '' %>"><span>-</span><%= t("dashboard") %></a>
+        <a href="/app/diary" class="<%= path.includes('/app/diary') ? 'active' : '' %>"><span>-</span><%= t("diary") %></a>
+        <a href="/app/activities" class="<%= path.includes('/app/activities') ? 'active' : '' %>"><span>-</span><%= t("activities") %></a>
+        <a href="/app/insights" class="<%= path.includes('/app/insights') ? 'active' : '' %>"><span>-</span><%= t("insights") %></a>
+        <a href="/app/profile" class="<%= path.includes('/app/profile') ? 'active' : '' %>"><span>-</span><%= t("profile") %></a>
+      </nav>
+    </div>
+    <script src="/js/app.js"></script>
+    <script src="/js/charts.js"></script>
+    <aside
+      class="chat-widget"
+      data-chat-widget
+      data-authenticated="<%= user ? '1' : '0' %>"
+      data-login-url="/login?redirect=/app?chat=open"
+      data-redirect-to="/app?chat=open"
+      data-title="<%= copy('Chat globale', 'Global chat', 'Globaler Chat') %>"
+      data-subtitle="<%= copy('Live e sempre aperta', 'Live and always open', 'Live und immer offen') %>"
+      data-placeholder="<%= copy('Scrivi un messaggio reale', 'Write a real message', 'Schreibe eine echte Nachricht') %>"
+      data-send-label="<%= copy('Invia', 'Send', 'Senden') %>"
+      data-open-label="<%= copy('Apri chat', 'Open chat', 'Chat oeffnen') %>"
+      data-close-label="<%= copy('Riduci', 'Minimize', 'Minimieren') %>"
+      data-auth-title="<%= copy('Devi accedere per scrivere nella chat', 'You need to log in to write in the chat', 'Du musst dich anmelden, um in den Chat zu schreiben') %>"
+      data-login-message="<%= copy('Accedi o registrati per scrivere nella chat', 'Log in or sign up to write in the chat', 'Melde dich an oder registriere dich, um in die Chat zu schreiben') %>"
+      data-like-message="<%= copy('Accedi o registrati per lasciare una reazione nella chat', 'Log in or sign up to react in the chat', 'Melde dich an oder registriere dich, um im Chat zu reagieren') %>"
+      data-empty-message="<%= copy('La chat e pronta e aspetta i primi messaggi reali', 'The chat is ready and waiting for the first real messages', 'Der Chat ist bereit und wartet auf die ersten echten Nachrichten') %>"
+      data-login-label="<%= t('login') %>"
+      data-loading-label="<%= copy('Caricamento in corso', 'Loading messages', 'Nachrichten werden geladen') %>"
+      data-error-label="<%= copy('La chat non e disponibile in questo momento', 'The chat is not available right now', 'Der Chat ist im Moment nicht verfuegbar') %>"
+      data-like-label="<%= copy('Reazione', 'Reaction', 'Reaktion') %>"
+    >
+      <button type="button" class="chat-widget__toggle" data-chat-toggle>
+        <span>HappyMeter Chat</span>
+      </button>
+      <div class="chat-widget__panel">
+        <div class="chat-widget__head">
+          <div>
+            <strong><%= copy('Chat globale', 'Global chat', 'Globaler Chat') %></strong>
+            <small><%= copy('Live e sempre aperta', 'Live and always open', 'Live und immer offen') %></small>
+          </div>
+          <button type="button" class="chat-widget__minimize" data-chat-minimize><%= copy('Riduci', 'Minimize', 'Minimieren') %></button>
+        </div>
+        <div class="chat-widget__status" data-chat-status><%= copy('Caricamento in corso', 'Loading messages', 'Nachrichten werden geladen') %></div>
+        <div class="chat-widget__messages" data-chat-messages></div>
+        <form class="chat-widget__composer" data-chat-form>
+          <textarea name="content" rows="2" maxlength="500" placeholder="<%= copy('Scrivi un messaggio reale', 'Write a real message', 'Schreibe eine echte Nachricht') %>"></textarea>
+          <div class="chat-widget__actions">
+            <button type="submit" class="primary-btn"><%= copy('Invia', 'Send', 'Senden') %></button>
+          </div>
+        </form>
+      </div>
+    </aside>
+    <div
+      class="auth-modal"
+      data-auth-modal
+      data-default-title="<%= copy('Accedi per continuare', 'Log in to continue', 'Melde dich an, um fortzufahren') %>"
+      data-default-body="<%= copy('Accedi o registrati per continuare da questo punto', 'Log in or sign up to continue from here', 'Melde dich an oder registriere dich, um hier weiterzumachen') %>"
+    >
+      <div class="auth-modal__card">
+        <button type="button" class="auth-modal__close" data-auth-modal-close><%= copy('Chiudi', 'Close', 'Schliessen') %></button>
+        <span class="eyebrow"><%= copy('Accesso richiesto', 'Login required', 'Anmeldung erforderlich') %></span>
+        <h2 data-auth-modal-title><%= copy('Accedi per continuare', 'Log in to continue', 'Melde dich an, um fortzufahren') %></h2>
+        <p data-auth-modal-body><%= copy('Accedi o registrati per continuare da questo punto', 'Log in or sign up to continue from here', 'Melde dich an oder registriere dich, um hier weiterzumachen') %></p>
+        <div class="cta-row">
+          <a href="/login" class="primary-btn" data-auth-modal-login><%= t("login") %></a>
+          <a href="/register" class="secondary-btn" data-auth-modal-register><%= copy('Registrati', 'Sign up', 'Registrieren') %></a>
+          <button type="button" class="ghost-btn" data-auth-modal-close><%= copy('Continua a leggere', 'Keep reading', 'Weiterlesen') %></button>
+        </div>
+      </div>
+    </div>
+    <script src="/js/auth-modal.js"></script>
+    <script src="/js/chat-widget.js"></script>
+    <script src="/js/language.js"></script>
+    <%- typeof script !== "undefined" ? script : "" %>
+  </body>
+</html>

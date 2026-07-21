@@ -1,0 +1,376 @@
+.app-shell {
+  min-height: 100vh;
+  padding: 18px 12px 28px;
+}
+
+.app-shell .chat-widget {
+  bottom: 86px;
+}
+
+.phone-frame {
+  width: min(100%, 460px);
+  margin: 0 auto;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 255, 248, 0.96));
+  border: 1px solid rgba(6, 59, 69, 0.12);
+  border-radius: 34px;
+  box-shadow: 0 32px 70px rgba(6, 59, 69, 0.18);
+  min-height: calc(100vh - 36px);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.app-topbar {
+  padding: 22px 20px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-topbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-topbar__copy {
+  min-width: 0;
+}
+
+.app-topbar h1 {
+  margin: 4px 0 0;
+  font-size: 1.5rem;
+}
+
+.topbar-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.topbar-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--blue), var(--sky));
+  color: var(--white);
+  font-weight: 800;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.app-main {
+  padding: 8px 16px 22px;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.score-hero {
+  padding: 22px;
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 20px;
+  align-items: center;
+}
+
+.score-ring {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(var(--green) 0deg, var(--yellow) 0deg, rgba(6, 59, 69, 0.08) 0deg);
+  position: relative;
+}
+
+.score-ring::after {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  background: var(--white);
+  border-radius: 50%;
+}
+
+.score-ring > div {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.score-ring strong {
+  display: block;
+  font-size: 1.5rem;
+}
+
+.mini-stats,
+.quick-grid,
+.badge-grid,
+.tag-list,
+.activity-grid,
+.community-feed,
+.insight-list,
+.result-grid,
+.check-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.mini-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mini-stats div,
+.quick-card,
+.tag,
+.badge-card,
+.activity-card,
+.post-card,
+.insight-card {
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(6, 59, 69, 0.1);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.quick-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.quick-card {
+  font-weight: 700;
+}
+
+.app-heading {
+  margin-bottom: 12px;
+}
+
+.chart-canvas {
+  width: 100%;
+  min-height: 220px;
+}
+
+.tag-list {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.tag,
+.gesture-line {
+  font-size: 0.95rem;
+}
+
+.timeline {
+  display: grid;
+  gap: 14px;
+}
+
+.timeline-head,
+.toolbar-form {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.score-pill,
+.premium-badge {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 216, 77, 0.32);
+  font-weight: 800;
+}
+
+.entry-meta {
+  display: grid;
+  gap: 10px;
+}
+
+.entry-meta div {
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(243, 255, 248, 0.9);
+}
+
+.entry-meta dt {
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.activity-grid {
+  grid-template-columns: 1fr;
+}
+
+.activity-card h3,
+.badge-card strong {
+  margin: 8px 0;
+}
+
+.activity-icon {
+  font-size: 1.8rem;
+}
+
+.badge-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.badge-card {
+  display: grid;
+  gap: 8px;
+}
+
+.badge-card--locked {
+  opacity: 0.6;
+}
+
+.community-feed,
+.insight-list {
+  grid-template-columns: 1fr;
+}
+
+.post-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.premium-card {
+  display: grid;
+  gap: 16px;
+}
+
+.clean-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.slider-form .range-row {
+  display: grid;
+  gap: 8px;
+}
+
+.slider-form input[type="range"] {
+  padding: 0;
+}
+
+.form-section {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(6, 59, 69, 0.08);
+}
+
+.highlight-strip {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 216, 77, 0.26), rgba(125, 221, 242, 0.24));
+}
+
+.check-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.check-card {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(6, 59, 69, 0.1);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.check-card input {
+  width: auto;
+  margin-top: 3px;
+}
+
+.result-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.score-hero--compact {
+  margin-bottom: 8px;
+}
+
+.insight-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0 0 16px;
+}
+
+.insight-stats small {
+  display: block;
+  margin-top: 6px;
+  color: rgba(6, 59, 69, 0.68);
+}
+
+.reminder-card {
+  margin: 8px 0;
+}
+
+.app-mini-footer {
+  padding: 0 18px 10px;
+}
+
+.app-mini-footer p {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: rgba(6, 59, 69, 0.62);
+}
+
+.bottom-nav {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-top: 1px solid rgba(6, 59, 69, 0.1);
+  padding: 10px 8px 12px;
+  background: rgba(255, 255, 255, 0.94);
+  position: sticky;
+  bottom: 0;
+}
+
+.bottom-nav a {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  font-size: 0.78rem;
+  padding: 8px 4px;
+  border-radius: 16px;
+  color: rgba(6, 59, 69, 0.68);
+}
+
+.bottom-nav a.active {
+  color: var(--blue);
+  background: rgba(125, 221, 242, 0.2);
+}
+
+@media (max-width: 420px) {
+  .score-hero {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .mini-stats,
+  .badge-grid,
+  .quick-grid,
+  .check-grid,
+  .result-grid,
+  .insight-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}

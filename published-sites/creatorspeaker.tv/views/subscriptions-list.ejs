@@ -1,0 +1,34 @@
+<section class="page-section">
+  <div class="shell">
+    <div class="dashboard-hero subscription-hero">
+      <div>
+        <p class="eyebrow">Abbonamenti</p>
+        <h1><%= page.title %></h1>
+        <p class="lead"><%= page.intro %></p>
+      </div>
+      <div class="info-panel">
+        <h3>Accessi attivati manualmente</h3>
+        <p class="muted">Ogni richiesta passa da verifica admin, controllo autorizzazione e attivazione dedicata</p>
+      </div>
+    </div>
+
+    <div class="card-grid subscription-grid">
+      <% page.platforms.forEach(function(platform) { %>
+        <article class="featured-card subscription-card">
+          <div class="featured-copy">
+            <span class="tag">Disponibile su approvazione</span>
+            <h3><%= platform.name %></h3>
+            <p><%= platform.public_description || platform.description %></p>
+            <div class="status-pills">
+              <span class="status-pill">Posti disponibili <%= platform.spots_left %></span>
+              <span class="status-pill">Durata <%= platform.duration_days %> giorni</span>
+            </div>
+            <div class="cta-row">
+              <a class="button secondary" href="/abbonamenti/<%= platform.slug %>">Richiedi accesso</a>
+            </div>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  </div>
+</section>

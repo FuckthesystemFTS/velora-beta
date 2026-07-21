@@ -1,0 +1,40 @@
+<footer class="site-footer">
+  <div class="shell footer-grid">
+    <div>
+      <div class="footer-brand">
+        <img src="<%= (data.site && data.site.logo) || '/assets/brand/creatorspeaker-brand-emblem.jpg' %>" alt="CreatorSpeaker TV" />
+        <h3><%= (data.site && data.site.name) || "creatorspeaker TV" %></h3>
+      </div>
+      <p>Network editoriale e multimediale per creator, speaker, aziende e progetti che vogliono distribuire contenuti su piu canali</p>
+      <p class="muted">Brand digitale CreatorSpeakerTV su www.creatorspeakertv.it</p>
+    </div>
+    <div>
+      <h4>Network</h4>
+      <a href="/">Home</a>
+      <a href="/network">Network</a>
+      <a href="/smart-tv">Smart TV</a>
+      <a href="/creator-network">Creator</a>
+      <a href="/speaker-network">Speaker</a>
+    </div>
+    <div>
+      <h4>Piattaforma</h4>
+      <a href="/login">Area riservata</a>
+      <a href="/register">Registrati</a>
+      <a href="/login">Accedi</a>
+      <a href="/contatti">Contatti</a>
+    </div>
+    <div>
+      <h4>Legal</h4>
+      <a href="/privacy">Privacy</a>
+      <a href="/cookie">Cookie</a>
+      <a href="/termini">Termini</a>
+      <a href="/mappa-sito">Mappa sito</a>
+    </div>
+    <div>
+      <h4>Contatti</h4>
+      <p><a href="mailto:<%= contactEmails.info %>"><%= contactEmails.info %></a></p>
+      <p><a href="mailto:<%= contactEmails.service %>"><%= contactEmails.service %></a></p>
+      <p><a href="mailto:<%= contactEmails.network %>"><%= contactEmails.network %></a></p>
+    </div>
+  </div>
+</footer>

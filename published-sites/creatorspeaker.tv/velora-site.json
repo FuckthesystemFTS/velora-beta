@@ -1,0 +1,28 @@
+{
+  "schema": "https://velora.dev/schemas/velora-site.v1.json",
+  "zone": "creatorspeaker.tv",
+  "title": "CreatorSpeaker TV",
+  "description": "Media studio e vetrina creator adattati per Velora",
+  "entry": "index.html",
+  "type": "static-site",
+  "version": "0.1.0-beta",
+  "publisher": {
+    "name": "CreatorSpeaker TV",
+    "requiresVeloraIdentity": true
+  },
+  "auth": {
+    "provider": "velora",
+    "registerUrl": "velora://auth/register?app=creatorspeaker.tv",
+    "loginUrl": "velora://auth/login?app=creatorspeaker.tv"
+  },
+  "permissions": {
+    "network": false,
+    "storage": "local"
+  },
+  "routes": [
+    {
+      "path": "/",
+      "file": "index.html"
+    }
+  ]
+}

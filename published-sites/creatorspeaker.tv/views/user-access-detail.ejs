@@ -1,0 +1,73 @@
+<section class="page-section">
+  <div class="shell narrow">
+    <article class="info-panel access-detail-card" data-access-card>
+      <p class="eyebrow">Accesso digitale</p>
+      <h1><%= page.access.name %></h1>
+      <p class="lead"><%= page.access.assignment_id ? page.access.assignment_status_label : page.access.request_status_label %></p>
+
+      <div class="stat-grid top-gap access-meta-grid">
+        <div class="stat-card">
+          <strong>Piattaforma</strong>
+          <span><%= page.access.name %></span>
+        </div>
+        <div class="stat-card">
+          <strong>Stato</strong>
+          <span><%= page.access.assignment_id ? page.access.assignment_status_label : page.access.request_status_label %></span>
+        </div>
+        <div class="stat-card">
+          <strong>Validita</strong>
+          <span><%= page.access.starts_at_label || 'Da definire' %> <% if (page.access.expires_at_label) { %>fino al <%= page.access.expires_at_label %><% } %></span>
+        </div>
+        <div class="stat-card">
+          <strong>Scadenza</strong>
+          <span><%= page.access.expires_at_label || 'Da definire' %></span>
+        </div>
+      </div>
+
+      <% if (page.access.assignment_id) { %>
+        <div class="credentials-panel top-gap" data-credentials-panel data-reveal-url="/dashboard/accessi/<%= page.access.slug %>/mostra-credenziali">
+          <div class="credential-box">
+            <span>Email</span>
+            <strong data-credential-email>***************</strong>
+          </div>
+          <div class="credential-box">
+            <span>Password</span>
+            <strong data-credential-password>***************</strong>
+          </div>
+
+          <% if (page.access.canRevealCredentials) { %>
+            <form method="post" action="/dashboard/accessi/<%= page.access.slug %>/mostra-credenziali" data-reveal-form>
+              <%- include("partials/csrf-fields") %>
+              <button class="button secondary" type="submit" data-reveal-button>Mostra credenziali</button>
+            </form>
+            <p class="muted">Le credenziali sono riservate e personali. Non condividerle con terzi. Ogni visualizzazione viene registrata per sicurezza</p>
+            <div class="inline-actions top-gap" data-reveal-actions hidden>
+              <button class="ghost-button compact-ghost" type="button" data-copy-target="email">Copia email</button>
+              <button class="ghost-button compact-ghost" type="button" data-copy-target="password">Copia password</button>
+              <a class="button secondary" href="<%= page.access.login_url || page.access.platform_url || 'https://www.canva.com/login' %>" target="_blank" rel="noreferrer" data-login-link hidden>Apri Canva</a>
+            </div>
+          <% } else { %>
+            <p class="muted">Le credenziali non sono disponibili in questo stato</p>
+          <% } %>
+        </div>
+      <% } else { %>
+        <div class="info-panel top-gap">
+          <h3>Richiesta in lavorazione</h3>
+          <p class="muted">Pagamento o autorizzazione: <%= page.access.payment_status_label %></p>
+          <p class="muted">La richiesta e stata ricevuta. L accesso verra mostrato qui appena l admin avra completato la verifica</p>
+        </div>
+      <% } %>
+
+      <% if (page.access.user_visible_note) { %>
+        <div class="info-panel top-gap">
+          <h3>Nota visibile</h3>
+          <p class="muted"><%= page.access.user_visible_note %></p>
+        </div>
+      <% } %>
+
+      <div class="cta-row top-gap">
+        <a class="ghost-button" href="/dashboard/accessi/<%= page.access.slug %>/problema">Segnala problema</a>
+      </div>
+    </article>
+  </div>
+</section>

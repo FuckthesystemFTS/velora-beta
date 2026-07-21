@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <%
+      const brandName = (data.site && data.site.name) || "CreatorSpeaker TV";
+      const brandCompactName = "CreatorSpeakerTV";
+      const defaultDescription =
+        "CreatorSpeaker TV o CreatorSpeakerTV e il network editoriale e multimediale per creator, speaker, podcast, aziende e progetti distribuiti su web, podcast e Smart TV";
+      const homeSeoDescription = currentPath === "/" && data.cmsSettings && data.cmsSettings.seo_home_description;
+      const pageDescription =
+        homeSeoDescription ||
+        (page && (page.seoDescription || page.intro || page.content)) ||
+        (data && data.content) ||
+        defaultDescription;
+      const homeSeoTitle = currentPath === "/" && data.cmsSettings && data.cmsSettings.seo_home_title;
+      const seoTitle = homeSeoTitle || (title && title !== brandName ? `${title} | ${brandName} ${brandCompactName}` : `${brandName} ${brandCompactName}`);
+      const pageImagePath =
+        (page && (page.seoImage || page.heroImage)) ||
+        (data.site && (data.site.heroImage || data.site.emblemImage)) ||
+        "/assets/brand/creatorspeaker-brand-hero.jpg";
+      const pageImage = new URL(pageImagePath, `${siteUrl}/`).toString();
+      const normalizedDescription = String(pageDescription).replace(/\s+/g, " ").trim().slice(0, 170);
+      const keywords = Array.isArray(page && page.seoKeywords) ? page.seoKeywords.filter(Boolean).join(", ") : "";
+      const faqSchema = Array.isArray(page && page.faqItems) && page.faqItems.length
+        ? {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: page.faqItems.map(function(item) {
+              return {
+                "@type": "Question",
+                name: item.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: item.answer
+                }
+              };
+            })
+          }
+        : null;
+    %>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= seoTitle %></title>
+    <meta name="application-name" content="<%= brandCompactName %>" />
+    <meta name="apple-mobile-web-app-title" content="<%= brandCompactName %>" />
+    <meta name="description" content="<%= normalizedDescription %>" />
+    <% if (keywords) { %><meta name="keywords" content="<%= keywords %>" /><% } %>
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+    <link rel="canonical" href="<%= canonicalUrl %>" />
+    <meta property="og:locale" content="it_IT" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="<%= seoTitle %>" />
+    <meta property="og:description" content="<%= normalizedDescription %>" />
+    <meta property="og:url" content="<%= canonicalUrl %>" />
+    <meta property="og:site_name" content="<%= brandName %>" />
+    <meta property="og:image" content="<%= pageImage %>" />
+    <meta property="og:image:alt" content="<%= brandName %> logo e piattaforma media" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="<%= seoTitle %>" />
+    <meta name="twitter:description" content="<%= normalizedDescription %>" />
+    <meta name="twitter:image" content="<%= pageImage %>" />
+    <meta name="theme-color" content="#050505" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/assets/favicon.png" />
+    <link rel="shortcut icon" href="/assets/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <script type="application/ld+json">
+      <%- JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: brandName,
+        alternateName: [brandCompactName, "creatorspeakertv"],
+        url: siteUrl,
+        logo: {
+          "@type": "ImageObject",
+          url: new URL((data.site && data.site.logo) || "/assets/brand/creatorspeaker-brand-emblem.jpg", `${siteUrl}/`).toString()
+        },
+        email: contactEmails.info,
+        contactPoint: [
+          {
+            "@type": "ContactPoint",
+            contactType: "customer support",
+            email: contactEmails.service,
+            availableLanguage: ["it"]
+          },
+          {
+            "@type": "ContactPoint",
+            contactType: "sales",
+            email: contactEmails.info,
+            availableLanguage: ["it"]
+          },
+          {
+            "@type": "ContactPoint",
+            contactType: "network",
+            email: contactEmails.network,
+            availableLanguage: ["it"]
+          }
+        ]
+      }) %>
+    </script>
+    <script type="application/ld+json">
+      <%- JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: brandName,
+        alternateName: [brandCompactName, "creatorspeakertv"],
+        url: siteUrl,
+        inLanguage: "it-IT"
+      }) %>
+    </script>
+    <% if (faqSchema) { %>
+      <script type="application/ld+json"><%- JSON.stringify(faqSchema) %></script>
+    <% } %>
+    <% if (page && page.schema) { %>
+      <script type="application/ld+json"><%- JSON.stringify(page.schema) %></script>
+    <% } %>
+  </head>
+  <body class="site-body">
+    <%- include("partials/site-header", { data, currentUser }) %>
+
+    <% if (flash) { %>
+      <div class="flash flash-<%= flash.type %>">
+        <div class="shell"><%= flash.message %></div>
+      </div>
+    <% } %>
+
+    <main>
+      <%- include(bodyTemplate, { data, page, currentUser }) %>
+    </main>
+
+    <%- include("partials/site-footer", { data }) %>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/cart.js"></script>
+  </body>
+</html>

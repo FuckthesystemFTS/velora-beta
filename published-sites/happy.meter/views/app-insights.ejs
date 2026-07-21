@@ -1,0 +1,108 @@
+<section class="app-card">
+  <div class="section-heading app-heading">
+    <span class="eyebrow">Cosa mi rende felice</span>
+    <h2>Insight personali in crescita</h2>
+    <p>Osserva come si muove il tuo benessere tra giorni migliori, fattori forti e segnali da tenere d occhio</p>
+  </div>
+  <div class="mini-stats">
+    <div><span>Giorni registrati</span><strong><%= insights.totalDays %></strong></div>
+    <div><span>Media Happy Score</span><strong><%= insights.averageScore %></strong></div>
+    <div><span>Lettura dati</span><strong><%= insights.hasDeepData ? '21+ giorni' : insights.hasWeeklyData ? '7+ giorni' : 'Prime indicazioni' %></strong></div>
+  </div>
+</section>
+
+<% if (!insights.hasMinimumData) { %>
+  <section class="app-card">
+    <p><%= insights.emptyMessage %></p>
+  </section>
+<% } else { %>
+  <section class="mini-stats insight-stats">
+    <div><span>Giorno migliore</span><strong><%= insights.bestDay ? `${insights.bestDay.happy_score}/100` : '-' %></strong><small><%= insights.bestDay ? String(insights.bestDay.entry_date).slice(0, 10) : '' %></small></div>
+    <div><span>Giorno piu difficile</span><strong><%= insights.hardestDay ? `${insights.hardestDay.happy_score}/100` : '-' %></strong><small><%= insights.hardestDay ? String(insights.hardestDay.entry_date).slice(0, 10) : '' %></small></div>
+    <div><span>Componente piu forte</span><strong><%= insights.strongestComponent ? insights.strongestComponent.label : '-' %></strong><small><%= insights.strongestComponent ? `${insights.strongestComponent.value}/100` : '' %></small></div>
+    <div><span>Componente piu debole</span><strong><%= insights.weakestComponent ? insights.weakestComponent.label : '-' %></strong><small><%= insights.weakestComponent ? `${insights.weakestComponent.value}/100` : '' %></small></div>
+  </section>
+
+  <section class="app-card">
+    <div class="section-heading app-heading">
+      <span class="eyebrow">Andamento del punteggio</span>
+      <h2>Ultimi giorni</h2>
+    </div>
+    <canvas
+      class="chart-canvas"
+      data-chart="line"
+      data-labels='<%- JSON.stringify((insights.hasWeeklyData ? insights.monthlySeries : insights.weeklySeries).map((item) => item.label)) %>'
+      data-values='<%- JSON.stringify((insights.hasWeeklyData ? insights.monthlySeries : insights.weeklySeries).map((item) => item.value)) %>'
+    ></canvas>
+  </section>
+
+  <section class="app-card">
+    <div class="section-heading app-heading">
+      <span class="eyebrow">Componenti medie</span>
+      <h2>Cosa pesa di piu nel tuo score</h2>
+    </div>
+    <canvas
+      class="chart-canvas"
+      data-chart="bar"
+      data-labels='<%- JSON.stringify(insights.componentAverages.map((item) => item.label)) %>'
+      data-values='<%- JSON.stringify(insights.componentAverages.map((item) => item.value)) %>'
+    ></canvas>
+  </section>
+
+  <section class="app-card">
+    <div class="section-heading app-heading">
+      <span class="eyebrow">Attivita associate a score alto</span>
+      <h2>Momenti che ricorrono nelle giornate migliori</h2>
+    </div>
+    <% if (!insights.activityAssociations.length) { %>
+      <p>Per questa vista servono ancora alcune attivita registrate nel diario</p>
+    <% } else { %>
+      <canvas
+        class="chart-canvas"
+        data-chart="bar"
+        data-labels='<%- JSON.stringify(insights.activityAssociations.map((item) => item.label)) %>'
+        data-values='<%- JSON.stringify(insights.activityAssociations.map((item) => item.averageScore)) %>'
+      ></canvas>
+    <% } %>
+  </section>
+
+  <% if (insights.hasWeeklyData) { %>
+    <section class="app-card">
+      <div class="section-heading app-heading">
+        <span class="eyebrow">Stress e score</span>
+        <h2>Due curve da osservare insieme</h2>
+      </div>
+      <canvas
+        class="chart-canvas"
+        data-chart="line"
+        data-labels='<%- JSON.stringify(insights.stressSeries.map((item) => item.label)) %>'
+        data-series='<%- JSON.stringify([
+          { label: "Stress", data: insights.stressSeries.map((item) => item.stress), borderColor: "#ef4444", backgroundColor: "rgba(239,68,68,0.12)", fill: false },
+          { label: "Happy Score", data: insights.stressSeries.map((item) => item.score), borderColor: "#0f766e", backgroundColor: "rgba(15,118,110,0.12)", fill: false }
+        ]) %>'
+      ></canvas>
+    </section>
+
+    <section class="app-card">
+      <div class="section-heading app-heading">
+        <span class="eyebrow">Sonno e score</span>
+        <h2>Come cambiano insieme</h2>
+      </div>
+      <canvas
+        class="chart-canvas"
+        data-chart="line"
+        data-labels='<%- JSON.stringify(insights.sleepSeries.map((item) => item.label)) %>'
+        data-series='<%- JSON.stringify([
+          { label: "Sonno", data: insights.sleepSeries.map((item) => item.sleep), borderColor: "#2563eb", backgroundColor: "rgba(37,99,235,0.12)", fill: false },
+          { label: "Happy Score", data: insights.sleepSeries.map((item) => item.score), borderColor: "#16a34a", backgroundColor: "rgba(22,163,74,0.12)", fill: false }
+        ]) %>'
+      ></canvas>
+    </section>
+  <% } %>
+
+  <section class="insight-list">
+    <% insights.messages.forEach((message) => { %>
+      <article class="insight-card"><p><%= message %></p></article>
+    <% }) %>
+  </section>
+<% } %>

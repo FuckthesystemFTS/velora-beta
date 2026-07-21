@@ -1,0 +1,18 @@
+<section class="page-section">
+  <div class="shell narrow">
+    <p class="eyebrow">Riepilogo richiesta</p>
+    <h1>Percorsi e soluzioni selezionate</h1>
+    <p>Qui trovi quello che vuoi sottoporre allo staff prima dell'attivazione</p>
+    <div class="cart-layout">
+      <div id="cart-items" class="info-panel"></div>
+      <aside class="info-panel cart-summary">
+        <h2>Riepilogo economico</h2>
+        <p id="cart-total" class="price">EUR 0,00</p>
+        <a class="button" href="/checkout">Invia richiesta</a>
+      </aside>
+    </div>
+  </div>
+  <script>
+    window.packageCatalog = <%- JSON.stringify(Object.values(data.packagesByArea || {}).flat()) %>;
+  </script>
+</section>

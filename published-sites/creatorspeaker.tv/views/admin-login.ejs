@@ -1,0 +1,26 @@
+<section class="admin-section">
+  <div class="shell narrow">
+    <% const basePath = panelBasePath || '/admin'; %>
+    <% if (data.passwordMode) { %>
+      <form class="admin-card stack-form" action="<%= basePath %>/password" method="post">
+        <%- include("partials/csrf-fields") %>
+        <p class="eyebrow">Sicurezza</p>
+        <h1>Cambia password <%= data.accessMode === 'staff' ? 'staff' : 'admin' %></h1>
+        <label>Password attuale<input type="password" name="current_password" required /></label>
+        <label>Nuova password<input type="password" name="new_password" minlength="10" required /></label>
+        <label>Conferma nuova password<input type="password" name="confirm_password" minlength="10" required /></label>
+        <button class="button" type="submit">Aggiorna password</button>
+      </form>
+    <% } else { %>
+      <form class="admin-card stack-form" action="<%= basePath %>/login" method="post" novalidate>
+        <%- include("partials/csrf-fields") %>
+        <p class="eyebrow"><%= data.accessMode === 'staff' ? 'Staff access' : 'Admin access' %></p>
+        <h1>Pannello controllo</h1>
+        <p class="muted">Password iniziale: cambiala subito dal pannello Impostazioni.</p>
+        <label>Username<input type="text" name="username" autocomplete="username" autocapitalize="off" spellcheck="false" inputmode="text" required /></label>
+        <label>Password<input type="password" name="password" required /></label>
+        <button class="button" type="submit">Accedi</button>
+      </form>
+    <% } %>
+  </div>
+</section>

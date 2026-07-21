@@ -1,0 +1,24 @@
+<header class="user-header">
+  <div class="shell topbar user-topbar">
+    <a class="brand" href="/dashboard">
+      <img src="<%= (data.site && data.site.logo) || '/assets/brand/creatorspeaker-brand-emblem.jpg' %>" alt="CreatorSpeaker TV" />
+      <span>
+        <strong>Il tuo spazio personale</strong>
+        <small>Gestisci contenuti, ordini, crediti e servizi acquistati</small>
+      </span>
+    </a>
+    <button class="menu-toggle" type="button" data-menu-toggle>Menu</button>
+    <nav class="site-nav user-nav" data-menu-panel>
+      <a href="/dashboard">Panoramica</a>
+      <a href="/dashboard/orders">Ordini</a>
+      <a href="/dashboard/subscriptions">Pacchetti</a>
+      <a href="/dashboard/accessi">I miei accessi</a>
+      <a href="/dashboard/upload">Carica contenuto</a>
+      <a href="/dashboard/video-studio">Crea video</a>
+      <a href="/dashboard/videos">I miei video</a>
+      <a href="/dashboard/credits">Crediti</a>
+      <a href="/cart">Servizi extra</a>
+      <form action="/logout" method="post"><%- include("csrf-fields") %><button type="submit" class="ghost-button">Esci</button></form>
+    </nav>
+  </div>
+</header>

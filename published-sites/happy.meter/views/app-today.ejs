@@ -1,0 +1,152 @@
+<section class="app-card">
+  <div class="section-heading app-heading">
+    <span class="eyebrow"><%= copy('Ogni giorno conta', 'Every day matters', 'Jeder Tag zaehlt') %></span>
+    <h2><%= copy('Il tuo test quotidiano', 'Your daily test', 'Dein taeglicher Test') %></h2>
+    <p><%= copy('Registra come stai oggi e scopri cosa sostiene davvero il tuo benessere', 'Record how you feel today and discover what truly supports your wellbeing', 'Halte fest, wie es dir heute geht, und entdecke, was dein Wohlbefinden wirklich traegt') %></p>
+  </div>
+
+  <% if (gesture) { %>
+    <div class="highlight-strip">
+      <strong><%= copy('Gesto felice del giorno', 'Happy gesture of the day', 'Gluecksgeste des Tages') %></strong>
+      <span><%= gesture.display_text %></span>
+    </div>
+  <% } %>
+
+  <form method="post" action="/app/today" class="stack-form slider-form">
+    <div class="form-section">
+      <h3><%= copy('Benessere di oggi', 'Today wellbeing', 'Wohlbefinden heute') %></h3>
+      <% const wellbeing = [
+        ["happiness", copy("Felicita", "Happiness"), entry?.happiness || 6],
+        ["energy", copy("Energia", "Energy"), entry?.energy || 6],
+        ["sleep", copy("Sonno", "Sleep"), entry?.sleep || 6],
+        ["stress", copy("Stress", "Stress"), entry?.stress || 4],
+        ["mood", copy("Umore generale", "Overall mood"), entry?.mood || 6]
+      ]; %>
+      <% wellbeing.forEach((slider) => { %>
+        <label class="range-row">
+          <span><%= slider[1] %></span>
+          <strong data-range-value><%= slider[2] %></strong>
+          <input type="range" min="1" max="10" value="<%= slider[2] %>" name="<%= slider[0] %>" required />
+        </label>
+      <% }) %>
+    </div>
+
+    <div class="form-section">
+      <h3><%= copy('Abitudini e corpo', 'Habits and body', 'Gewohnheiten und Koerper') %></h3>
+      <% const habits = [
+        ["physical_activity", copy("Attivita fisica o movimento", "Physical activity or movement"), entry?.physical_activity || 5],
+        ["nutrition", copy("Alimentazione percepita", "Perceived nutrition"), entry?.nutrition || 5],
+        ["outdoor_time", copy("Tempo all aria aperta", "Time outdoors"), entry?.outdoor_time || 5],
+        ["rest_breaks", copy("Riposo e pause", "Rest and breaks"), entry?.rest_breaks || 5],
+        ["self_care", copy("Cura di se", "Self care"), entry?.self_care || 5]
+      ]; %>
+      <% habits.forEach((slider) => { %>
+        <label class="range-row">
+          <span><%= slider[1] %></span>
+          <strong data-range-value><%= slider[2] %></strong>
+          <input type="range" min="1" max="10" value="<%= slider[2] %>" name="<%= slider[0] %>" required />
+        </label>
+      <% }) %>
+    </div>
+
+    <div class="form-section">
+      <h3><%= copy('Relazioni e significato', 'Relationships and meaning', 'Beziehungen und Sinn') %></h3>
+      <% const meaning = [
+        ["social_relations", copy("Relazioni sociali", "Social relationships"), entry?.social_relations || 6],
+        ["gratitude", copy("Gratitudine", "Gratitude"), entry?.gratitude || 6],
+        ["meaning", copy("Senso di utilita", "Sense of usefulness"), entry?.meaning || 6],
+        ["engagement", copy("Coinvolgimento in qualcosa che ti piace", "Engagement in something you enjoy"), entry?.engagement || 6],
+        ["day_satisfaction", copy("Soddisfazione della giornata", "Day satisfaction"), entry?.day_satisfaction || 6]
+      ]; %>
+      <% meaning.forEach((slider) => { %>
+        <label class="range-row">
+          <span><%= slider[1] %></span>
+          <strong data-range-value><%= slider[2] %></strong>
+          <input type="range" min="1" max="10" value="<%= slider[2] %>" name="<%= slider[0] %>" required />
+        </label>
+      <% }) %>
+    </div>
+
+    <div class="form-section">
+      <h3><%= copy('Note libere', 'Free notes', 'Freie Notizen') %></h3>
+      <label><%= copy('Cosa ti ha fatto stare bene oggi', 'What felt good today', 'Was dir heute gutgetan hat') %><textarea name="good_things_text" rows="3"><%= entry?.good_things_text || '' %></textarea></label>
+      <label><%= copy('Cosa ti ha pesato oggi', 'What felt heavy today', 'Was heute schwer auf dir lag') %><textarea name="hard_things_text" rows="3"><%= entry?.hard_things_text || '' %></textarea></label>
+      <label><%= copy('Persone importanti incontrate o sentite oggi', 'Important people you met or heard from today', 'Wichtige Menschen, die du heute getroffen oder gehoert hast') %><textarea name="people_text" rows="3"><%= entry?.people_text || '' %></textarea></label>
+      <label><%= copy('Una cosa per cui sei grato', 'One thing you feel grateful for', 'Eine Sache, fuer die du dankbar bist') %><textarea name="gratitude_text" rows="3"><%= entry?.gratitude_text || '' %></textarea></label>
+      <label><%= copy('Nota del giorno', 'Note of the day', 'Notiz des Tages') %><textarea name="note" rows="3"><%= entry?.note || '' %></textarea></label>
+    </div>
+
+    <div class="form-section">
+      <h3><%= copy('Attivita svolte', 'Activities completed', 'Erledigte Aktivitaeten') %></h3>
+      <% const dailyActivities = [
+        { it: "Fare una passeggiata", en: "Go for a walk", de: "Spazieren gehen" },
+        { it: "Ascoltare musica", en: "Listen to music", de: "Musik hoeren" },
+        { it: "Leggere un libro", en: "Read a book", de: "Ein Buch lesen" },
+        { it: "Chiamare un amico", en: "Call a friend", de: "Einen Freund anrufen" },
+        { it: "Bere un buon caffe", en: "Enjoy a good coffee", de: "Einen guten Kaffee trinken" },
+        { it: "Guardare un alba", en: "Watch a sunrise", de: "Einen Sonnenaufgang ansehen" },
+        { it: "Guardare un tramonto", en: "Watch a sunset", de: "Einen Sonnenuntergang ansehen" },
+        { it: "Fare un complimento sincero", en: "Give a sincere compliment", de: "Ein ehrliches Kompliment machen" },
+        { it: "Ringraziare qualcuno", en: "Thank someone", de: "Jemandem danken" },
+        { it: "Passare tempo nella natura", en: "Spend time in nature", de: "Zeit in der Natur verbringen" },
+        { it: "Meditare 5 minuti", en: "Meditate for 5 minutes", de: "5 Minuten meditieren" },
+        { it: "Scrivere nel diario", en: "Write in your diary", de: "Ins Tagebuch schreiben" }
+      ]; %>
+      <% const selectedActivities = String(entry?.activities_text || '').split(',').map((item) => item.trim()).filter(Boolean); %>
+      <div class="check-grid">
+        <% dailyActivities.forEach((activity) => { %>
+          <% const activityLabel = lang === 'de' ? activity.de : lang === 'en' ? activity.en : activity.it; %>
+          <label class="check-card">
+            <input type="checkbox" name="activities" value="<%= activityLabel %>" <%= selectedActivities.includes(activityLabel) ? 'checked' : '' %> />
+            <span><%= activityLabel %></span>
+          </label>
+        <% }) %>
+      </div>
+    </div>
+
+      <button type="submit" class="primary-btn"><%= copy('Calcola Happy Score', 'Calculate Happy Score', 'Happy Score berechnen') %></button>
+  </form>
+</section>
+
+<% if (result) { %>
+  <section class="app-card result-card">
+    <div class="score-hero score-hero--compact">
+      <div class="score-ring" data-score-ring data-score="<%= result.score %>">
+        <div>
+          <small>Happy Score</small>
+          <strong><%= result.score %>/100</strong>
+        </div>
+      </div>
+      <div class="score-summary">
+        <h2><%= copy('Il tuo Happy Score di oggi', 'Your Happy Score today', 'Dein Happy Score heute') %></h2>
+        <p><strong><%= result.label %></strong></p>
+        <p><%= result.explanation %></p>
+      </div>
+    </div>
+
+    <div class="result-grid">
+      <article>
+        <h3><%= copy('Tre punti forti della giornata', 'Three strengths from today', 'Drei Staerken des Tages') %></h3>
+        <ul class="clean-list">
+          <% result.strengths.forEach((item) => { %>
+            <li><%= item %></li>
+          <% }) %>
+        </ul>
+      </article>
+      <article>
+        <h3><%= copy('Un area da osservare', 'One area to watch', 'Ein Bereich zum Beobachten') %></h3>
+        <ul class="clean-list">
+          <% result.watchAreas.forEach((item) => { %>
+            <li><%= item %></li>
+          <% }) %>
+        </ul>
+      </article>
+    </div>
+
+    <div class="cta-row">
+      <a href="/app/diary" class="secondary-btn"><%= copy('Diario', 'Diary', 'Tagebuch') %></a>
+      <a href="/app/insights" class="secondary-btn"><%= copy('Insight', 'Insights', 'Einblicke') %></a>
+      <a href="/app/today" class="primary-btn"><%= copy('Domani continua la serie', 'Keep the streak going tomorrow', 'Mach morgen mit der Serie weiter') %></a>
+    </div>
+  </section>
+<% } %>

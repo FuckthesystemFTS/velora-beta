@@ -1,0 +1,21 @@
+{
+  "formatVersion": 1,
+  "address": "health.happymeter",
+  "title": "HappyMeter",
+  "description": "Feliciometro adattato per Velora con accesso tramite identita unica",
+  "category": "health",
+  "entryFile": "index.html",
+  "languages": ["it"],
+  "keywords": ["felicita", "benessere", "diario", "salute", "velora"],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

@@ -1,0 +1,70 @@
+<section class="score-hero">
+  <div class="score-ring" data-score-ring data-score="<%= dashboard.quickStats.todayScore %>">
+    <div>
+      <small>Happy Score</small>
+      <strong><%= dashboard.quickStats.todayScore %>/100</strong>
+    </div>
+  </div>
+  <div class="score-summary">
+    <h2><%= copy('La tua schermata di oggi', 'Your today screen', 'Dein Bildschirm fuer heute') %></h2>
+    <p><%= copy('Punteggio giornaliero, attivita completate e accesso rapido al test quotidiano restano in primo piano', 'Daily score, completed activities and quick access to the daily test stay front and centre', 'Taeglicher Score, erledigte Aktivitaeten und der schnelle Zugang zum Tagestest stehen im Mittelpunkt') %></p>
+    <div class="mini-stats">
+      <div><span>Streak</span><strong><%= user.current_streak %> <%= copy('giorni', 'days', 'Tage') %></strong></div>
+      <div><span><%= copy('Punti', 'Points', 'Punkte') %></span><strong><%= user.points %></strong></div>
+      <div><span><%= copy('Livello', 'Level', 'Level') %></span><strong><%= user.level %></strong></div>
+    </div>
+  </div>
+</section>
+
+<section class="quick-grid">
+  <a href="/app/today" class="quick-card"><%= copy('Crea il tuo test quotidiano', 'Create your daily test', 'Erstelle deinen taeglichen Test') %></a>
+  <a href="/app/activities" class="quick-card"><%= copy('Aggiungi attivita felici', 'Add happy activities', 'Gluecksaktivitaeten hinzufuegen') %></a>
+  <a href="/app/diary" class="quick-card"><%= copy('Apri il diario', 'Open the diary', 'Tagebuch oeffnen') %></a>
+  <a href="/app/insights" class="quick-card"><%= copy('Vedi insight', 'View insights', 'Einblicke ansehen') %></a>
+  <a href="/community" class="quick-card"><%= copy('Community positiva', 'Positive community', 'Positive Community') %></a>
+  <a href="/app/badges" class="quick-card"><%= copy('Premi e medaglie', 'Badges and rewards', 'Badges und Belohnungen') %></a>
+</section>
+
+<section class="app-card">
+  <div class="section-heading app-heading">
+    <span class="eyebrow"><%= t("happyGesture") %></span>
+    <h2><%= dashboard.gesture ? dashboard.gesture.display_text : copy('Nessun gesto disponibile', 'No gesture available today') %></h2>
+  </div>
+  <form method="post" action="/app/gesture/complete" class="stack-form">
+    <label><%= copy('Nota rapida', 'Quick note', 'Kurze Notiz') %>
+      <textarea name="note" rows="2" placeholder="<%= copy('Come e andata', 'How did it go', 'Wie ist es gelaufen') %>"></textarea>
+    </label>
+    <button type="submit" class="primary-btn" <%= dashboard.gesture && Number(dashboard.gesture.completed) === 1 ? 'disabled' : '' %>>
+      <%= dashboard.gesture && Number(dashboard.gesture.completed) === 1 ? copy('Gia fatto', 'Already done', 'Schon erledigt') : copy('Segna come fatto', 'Mark as done', 'Als erledigt markieren') %>
+    </button>
+  </form>
+</section>
+
+<section class="app-card">
+  <div class="section-heading app-heading">
+    <span class="eyebrow"><%= copy('Progressi', 'Progress', 'Fortschritt') %></span>
+    <h2><%= copy('Ultimi 7 giorni', 'Last 7 days', 'Letzte 7 Tage') %></h2>
+  </div>
+  <canvas
+    class="chart-canvas"
+    data-chart="line"
+    data-labels='<%- JSON.stringify(dashboard.recentEntries.map((entry) => String(entry.entry_date).slice(5))) %>'
+    data-values='<%- JSON.stringify(dashboard.recentEntries.map((entry) => entry.happy_score)) %>'
+  ></canvas>
+</section>
+
+<section class="app-card">
+  <div class="section-heading app-heading">
+    <span class="eyebrow"><%= copy('Oggi hai completato', 'Completed today', 'Heute erledigt') %></span>
+    <h2><%= dashboard.todayActivities.length %> <%= copy('attivita', 'activities', 'Aktivitaeten') %></h2>
+  </div>
+  <% if (!dashboard.todayActivities.length) { %>
+    <p><%= copy('Non hai ancora segnato nulla oggi, puoi partire con una passeggiata, una canzone o un gesto gentile', 'You have not logged anything yet today. Start with a walk, a song or a kind gesture', 'Du hast heute noch nichts eingetragen. Starte mit einem Spaziergang, einem Lied oder einer freundlichen Geste') %></p>
+  <% } else { %>
+    <div class="tag-list">
+      <% dashboard.todayActivities.forEach((activity) => { %>
+        <span class="tag"><%= activity.icon || "✨" %> <%= activity.activity_name %></span>
+      <% }) %>
+    </div>
+  <% } %>
+</section>

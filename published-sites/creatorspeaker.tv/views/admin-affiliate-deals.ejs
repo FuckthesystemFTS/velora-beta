@@ -1,0 +1,441 @@
+<%
+  const activeSection = data.section || "overview";
+  const pathFor = typeof panelPath === "function" ? panelPath : function(path) { return path; };
+  const canAccess = typeof canPanelPermission === "function" ? canPanelPermission : function() { return false; };
+%>
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <div class="streaming-heading">
+      <div>
+        <p class="eyebrow">Contenuti offerte</p>
+        <h1>Bot offerte</h1>
+        <p class="muted">Import da Facebook, controllo Telegram, approvazione e coda pubblicazioni</p>
+      </div>
+      <div class="admin-system-state">
+        <span>Sorgente <strong><%= data.config.sourceMode === "facebook_page" ? "facebook" : "amazon" %></strong></span>
+        <span>Telegram <strong><%= data.config.telegramEnabled ? "attivo" : "spento" %></strong></span>
+        <span>Facebook <strong><%= data.config.facebookEnabled ? "attivo" : "spento" %></strong></span>
+      </div>
+    </div>
+
+    <div class="admin-action-row top-gap">
+      <% (data.tabs || []).forEach(function(tab) { %>
+        <% if (canAccess(tab[3])) { %>
+          <a class="<%= activeSection === tab[0] ? 'button compact' : 'ghost-button compact-ghost' %>" href="<%= pathFor(tab[2]) %>"><%= tab[1] %></a>
+        <% } %>
+      <% }) %>
+    </div>
+    <% if (activeSection === "overview" || activeSection === "stats") { %>
+      <div class="admin-summary-strip top-gap">
+        <article><span>Categorie attive</span><strong><%= data.summary.activeCategories %></strong></article>
+        <article><span>Prodotti tracciati</span><strong><%= data.summary.trackedProducts %></strong></article>
+        <article><span>Offerte approvate</span><strong><%= data.summary.offersApproved %></strong></article>
+        <article><span>In coda</span><strong><%= data.summary.queueOpen %></strong></article>
+        <article><span>Telegram oggi</span><strong><%= data.summary.telegramPublishedToday %></strong></article>
+        <article><span>Facebook oggi</span><strong><%= data.summary.facebookPublishedToday %></strong></article>
+      </div>
+
+      <div class="two-column top-gap">
+        <article class="info-panel">
+          <h2>Stato modulo</h2>
+          <div class="row-card"><strong>Automazione</strong><span><%= data.config.automationEnabled ? "abilitata" : "disattivata" %></span></div>
+          <div class="row-card"><strong>Sorgente attiva</strong><span><%= data.config.sourceMode === "facebook_page" ? "Pagina Facebook" : "Amazon" %></span></div>
+          <div class="row-card"><strong>Import Facebook</strong><span><%= data.config.facebookSourceEnabled ? "abilitato" : "disattivato" %></span></div>
+          <div class="row-card"><strong>Timezone</strong><span><%= data.config.timezone %></span></div>
+          <div class="row-card"><strong>Prossimi job</strong><span><%= (data.nextJobs || []).length %></span></div>
+        </article>
+
+        <article class="info-panel">
+          <h2>Offerta del giorno</h2>
+          <% if (!data.latestSpecial) { %>
+            <p class="muted">Non ancora selezionata</p>
+          <% } else { %>
+            <div class="row-card"><strong><%= data.latestSpecial.title %></strong><span><%= data.latestSpecial.selection_date %></span></div>
+            <div class="row-card"><strong>Score</strong><span><%= data.latestSpecial.score %></span></div>
+            <div class="row-card"><strong>Stato</strong><span><%= data.latestSpecial.status %></span></div>
+          <% } %>
+        </article>
+      </div>
+
+      <% if (activeSection === "overview") { %>
+        <div class="admin-action-row top-gap">
+          <% if (canAccess("affiliate_deals.search")) { %>
+            <form method="post" action="<%= pathFor('/admin/affiliate-deals/search-now') %>"><%- include("partials/csrf-fields") %><button class="button compact" type="submit">Importa contenuti</button></form>
+          <% } %>
+          <% if (canAccess("affiliate_deals.publish")) { %>
+            <form method="post" action="<%= pathFor('/admin/affiliate-deals/daily-special/select') %>"><%- include("partials/csrf-fields") %><button class="ghost-button compact-ghost" type="submit">Seleziona offerta del giorno</button></form>
+          <% } %>
+          <% if (canAccess("affiliate_deals.scheduler_manage")) { %>
+            <form method="post" action="<%= pathFor('/admin/affiliate-deals/schedule/run') %>"><%- include("partials/csrf-fields") %><button class="ghost-button compact-ghost" type="submit">Esegui scheduler</button></form>
+          <% } %>
+        </div>
+      <% } %>
+    <% } %>
+
+    <% if (activeSection === "offers" || activeSection === "approved") { %>
+      <div class="table-list top-gap">
+        <% (data.offers || []).forEach(function(item) { %>
+          <article class="admin-row">
+            <div>
+              <strong><%= item.title %></strong>
+              <p><%= item.source_type === "facebook_page" ? "Facebook page" : item.amazon_asin %> - <%= item.category_name || "senza categoria" %> - score <%= Number(item.deal_score || 0).toFixed(1) %></p>
+              <p class="muted"><%= item.discount_percent || 0 %>% - <%= item.current_price ? "EUR " + (item.current_price / 100).toFixed(2).replace(".", ",") : "prezzo non letto" %> - <%= item.status %></p>
+              <% if (item.source_post_url) { %><p class="muted"><%= item.source_post_url %></p><% } %>
+            </div>
+            <div class="admin-action-row">
+              <a class="ghost-button compact-ghost" href="<%= pathFor('/admin/affiliate-deals/offers/' + item.id) %>">Anteprima</a>
+              <% if (canAccess("affiliate_deals.approve")) { %>
+                <form method="post" action="<%= pathFor('/admin/affiliate-deals/offers/' + item.id + '/approve') %>"><%- include("partials/csrf-fields") %><button class="button compact secondary" type="submit">Approva</button></form>
+                <form method="post" action="<%= pathFor('/admin/affiliate-deals/offers/' + item.id + '/reject') %>"><%- include("partials/csrf-fields") %><input type="hidden" name="reason" value="Rifiutata da pannello" /><button class="ghost-button compact-ghost" type="submit">Rifiuta</button></form>
+              <% } %>
+              <% if (canAccess("affiliate_deals.publish")) { %>
+                <form method="post" action="<%= pathFor('/admin/affiliate-deals/offers/' + item.id + '/publish-telegram') %>"><%- include("partials/csrf-fields") %><button class="ghost-button compact-ghost" type="submit">Telegram</button></form>
+                <form method="post" action="<%= pathFor('/admin/affiliate-deals/offers/' + item.id + '/publish-facebook') %>"><%- include("partials/csrf-fields") %><button class="ghost-button compact-ghost" type="submit">Facebook</button></form>
+              <% } %>
+            </div>
+          </article>
+        <% }) %>
+        <% if (!(data.offers || []).length) { %><p class="muted">Nessuna offerta disponibile</p><% } %>
+      </div>
+    <% } %>
+
+    <% if (activeSection === "offer-detail") { %>
+      <div class="two-column top-gap">
+        <article class="info-panel">
+          <h2>Anteprima Telegram</h2>
+          <pre class="code-block"><%= data.telegramPreview.renderedText %></pre>
+        </article>
+        <article class="info-panel">
+          <h2>Anteprima Facebook</h2>
+          <pre class="code-block"><%= data.facebookPreview.renderedText %></pre>
+        </article>
+      </div>
+    <% } %>
+
+    <% if (activeSection === "queue" || activeSection === "publications") { %>
+      <div class="table-list top-gap">
+        <% (data.queue || []).forEach(function(item) { %>
+          <div class="admin-row">
+            <strong><%= item.title || item.post_type %></strong>
+            <p><%= item.channel_type %> - <%= item.post_type %> - <%= item.status %></p>
+            <p class="muted"><%= item.error_message || item.external_post_url || "" %></p>
+          </div>
+        <% }) %>
+        <% if (!(data.queue || []).length) { %><p class="muted">Nessuna pubblicazione in archivio</p><% } %>
+      </div>
+    <% } %>
+
+    <% if (activeSection === "daily-special") { %>
+      <div class="two-column top-gap">
+        <article class="info-panel">
+          <h2>Offerta del giorno corrente</h2>
+          <% if (!data.latestSpecial) { %>
+            <p class="muted">Nessuna selezione registrata</p>
+          <% } else { %>
+            <div class="row-card"><strong>Data</strong><span><%= data.latestSpecial.selection_date %></span></div>
+            <div class="row-card"><strong>Score</strong><span><%= data.latestSpecial.score %></span></div>
+            <div class="row-card"><strong>URL Facebook</strong><span><%= data.latestSpecial.facebook_post_url || "in attesa" %></span></div>
+          <% } %>
+        </article>
+        <article class="info-panel">
+          <h2>Selezione manuale</h2>
+          <form method="post" action="<%= pathFor('/admin/affiliate-deals/daily-special/select') %>">
+            <%- include("partials/csrf-fields") %>
+            <button class="button" type="submit">Seleziona e metti in coda</button>
+          </form>
+        </article>
+      </div>
+    <% } %>
+
+    <% if (activeSection === "categories") { %>
+      <form class="info-panel stack-form top-gap" method="post" action="<%= pathFor('/admin/affiliate-deals/categories') %>">
+        <h2>Nuova categoria</h2>
+        <div class="grid-2">
+          <label>Nome<input name="name" required /></label>
+          <label>Slug<input name="slug" /></label>
+        </div>
+        <div class="grid-2">
+          <label>Emoji<input name="emoji" /></label>
+          <label>Riferimento Amazon<input name="amazon_category_reference" /></label>
+        </div>
+        <label>Keyword Amazon<textarea name="amazon_keywords" placeholder="smartphone offerte amazon&#10;telefono android offerta"></textarea></label>
+        <div class="grid-4">
+          <label>Priorita<input type="number" name="priority" value="50" /></label>
+          <label>Sconto minimo<input type="number" name="minimum_discount_percent" value="20" /></label>
+          <label>Deal score minimo<input type="number" name="minimum_deal_score" value="65" /></label>
+          <label>Max risultati<input type="number" name="max_results_per_search" value="20" /></label>
+        </div>
+        <div class="grid-4">
+          <label>Frequenza minuti<input type="number" name="search_frequency_minutes" value="60" /></label>
+          <label>Ordine<input type="number" name="sort_order" value="0" /></label>
+          <label class="checkbox"><input type="checkbox" name="active" checked /> Attiva</label>
+          <label class="checkbox"><input type="checkbox" name="daily_special_enabled" checked /> Offerta del giorno</label>
+        </div>
+        <div class="grid-3">
+          <label class="checkbox"><input type="checkbox" name="telegram_enabled" checked /> Telegram</label>
+          <label class="checkbox"><input type="checkbox" name="facebook_enabled" checked /> Facebook</label>
+        </div>
+        <button class="button" type="submit">Salva categoria</button>
+      </form>
+
+      <div class="table-list top-gap">
+        <% (data.categoriesList || []).forEach(function(item) { %>
+          <div class="admin-row">
+            <strong><%= item.emoji %> <%= item.name %></strong>
+            <p><%= item.status %> - priorita <%= item.priority %> - max <%= item.max_results_per_search %></p>
+            <p class="muted"><%= (item.amazon_keywords || []).join(", ") %></p>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <% if (activeSection === "templates") { %>
+      <form class="info-panel stack-form top-gap" method="post" action="<%= pathFor('/admin/affiliate-deals/templates') %>">
+        <h2>Nuovo template</h2>
+        <div class="grid-3">
+          <label>Nome<input name="name" required /></label>
+          <label>Canale
+            <select name="channel_type">
+              <option value="telegram">telegram</option>
+              <option value="facebook">facebook</option>
+            </select>
+          </label>
+          <label>Tipo
+            <select name="post_type">
+              <option value="standard_offer">standard_offer</option>
+              <option value="daily_special">daily_special</option>
+              <option value="daily_special_teaser">daily_special_teaser</option>
+              <option value="facebook_second_offer">facebook_second_offer</option>
+              <option value="manual">manual</option>
+            </select>
+          </label>
+        </div>
+        <label>Template<textarea name="text_template" required placeholder="{{product_title}}&#10;{{affiliate_url}}"></textarea></label>
+        <div class="grid-4">
+          <label>Pulsante<input name="button_label" /></label>
+          <label class="checkbox"><input type="checkbox" name="include_product_image" checked /> Immagine</label>
+          <label class="checkbox"><input type="checkbox" name="include_affiliate_disclosure" checked /> Disclosure</label>
+          <label class="checkbox"><input type="checkbox" name="include_price_disclaimer" checked /> Disclaimer</label>
+        </div>
+        <button class="button" type="submit">Salva template</button>
+      </form>
+
+      <div class="table-list top-gap">
+        <% (data.templates || []).forEach(function(item) { %>
+          <div class="admin-row">
+            <strong><%= item.name %></strong>
+            <p><%= item.channel_type %> - <%= item.post_type %> - <%= item.status %></p>
+            <p class="muted"><%= item.text_template.slice(0, 180) %></p>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <% if (activeSection === "telegram") { %>
+      <div class="two-column top-gap">
+        <article class="info-panel stack-form">
+          <h2>Controllo bot Telegram</h2>
+          <div class="row-card"><strong>Bot</strong><span><%= data.config.secretsMasked.telegramBotToken %></span></div>
+          <div class="row-card"><strong>Canale</strong><span><%= process.env.TELEGRAM_CHANNEL_ID || "non configurato" %></span></div>
+          <div class="row-card"><strong>Automazione</strong><span><%= data.config.automationEnabled ? "attiva" : "spenta" %></span></div>
+          <div class="row-card"><strong>Pubblicazione Telegram</strong><span><%= data.config.telegramEnabled ? "attiva" : "spenta" %></span></div>
+          <div class="row-card"><strong>Sorgente contenuti</strong><span><%= data.config.sourceMode === "facebook_page" ? "pagina Facebook" : "Amazon" %></span></div>
+
+          <form method="post" action="<%= pathFor('/admin/affiliate-deals/telegram/quick-save') %>" class="stack-form top-gap">
+            <%- include("partials/csrf-fields") %>
+            <div class="grid-2">
+              <label class="checkbox"><input type="checkbox" name="affiliate_facebook_source_enabled" <%= data.settingsMap.affiliate_facebook_source_enabled !== false ? "checked" : "" %> /> Importa post Facebook</label>
+              <label class="checkbox"><input type="checkbox" name="affiliate_telegram_enabled" <%= data.settingsMap.affiliate_telegram_enabled ? "checked" : "" %> /> Pubblica su Telegram</label>
+            </div>
+            <div class="grid-2">
+              <label class="checkbox"><input type="checkbox" name="affiliate_automation_enabled" <%= data.settingsMap.affiliate_automation_enabled ? "checked" : "" %> /> Automazione attiva</label>
+              <label>Post al giorno<input type="number" name="affiliate_telegram_max_posts_per_day" value="<%= data.settingsMap.affiliate_telegram_max_posts_per_day || 16 %>" min="1" max="50" /></label>
+            </div>
+            <div class="grid-3">
+              <label>Ogni minuti<input type="number" name="affiliate_telegram_interval_minutes" value="<%= data.settingsMap.affiliate_telegram_interval_minutes || 60 %>" min="15" /></label>
+              <label>Dalle<input name="affiliate_telegram_active_start_time" value="<%= data.settingsMap.affiliate_telegram_active_start_time || '07:00' %>" /></label>
+              <label>Alle<input name="affiliate_telegram_active_end_time" value="<%= data.settingsMap.affiliate_telegram_active_end_time || '23:00' %>" /></label>
+            </div>
+            <button class="button" type="submit">Salva controllo bot</button>
+          </form>
+        </article>
+
+        <article class="info-panel stack-form">
+          <h2>Azioni rapide</h2>
+          <div class="admin-action-row">
+            <% if (canAccess("affiliate_deals.search")) { %>
+              <form method="post" action="<%= pathFor('/admin/affiliate-deals/telegram/import-now') %>"><%- include("partials/csrf-fields") %><button class="button compact" type="submit">Importa ora da Facebook</button></form>
+            <% } %>
+            <% if (canAccess("affiliate_deals.publish")) { %>
+              <form method="post" action="<%= pathFor('/admin/affiliate-deals/telegram/publish-next') %>"><%- include("partials/csrf-fields") %><button class="button compact secondary" type="submit">Pubblica prossimo post</button></form>
+            <% } %>
+            <% if (canAccess("affiliate_deals.telegram_manage")) { %>
+              <form method="post" action="<%= pathFor('/admin/affiliate-deals/telegram/test') %>"><%- include("partials/csrf-fields") %><button class="ghost-button compact-ghost" type="submit">Verifica bot</button></form>
+            <% } %>
+            <% if (canAccess("affiliate_deals.scheduler_manage")) { %>
+              <form method="post" action="<%= pathFor('/admin/affiliate-deals/schedule/run') %>"><%- include("partials/csrf-fields") %><button class="ghost-button compact-ghost" type="submit">Esegui automazione ora</button></form>
+            <% } %>
+          </div>
+          <div class="row-card"><strong>Contenuti pronti</strong><span><%= data.summary.candidateOffers %></span></div>
+          <div class="row-card"><strong>In coda</strong><span><%= data.summary.queueOpen %></span></div>
+          <div class="row-card"><strong>Telegram oggi</strong><span><%= data.summary.telegramPublishedToday %></span></div>
+          <a class="ghost-button top-gap" href="<%= pathFor('/admin/affiliate-deals/offers') %>">Vai ai contenuti importati</a>
+          <a class="ghost-button" href="<%= pathFor('/admin/affiliate-deals/queue') %>">Controlla la coda</a>
+        </article>
+      </div>
+
+      <div class="two-column top-gap">
+        <article class="info-panel">
+          <h2>Post importati da condividere</h2>
+          <div class="table-list top-gap">
+            <% if (!(data.telegramOffers || []).length) { %>
+              <div class="admin-empty-state">
+                <strong>Nessun post pronto</strong>
+                <span>Usa Importa ora da Facebook per leggere gli ultimi post della pagina</span>
+              </div>
+            <% } %>
+            <% (data.telegramOffers || []).forEach(function(item) { %>
+              <div class="admin-row">
+                <div>
+                  <strong><%= item.title %></strong>
+                  <p><%= item.status %> - score <%= Number(item.deal_score || 0).toFixed(1) %></p>
+                  <p class="muted"><%= item.source_post_url || item.affiliate_url || "" %></p>
+                </div>
+                <div class="admin-action-row">
+                  <a class="ghost-button compact-ghost" href="<%= pathFor('/admin/affiliate-deals/offers/' + item.id) %>">Anteprima</a>
+                  <% if (canAccess("affiliate_deals.publish")) { %>
+                    <form method="post" action="<%= pathFor('/admin/affiliate-deals/offers/' + item.id + '/publish-telegram-now') %>"><%- include("partials/csrf-fields") %><button class="button compact" type="submit">Pubblica ora</button></form>
+                  <% } %>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        </article>
+
+        <article class="info-panel">
+          <h2>Coda Telegram recente</h2>
+          <div class="table-list top-gap">
+            <% if (!(data.telegramQueue || []).length) { %>
+              <p class="muted">Nessun invio Telegram recente</p>
+            <% } %>
+            <% (data.telegramQueue || []).forEach(function(item) { %>
+              <div class="admin-row">
+                <div>
+                  <strong><%= item.title || item.post_type %></strong>
+                  <p><%= item.status %> - <%= item.post_type %></p>
+                  <p class="muted"><%= item.error_message || item.external_post_url || "" %></p>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        </article>
+      </div>
+    <% } %>
+
+    <% if (activeSection === "facebook" || activeSection === "amazon") { %>
+      <div class="two-column top-gap">
+        <article class="info-panel">
+          <h2>Stato configurazione</h2>
+          <% if (activeSection === "facebook") { %>
+            <div class="row-card"><strong>Page token</strong><span><%= data.config.secretsMasked.facebookPageToken %></span></div>
+            <div class="row-card"><strong>Page ID</strong><span><%= process.env.META_PAGE_ID || "non configurato" %></span></div>
+            <form method="post" action="<%= pathFor('/admin/affiliate-deals/facebook/test') %>"><%- include("partials/csrf-fields") %><label class="checkbox"><input type="checkbox" name="send_test" /> Invia anche post di prova</label><button class="button top-gap" type="submit">Verifica Facebook</button></form>
+          <% } %>
+          <% if (activeSection === "amazon") { %>
+            <div class="row-card"><strong>Credential ID</strong><span><%= data.config.secretsMasked.amazonCredentialId %></span></div>
+            <div class="row-card"><strong>Associate tag</strong><span><%= data.config.secretsMasked.amazonAssociateTag %></span></div>
+            <div class="row-card"><strong>Endpoint</strong><span><%= data.config.amazon.endpoint || "non configurato" %></span></div>
+            <form method="post" action="<%= pathFor('/admin/affiliate-deals/amazon/test') %>"><%- include("partials/csrf-fields") %><button class="button top-gap" type="submit">Verifica Amazon</button></form>
+          <% } %>
+        </article>
+
+        <article class="info-panel">
+          <h2>Note operative</h2>
+          <% if (activeSection === "facebook") { %>
+            <p class="muted">Usa il token pagina per importare i post e per pubblicare solo quando il toggle pannello e attivo</p>
+            <p class="muted">Permessi da verificare: pages_manage_posts, pages_read_engagement, pages_show_list</p>
+          <% } %>
+          <% if (activeSection === "amazon") { %>
+            <p class="muted">La modalita live resta in configurazione fino a conferma endpoint e credenziali Creators API</p>
+            <p class="muted">Nessuno scraping Amazon e nessuna cache immagini oltre il link ufficiale</p>
+          <% } %>
+        </article>
+      </div>
+    <% } %>
+
+    <% if (activeSection === "schedule" || activeSection === "settings") { %>
+      <form class="info-panel stack-form top-gap" method="post" action="<%= pathFor('/admin/affiliate-deals/settings') %>">
+        <h2>Configurazione automazione</h2>
+        <div class="grid-4">
+          <label>Sorgente contenuti
+            <select name="affiliate_source_mode">
+              <option value="facebook_page" <%= data.settingsMap.affiliate_source_mode === "facebook_page" ? "selected" : "" %>>facebook_page</option>
+              <option value="amazon" <%= data.settingsMap.affiliate_source_mode === "amazon" ? "selected" : "" %>>amazon</option>
+            </select>
+          </label>
+          <label>Modalita Amazon
+            <select name="affiliate_mode">
+              <option value="configuration" <%= data.settingsMap.affiliate_mode === "configuration" ? "selected" : "" %>>configuration</option>
+              <option value="demo" <%= data.settingsMap.affiliate_mode === "demo" ? "selected" : "" %>>demo</option>
+              <option value="live" <%= data.settingsMap.affiliate_mode === "live" ? "selected" : "" %>>live</option>
+            </select>
+          </label>
+          <label>Ricerca minuti<input type="number" name="affiliate_search_interval_minutes" value="<%= data.settingsMap.affiliate_search_interval_minutes || 60 %>" /></label>
+          <label>Telegram minuti<input type="number" name="affiliate_telegram_interval_minutes" value="<%= data.settingsMap.affiliate_telegram_interval_minutes || 60 %>" /></label>
+          <label>Max Telegram giorno<input type="number" name="affiliate_telegram_max_posts_per_day" value="<%= data.settingsMap.affiliate_telegram_max_posts_per_day || 16 %>" /></label>
+        </div>
+        <div class="grid-4">
+          <label>Inizio Telegram<input name="affiliate_telegram_active_start_time" value="<%= data.settingsMap.affiliate_telegram_active_start_time || '07:00' %>" /></label>
+          <label>Fine Telegram<input name="affiliate_telegram_active_end_time" value="<%= data.settingsMap.affiliate_telegram_active_end_time || '23:00' %>" /></label>
+          <label>Facebook 1<input name="affiliate_facebook_post_1_time" value="<%= data.settingsMap.affiliate_facebook_post_1_time || '07:00' %>" /></label>
+          <label>Facebook 2<input name="affiliate_facebook_post_2_time" value="<%= data.settingsMap.affiliate_facebook_post_2_time || '19:00' %>" /></label>
+        </div>
+        <div class="grid-4">
+          <label>Daily special<input name="affiliate_daily_special_selection_time" value="<%= data.settingsMap.affiliate_daily_special_selection_time || '06:45' %>" /></label>
+          <label>Sconto minimo<input type="number" name="affiliate_min_discount_percent" value="<%= data.settingsMap.affiliate_min_discount_percent || 20 %>" /></label>
+          <label>Deal score minimo<input type="number" name="affiliate_min_deal_score" value="<%= data.settingsMap.affiliate_min_deal_score || 65 %>" /></label>
+          <label>Rating minimo<input type="text" name="affiliate_min_rating" value="<%= data.settingsMap.affiliate_min_rating || 3.8 %>" /></label>
+        </div>
+        <div class="grid-4">
+          <label>Review minime<input type="number" name="affiliate_min_review_count" value="<%= data.settingsMap.affiliate_min_review_count || 20 %>" /></label>
+          <label class="checkbox"><input type="checkbox" name="affiliate_automation_enabled" <%= data.settingsMap.affiliate_automation_enabled ? "checked" : "" %> /> Automazione attiva</label>
+          <label class="checkbox"><input type="checkbox" name="affiliate_facebook_source_enabled" <%= data.settingsMap.affiliate_facebook_source_enabled !== false ? "checked" : "" %> /> Import Facebook</label>
+          <label class="checkbox"><input type="checkbox" name="affiliate_amazon_search_enabled" <%= data.settingsMap.affiliate_amazon_search_enabled ? "checked" : "" %> /> Ricerca Amazon</label>
+          <label class="checkbox"><input type="checkbox" name="affiliate_daily_special_enabled" <%= data.settingsMap.affiliate_daily_special_enabled ? "checked" : "" %> /> Offerta del giorno</label>
+        </div>
+        <div class="grid-4">
+          <label class="checkbox"><input type="checkbox" name="affiliate_telegram_enabled" <%= data.settingsMap.affiliate_telegram_enabled ? "checked" : "" %> /> Telegram</label>
+          <label class="checkbox"><input type="checkbox" name="affiliate_facebook_enabled" <%= data.settingsMap.affiliate_facebook_enabled ? "checked" : "" %> /> Facebook</label>
+          <label class="checkbox"><input type="checkbox" name="affiliate_allow_facebook_text_fallback" <%= data.settingsMap.affiliate_allow_facebook_text_fallback ? "checked" : "" %> /> Fallback testo Facebook</label>
+        </div>
+        <label>Disclosure<textarea name="affiliate_disclosure_text"><%= data.settingsMap.affiliate_disclosure_text || "" %></textarea></label>
+        <label>Disclaimer prezzo<textarea name="affiliate_price_disclaimer"><%= data.settingsMap.affiliate_price_disclaimer || "" %></textarea></label>
+        <button class="button" type="submit">Salva configurazione</button>
+      </form>
+
+      <% if (activeSection === "schedule") { %>
+        <div class="table-list top-gap">
+          <% (data.recentRuns || []).forEach(function(item) { %>
+            <div class="admin-row">
+              <strong><%= item.job_type %></strong>
+              <p><%= item.status %> - job <%= item.jobs_created %> - offerte <%= item.offers_found %></p>
+              <p class="muted"><%= item.error_message || "" %></p>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    <% } %>
+
+    <% if (activeSection === "logs") { %>
+      <div class="table-list top-gap">
+        <% (data.logs || []).forEach(function(item) { %>
+          <div class="admin-row">
+            <strong><%= item.action %></strong>
+            <p><%= item.entity_type %> #<%= item.entity_id || "" %></p>
+            <p class="muted"><%= item.created_at %></p>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</section>

@@ -1,0 +1,25 @@
+<section class="admin-section">
+  <div class="shell">
+    <div class="two-column">
+      <article class="info-panel">
+        <h1>Crediti utenti</h1>
+        <div class="table-list">
+          <% (data.users || []).forEach(function(user) { %>
+            <div class="row-card">
+              <strong><%= user.name %></strong>
+              <span><%= user.email %> · crediti: <%= user.credits %></span>
+            </div>
+          <% }) %>
+        </div>
+      </article>
+      <article class="info-panel">
+        <h2>Costi video</h2>
+        <ul class="mini-list">
+          <% Object.entries(data.costs || {}).forEach(function(entry) { %>
+            <li><%= entry[0] %> - <%= entry[1] %> crediti</li>
+          <% }) %>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>

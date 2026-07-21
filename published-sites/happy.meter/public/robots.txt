@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /app
+Disallow: /api
+Disallow: /reset-password
+Disallow: /forgot-password
+Disallow: /logout
+Disallow: /daily-test
+
+Sitemap: https://www.happymeter.it/sitemap.xml

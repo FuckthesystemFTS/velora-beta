@@ -1,0 +1,42 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <p class="eyebrow">Pubblica contenuti</p>
+    <h1>Contenuti caricati dagli utenti</h1>
+    <p class="muted">Revisiona upload, stato di pubblicazione, note admin e file collegati</p>
+
+    <div class="admin-action-row">
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/media') %>">Media Library</a>
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/creators') %>">Nuovo creator</a>
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/speakers') %>">Nuovo speaker</a>
+      <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/brands') %>">Nuovo brand</a>
+    </div>
+
+    <div class="table-list top-gap">
+      <% if (!data.content.length) { %>
+        <div class="admin-empty-state">
+          <strong>Nessun contenuto utente da revisionare</strong>
+          <span>Quando un utente carica un file o chiede pubblicazione, lo stato apparira qui</span>
+        </div>
+      <% } %>
+      <% data.content.forEach(function(item) { %>
+        <form class="admin-row stack-form compact-form" action="<%= panelPath('/admin/content/' + item.id + '/status') %>" method="post">
+          <%- include("partials/csrf-fields") %>
+          <div>
+            <strong><%= item.title %></strong>
+            <p><%= item.user_name %> - <%= item.type %></p>
+            <p><a href="<%= item.file_url %>" target="_blank" rel="noreferrer">Apri file</a> - avanzamento <%= item.progress_percent %>%</p>
+          </div>
+          <label>Stato
+            <select name="status">
+              <% ["uploaded","under_review","scheduled","published","rejected"].forEach(function(status) { %>
+                <option value="<%= status %>" <%= item.status === status ? "selected" : "" %>><%= status %></option>
+              <% }) %>
+            </select>
+          </label>
+          <label>Note admin<textarea name="admin_notes"><%= item.admin_notes || "" %></textarea></label>
+          <button class="button compact" type="submit">Aggiorna</button>
+        </form>
+      <% }) %>
+    </div>
+  </div>
+</section>

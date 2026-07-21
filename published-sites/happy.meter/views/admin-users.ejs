@@ -1,0 +1,50 @@
+<section class="admin-panel">
+  <h2>Utenti registrati</h2>
+  <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead><tr><th>ID</th><th>Nome</th><th>Email</th><th>Lingua</th><th>Punti</th><th>Livello</th><th>Streak</th><th>Stato</th><th>Moderazione</th></tr></thead>
+      <tbody>
+        <% users.forEach((item) => { %>
+          <tr>
+            <td><%= item.id %></td>
+            <td><strong><%= item.name %></strong></td>
+            <td><%= item.email %></td>
+            <td><%= item.preferred_language %></td>
+            <td><%= item.points %></td>
+            <td><%= item.level %></td>
+            <td><%= item.current_streak %></td>
+            <td>
+              <span class="status-pill <%= item.ban_status && item.ban_status !== 'active' ? 'status-pill--warn' : 'status-pill--ok' %>"><%= item.ban_status || 'active' %></span>
+              <% if (item.ban_reason) { %>
+                <div><small><%= item.ban_reason %></small></div>
+              <% } %>
+              <% if (item.banned_until) { %>
+                <div><small>Fino a <%= item.banned_until %></small></div>
+              <% } %>
+            </td>
+            <td>
+              <% if (item.ban_status === 'active' || !item.ban_status) { %>
+                <form method="post" action="/admin/users/<%= item.id %>/ban" class="admin-inline-form">
+                  <select name="mode">
+                    <option value="temporary">Ban temporaneo</option>
+                    <option value="permanent">Ban permanente</option>
+                  </select>
+                  <input type="number" name="days" min="1" value="7" placeholder="Giorni" />
+                  <input type="text" name="reason" placeholder="Motivo moderazione" />
+                  <button type="submit" class="secondary-btn">Applica</button>
+                </form>
+              <% } else { %>
+                <form method="post" action="/admin/users/<%= item.id %>/unban">
+                  <button type="submit" class="primary-btn">Riattiva</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% if (!users.length) { %>
+    <p class="admin-empty">Nessun utente registrato</p>
+  <% } %>
+</section>

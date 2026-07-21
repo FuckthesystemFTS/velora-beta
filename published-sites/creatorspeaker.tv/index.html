@@ -1,0 +1,345 @@
+﻿<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CreatorSpeaker TV su Velora</title>
+    <meta
+      name="description"
+      content="CreatorSpeaker TV adattato per Velora con login tramite identita unica"
+    />
+    <link rel="icon" href="public/assets/favicon.png" />
+    <style>
+      :root {
+        --ink: #080b12;
+        --panel: rgba(12, 17, 28, 0.84);
+        --line: rgba(255, 255, 255, 0.14);
+        --text: #f8fbff;
+        --muted: #b9c3d6;
+        --gold: #f6c75a;
+        --red: #e84c45;
+        --cyan: #63d7ff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+        background:
+          linear-gradient(120deg, rgba(8, 11, 18, 0.96), rgba(8, 11, 18, 0.68)),
+          url("public/assets/brand/creatorspeaker-brand-hero.jpg") center/cover fixed,
+          #080b12;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .shell {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 58px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 52px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+      }
+
+      .brand img {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        object-fit: cover;
+      }
+
+      .pill {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 10px 16px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(14px);
+        color: var(--muted);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1fr 0.9fr;
+        gap: 28px;
+        align-items: stretch;
+      }
+
+      .hero-copy,
+      .screen,
+      .card,
+      .studio {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.36);
+      }
+
+      .hero-copy {
+        border-radius: 36px;
+        padding: 42px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        color: var(--gold);
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-weight: 900;
+        font-size: 0.76rem;
+      }
+
+      h1 {
+        margin: 18px 0;
+        font-size: clamp(3rem, 7vw, 7.2rem);
+        line-height: 0.86;
+        letter-spacing: -0.09em;
+      }
+
+      .lead {
+        color: var(--muted);
+        font-size: clamp(1.05rem, 1.8vw, 1.32rem);
+        line-height: 1.58;
+        max-width: 700px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .btn {
+        border: 0;
+        border-radius: 16px;
+        padding: 15px 19px;
+        font-weight: 900;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .btn-primary {
+        color: #10131b;
+        background: linear-gradient(135deg, var(--gold), #fff0a8);
+      }
+
+      .btn-soft {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid var(--line);
+      }
+
+      .screen {
+        border-radius: 38px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .screen img {
+        width: 100%;
+        height: 100%;
+        min-height: 540px;
+        object-fit: cover;
+        display: block;
+      }
+
+      .abstract-visual {
+        min-height: 540px;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at 30% 20%, rgba(246, 199, 90, 0.38), transparent 13rem),
+          radial-gradient(circle at 78% 32%, rgba(99, 215, 255, 0.26), transparent 13rem),
+          linear-gradient(135deg, #111827, #080b12);
+      }
+
+      .abstract-visual span {
+        grid-area: 1 / 1;
+        width: 220px;
+        height: 130px;
+        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+        transform: rotate(var(--turn, 0deg)) translateY(var(--shift, 0));
+      }
+
+      .abstract-visual span:nth-child(2) { --turn: 9deg; --shift: -42px; }
+      .abstract-visual span:nth-child(3) { --turn: -11deg; --shift: 44px; }
+
+      .screen-badge {
+        position: absolute;
+        left: 22px;
+        right: 22px;
+        bottom: 22px;
+        border-radius: 24px;
+        padding: 20px;
+        background: rgba(8, 11, 18, 0.82);
+        border: 1px solid var(--line);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-top: 28px;
+      }
+
+      .card {
+        border-radius: 28px;
+        padding: 26px;
+      }
+
+      .card h2 {
+        margin: 0 0 10px;
+      }
+
+      .card p,
+      .card li {
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .studio {
+        margin-top: 28px;
+        border-radius: 34px;
+        padding: 28px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .status {
+        color: var(--cyan);
+        font-weight: 900;
+        min-height: 1.4em;
+      }
+
+      footer {
+        margin-top: 30px;
+        color: rgba(248, 251, 255, 0.58);
+      }
+
+      @media (max-width: 860px) {
+        .topbar,
+        .hero,
+        .studio {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .hero-copy {
+          padding: 28px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .screen img {
+          min-height: 360px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <img src="public/assets/brand/creatorspeaker-brand-emblem.jpg" alt="CreatorSpeaker TV" />
+          <div>
+            <div>CreatorSpeaker TV</div>
+            <small>Media studio per Velora</small>
+          </div>
+        </div>
+        <div class="pill">Login tramite identita Velora</div>
+      </header>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow">Zona beta creatorspeaker.tv</span>
+          <h1>La TV dei creator sopra il web</h1>
+          <p class="lead">
+            CreatorSpeaker TV porta vetrina, media studio, offerte affiliate e area creator dentro una zona Velora.
+            Questa versione e pronta per testare pubblicazione statica e accesso con identita unica Velora.
+          </p>
+          <div class="actions">
+            <a class="btn btn-primary" href="#" data-velora-auth="register">Registrati con Velora</a>
+            <a class="btn btn-soft" href="#" data-velora-auth="login">Accedi con Velora</a>
+            <a class="btn btn-soft" href="#studio">Apri demo studio</a>
+          </div>
+        </div>
+
+        <aside class="screen">
+          <div class="abstract-visual" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div class="screen-badge">
+            <strong>MediaStream beta</strong>
+            <p>Canali, profili creator e contenuti premium saranno salvati tramite backend Velora quando il publisher abilita le API app-specific.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Vetrina creator</h2>
+          <p>Pagina pubblica per presentare canali, pacchetti, video e profili professionali.</p>
+        </article>
+        <article class="card">
+          <h2>Studio video</h2>
+          <p>Upload, archivio e gestione contenuti restano collegati al login Velora e alle API protette.</p>
+        </article>
+        <article class="card">
+          <h2>Affiliate hub</h2>
+          <p>Offerte e automazioni sono mostrate in beta statica, con funzioni server abilitate solo dopo integrazione backend.</p>
+        </article>
+      </section>
+
+      <section id="studio" class="studio">
+        <div>
+          <span class="eyebrow">Demo locale</span>
+          <h2>Controllo pubblicazione</h2>
+          <p>Questa demo verifica che script, layout e asset funzionino dentro una cartella pubblicabile su Velora.</p>
+          <p class="status" data-status></p>
+        </div>
+        <button class="btn btn-primary" type="button" data-check>Verifica demo</button>
+      </section>
+
+      <footer>
+        Versione Velora statica. La cartella originale CreatorSpeaker TV non e stata modificata.
+      </footer>
+    </main>
+
+    <script>
+      document.querySelector("[data-check]").addEventListener("click", () => {
+        document.querySelector("[data-status]").textContent =
+          "Demo pronta: pubblicazione statica e login Velora configurati";
+      });
+    </script>
+  </body>
+</html>
+

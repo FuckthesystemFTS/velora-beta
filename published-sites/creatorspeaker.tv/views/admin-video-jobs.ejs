@@ -1,0 +1,55 @@
+<section class="admin-section">
+  <div class="shell">
+    <div class="streaming-heading">
+      <div>
+        <h1>Video jobs</h1>
+        <p class="muted">Controlla elaborazioni, output, errori e rimborsi crediti</p>
+      </div>
+      <div class="inline-actions">
+        <% if (data.showAll) { %>
+          <a class="ghost-button compact-ghost" href="/admin/video-jobs">Mostra operativi</a>
+        <% } else { %>
+          <a class="ghost-button compact-ghost" href="/admin/video-jobs?show=all">Mostra anche chiusi</a>
+        <% } %>
+      </div>
+    </div>
+    <div class="table-list">
+      <% if (!data.jobs.length) { %>
+        <div class="admin-empty-state">
+          <strong>Nessun video job operativo</strong>
+          <span>I job rimborsati o chiusi non restano nella lista principale</span>
+        </div>
+      <% } %>
+      <% data.jobs.forEach(function(job) { %>
+        <div class="admin-row split-admin-row" data-job-status data-job-status-url="/admin/video-jobs/<%= job.id %>/status" data-job-refresh-ms="5000">
+          <div>
+            <strong><%= job.title %></strong>
+            <p><%= job.user_name %> - <%= job.profile_name || job.style %> - <%= job.aspect_ratio || job.format %></p>
+            <p>Stato <span data-job-status-label><%= job.status %></span> - avanzamento <strong data-job-progress-text><%= job.progress_percent %>%</strong> - costo <%= job.credits_cost %> crediti</p>
+            <div class="upload-progress">
+              <div class="upload-progress-bar" style="width: <%= job.progress_percent %>%" data-job-progress-bar role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= job.progress_percent %>"></div>
+            </div>
+            <% if (job.refunded) { %><p class="muted">Crediti gia rimborsati</p><% } %>
+            <% if (job.output_url) { %><a href="<%= job.output_url %>" target="_blank" rel="noreferrer" data-job-output-link>Apri output</a><% } else { %><a href="#" target="_blank" rel="noreferrer" data-job-output-link hidden>Apri output</a><% } %>
+            <p class="muted" data-job-status-detail><%= job.status_detail || '' %></p>
+            <% if (job.error_message) { %><p class="muted"><%= job.error_message %></p><% } %>
+          </div>
+          <% if (!job.refunded && job.status !== 'refunded') { %>
+            <div class="inline-actions">
+              <% if (job.status !== 'completed') { %>
+                <form action="/admin/video-jobs/<%= job.id %>/retry" method="post" onsubmit="return confirm('Rilanciare questa elaborazione?')">
+                  <%- include("partials/csrf-fields") %>
+                  <button class="ghost-button compact-ghost" type="submit">Rilancia</button>
+                </form>
+              <% } %>
+              <form action="/admin/video-jobs/<%= job.id %>/refund" method="post" onsubmit="return confirm('Rimborsare i crediti e chiudere questo job?')">
+                <%- include("partials/csrf-fields") %>
+                <button class="button compact secondary" type="submit">Rimborsa e chiudi</button>
+              </form>
+            </div>
+          <% } %>
+        </div>
+      <% }) %>
+    </div>
+  </div>
+</section>

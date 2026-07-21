@@ -1,0 +1,10 @@
+node_modules/
+db/*.sqlite
+server.out.log
+server.err.log
+.env
+npm-debug.log*
+logo happy.png
+prepagina 1 .jpg
+prepagina 2.jpg
+photo_*.jpg

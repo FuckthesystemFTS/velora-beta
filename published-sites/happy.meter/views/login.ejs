@@ -1,0 +1,20 @@
+<section class="auth-wrap">
+  <div class="auth-card">
+    <% const formErrors = typeof errors !== "undefined" ? errors : []; %>
+    <% const formValues = typeof values !== "undefined" ? values : {}; %>
+    <h1><%= copy('Accedi', 'Log in', 'Anmelden') %></h1>
+    <p><%= copy('Rientra nel tuo spazio, riprendi il diario e continua dal prossimo Happy Score', 'Come back to your space, reopen your diary and continue from your next Happy Score', 'Kehre in deinen Bereich zurueck, oeffne dein Tagebuch wieder und mach mit deinem naechsten Happy Score weiter') %></p>
+    <% if (formErrors.length) { %>
+      <div class="error-box"><%= formErrors.join(" ") %></div>
+    <% } %>
+    <form method="post" action="/login" class="stack-form">
+      <input type="hidden" name="redirect" value="<%= formValues.redirect || '' %>" />
+      <label><%= copy('Email', 'Email', 'E Mail') %><input type="email" name="email" value="<%= formValues.email || '' %>" autocomplete="email" required /></label>
+      <label><%= copy('Password', 'Password', 'Passwort') %><input type="password" name="password" autocomplete="current-password" required /></label>
+      <button type="submit" class="primary-btn"><%= copy('Accedi', 'Log in', 'Anmelden') %></button>
+    </form>
+    <p class="auth-link"><%= copy('Non hai un account?', 'Do not have an account?', 'Noch kein Konto?') %> <a href="/register"><%= copy('Registrati', 'Sign up', 'Registrieren') %></a></p>
+    <p class="auth-link"><a href="/forgot-password"><%= copy('Hai dimenticato la password?', 'Forgot your password?', 'Passwort vergessen?') %></a></p>
+    <p class="auth-link"><a href="/"><%= copy('Torna alla home', 'Back to home', 'Zur Startseite') %></a></p>
+  </div>
+</section>

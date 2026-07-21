@@ -1,0 +1,32 @@
+<section class="auth-wrap">
+  <div class="auth-card auth-card--wide">
+    <% const formErrors = typeof errors !== "undefined" ? errors : []; %>
+    <% const formValues = typeof values !== "undefined" ? values : {}; %>
+    <h1><%= copy('Crea il tuo Feliciometro', 'Create your HappyMeter', 'Erstelle dein HappyMeter') %></h1>
+    <p><%= copy('Apri il tuo spazio personale e salva test, diario, attivita felici e insight che crescono con te', 'Open your personal space and save tests, diary entries, happy activities and insights that grow with you', 'Oeffne deinen persoenlichen Bereich und speichere Tests, Tagebuch, Gluecksaktivitaeten und Einblicke, die mit dir wachsen') %></p>
+    <% if (formErrors.length) { %>
+      <div class="error-box"><%= formErrors.join(" ") %></div>
+    <% } %>
+    <form method="post" action="/register" class="stack-form two-col">
+      <input type="hidden" name="redirect" value="<%= formValues.redirect || '' %>" />
+      <label><%= copy('Nome', 'Name', 'Name') %><input type="text" name="name" value="<%= formValues.name || '' %>" autocomplete="name" required /></label>
+      <label>Email<input type="email" name="email" value="<%= formValues.email || '' %>" autocomplete="email" required /></label>
+      <label><%= copy('Password', 'Password', 'Passwort') %><input type="password" name="password" autocomplete="new-password" required /></label>
+      <label><%= copy('Conferma password', 'Confirm password', 'Passwort bestaetigen') %><input type="password" name="confirmPassword" autocomplete="new-password" required /></label>
+      <label><%= copy('Lingua preferita', 'Preferred language', 'Bevorzugte Sprache') %>
+        <select name="preferred_language">
+          <option value="it" <%= (formValues.preferred_language || "it") === "it" ? "selected" : "" %>>Italiano</option>
+          <option value="en" <%= formValues.preferred_language === "en" ? "selected" : "" %>>English</option>
+          <option value="de" <%= formValues.preferred_language === "de" ? "selected" : "" %>>Deutsch</option>
+        </select>
+      </label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" name="acceptPrivacy" value="1" <%= formValues.acceptPrivacy ? "checked" : "" %> /> <%= copy('Accetto la privacy policy', 'I accept the privacy policy', 'Ich akzeptiere die Datenschutzrichtlinie') %></label>
+        <label><input type="checkbox" name="acceptTerms" value="1" <%= formValues.acceptTerms ? "checked" : "" %> /> <%= copy('Accetto i termini e condizioni', 'I accept the terms and conditions', 'Ich akzeptiere die Nutzungsbedingungen') %></label>
+      </div>
+      <button type="submit" class="primary-btn"><%= copy('Crea account', 'Create account', 'Konto erstellen') %></button>
+    </form>
+    <p class="auth-link"><%= copy('Hai gia un account?', 'Already have an account?', 'Hast du bereits ein Konto?') %> <a href="/login"><%= copy('Accedi da qui', 'Log in here', 'Hier anmelden') %></a></p>
+    <p class="auth-link"><a href="/"><%= copy('Torna alla home', 'Back to home', 'Zur Startseite') %></a></p>
+  </div>
+</section>

@@ -1,0 +1,42 @@
+<section class="auth-wrap">
+  <div class="test-variant-stack">
+    <article class="test-variant-hero variant-score-panel">
+      <span class="eyebrow"><%= copy('Tre percorsi per iniziare', 'Three paths to begin', 'Drei Wege zum Start') %></span>
+      <h1><%= copy('Scegli il tuo HappyMeter', 'Choose your HappyMeter', 'Waehle dein HappyMeter') %></h1>
+      <p><%= copy('Tre modi diversi per iniziare. Provali e vota quello che senti piu vicino al tuo modo di osservare la giornata', 'Three different ways to begin. Try them and vote for the one that feels closest to how you observe your day', 'Drei verschiedene Wege, um zu beginnen. Probiere sie aus und stimme fuer den Test, der am besten zu dir passt') %></p>
+    </article>
+
+    <div class="test-selection-grid">
+      <% const titles = {
+        A: copy('Test A - HappyMeter Classico', 'Test A - Classic HappyMeter', 'Test A - Klassisches HappyMeter'),
+        B: copy('Test B - Missioni Felici', 'Test B - Happy Missions', 'Test B - Gluecksmissionen'),
+        C: copy('Test C - Ibrido', 'Test C - Hybrid', 'Test C - Hybrid')
+      }; %>
+      <% const descriptions = {
+        A: copy('Domande rapide con score immediato e primo sguardo alla tua giornata', 'Quick questions with instant score and a first look at your day', 'Schnelle Fragen mit sofortigem Score und erstem Blick auf deinen Tag'),
+        B: copy('Venti missioni leggere da spuntare per capire quanto spazio hanno avuto i gesti positivi', 'Twenty light missions to tick off and see how much space positive actions had', 'Zwanzig leichte Missionen zum Abhaken, um zu sehen, wie viel Raum positive Gesten hatten'),
+        C: copy('Pochi slider, missioni del giorno e un punteggio piu ricco in un unico passaggio', 'A few sliders, daily missions and a richer score in one flow', 'Ein paar Slider, Tagesmissionen und ein umfassenderer Score in einem Ablauf')
+      }; %>
+      <% tests.forEach((test) => { const code = String(test.code || '').toUpperCase(); %>
+        <article class="test-variant-card">
+          <span class="eyebrow"><%= copy('Percorso HappyMeter', 'HappyMeter path', 'HappyMeter Weg') %></span>
+          <h2><%= titles[code] || test.title %></h2>
+          <p><%= descriptions[code] || test.description %></p>
+          <div class="variant-meta">
+            <article>
+              <small><%= copy('Ideale se vuoi', 'Ideal if you want', 'Ideal, wenn du') %></small>
+              <strong><%= code === 'A' ? copy('un check rapido', 'a quick check', 'einen schnellen Check willst') : code === 'B' ? copy('partire dai gesti', 'start from actions', 'von Gesten aus starten willst') : copy('una lettura mista', 'a mixed reading', 'eine gemischte Sicht willst') %></strong>
+            </article>
+            <article>
+              <small><%= copy('Voti raccolti', 'Votes collected', 'Gesammelte Stimmen') %></small>
+              <strong data-test-like-count="<%= code %>"><%= test.likesCount || 0 %></strong>
+            </article>
+          </div>
+          <div class="test-variant-card__footer">
+            <a href="/test/<%= code.toLowerCase() %>" class="primary-btn"><%= copy('Apri questo test', 'Open this test', 'Diesen Test oeffnen') %></a>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  </div>
+</section>

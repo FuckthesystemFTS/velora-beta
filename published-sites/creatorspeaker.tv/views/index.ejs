@@ -1,0 +1,297 @@
+<%
+  const heroMetrics = [
+    { value: "100+", label: "contenuti pubblicati" },
+    { value: "*****", label: "qualita editoriale" },
+    { value: "2700+", label: "utenti raggiunti" }
+  ];
+
+  const featureStrip = [
+    ["Streaming Experience", "Interfaccia visiva ispirata alle piattaforme on demand", "SE"],
+    ["Creator Network", "Perfetta per creator, speaker, aziende e format multimediali", "CN"],
+    ["Smart TV Ready", "Presentazione ideale per web TV, app e dispositivi connessi", "TV"],
+    ["Conversion Focus", "CTA e sezioni pensate per generare richieste e contatti", "CF"]
+  ];
+
+  const steps = [
+    { number: "1", label: "CREA", title: "Produci podcast, video, articoli e format" },
+    { number: "2", label: "DISTRIBUISCI", title: "Pubblichiamo su web, social, podcast e Smart TV" },
+    { number: "3", label: "CRESCI", title: "Aumenti autorevolezza, visibilita e opportunita" }
+  ];
+
+  const exploreRows = [
+    {
+      title: "Featured Shows",
+      items: [
+        { badge: "NEW", title: "Creator Spotlight", meta: "Docu Series", tone: "red", image: "/assets/mediastream/thumb-01.jpg" },
+        { badge: "LIVE", title: "Podcast Live", meta: "On Air", tone: "blue", image: "/assets/mediastream/thumb-02.jpg" },
+        { badge: "NEW", title: "Vision Makers", meta: "Inspiration", tone: "red", image: "/assets/mediastream/thumb-03.jpg" },
+        { badge: "", title: "Interview Room", meta: "Creator Talk", tone: "dark", image: "/assets/mediastream/thumb-04.jpg" }
+      ]
+    },
+    {
+      title: "Podcast",
+      items: [
+        { badge: "LIVE", title: "Mindset Shift", meta: "Episodio 24", tone: "gold", image: "/assets/mediastream/thumb-07.jpg" },
+        { badge: "", title: "Digital Voices", meta: "Studio Session", tone: "violet", image: "/assets/mediastream/thumb-08.jpg" },
+        { badge: "NEW", title: "Sound Talks", meta: "Episodio 29", tone: "gold", image: "/assets/mediastream/thumb-11.jpg" },
+        { badge: "", title: "Music & Voice", meta: "On Demand", tone: "violet", image: "/assets/mediastream/thumb-12.jpg" }
+      ]
+    },
+    {
+      title: "Business TV",
+      items: [
+        { badge: "NEW", title: "Market Insight", meta: "Trend e Analisi", tone: "blue", image: "/assets/mediastream/thumb-13.jpg" },
+        { badge: "", title: "Startup Spotlight", meta: "Business Talk", tone: "red", image: "/assets/mediastream/thumb-14.jpg" },
+        { badge: "LIVE", title: "Future Business", meta: "Innovation", tone: "blue", image: "/assets/mediastream/thumb-17.jpg" },
+        { badge: "", title: "Creator App", meta: "Round Table", tone: "dark", image: "/assets/mediastream/thumb-18.jpg" }
+      ]
+    },
+    {
+      title: "Creator Channel",
+      items: [
+        { badge: "NEW", title: "The Stage", meta: "Live Performance", tone: "violet", image: "/assets/mediastream/thumb-04.jpg" },
+        { badge: "", title: "Content Flow", meta: "Tips and Tricks", tone: "blue", image: "/assets/mediastream/thumb-05.jpg" },
+        { badge: "LIVE", title: "Creators Live", meta: "On Air", tone: "red", image: "/assets/mediastream/thumb-06.jpg" },
+        { badge: "", title: "Story Lab", meta: "Workshop", tone: "gold", image: "/assets/mediastream/thumb-10.jpg" }
+      ]
+    }
+  ];
+
+  const benefits = [
+    ["Visibilita", "Dai ai tuoi contenuti piu occasioni di essere visti, ascoltati e riconosciuti"],
+    ["Branding", "Costruisci una presenza piu professionale e coerente attorno alla tua voce o al tuo progetto"],
+    ["Community", "Entra in un ecosistema di creator, speaker, professionisti e realta che vogliono comunicare meglio"],
+    ["Distribuzione", "Porta i contenuti su piu canali, dal web al podcast, dai social alla Smart TV"],
+    ["Monetizzazione", "Trasforma format, contenuti e competenze in nuove opportunita commerciali e professionali"],
+    ["Collaborazioni", "Crea connessioni con altri progetti, aziende, speaker e realta editoriali"]
+  ];
+
+  const featuredCreators = [
+    ["Creator Video", "Creator", "Format video e presenza continuativa", "red", "/assets/mediastream/thumb-01.jpg"],
+    ["Speaker Podcast", "Speaker", "Voce, interviste e podcast premium", "gold", "/assets/mediastream/thumb-02.jpg"],
+    ["Business Story", "Azienda", "Contenuti autorevoli per brand e attivita", "blue", "/assets/mediastream/thumb-13.jpg"],
+    ["Format TV", "Smart TV", "Programmi pensati per schermi connessi", "dark", "/assets/mediastream/thumb-04.jpg"],
+    ["Progetto Editoriale", "Web TV", "Rubriche e serie da distribuire meglio", "violet", "/assets/mediastream/thumb-17.jpg"],
+    ["Voce del Network", "Podcast", "Presenza audio con taglio professionale", "red", "/assets/mediastream/thumb-11.jpg"]
+  ];
+
+  const testimonials = [
+    ["Creator indipendente", "Finalmente un progetto che non si limita a pubblicare contenuti, ma li inserisce dentro una rete con una direzione"],
+    ["Speaker e podcaster", "Per chi usa la voce come strumento di comunicazione, avere un contesto multicanale cambia la percezione del proprio lavoro"],
+    ["Azienda partner", "Il valore non e solo nel servizio, ma nel modo in cui il contenuto viene presentato, distribuito e valorizzato"]
+  ];
+%>
+
+<section class="hero hero-template">
+  <div class="shell hero-template-grid">
+    <div class="hero-copy hero-template-copy">
+      <h1><span>Costruisci la tua</span><span>piattaforma multimediale</span></h1>
+      <p class="lead">
+        CreatorSpeaker TV aiuta creator, speaker, aziende e professionisti a trasformare contenuti e idee in visibilita, autorevolezza e opportunita
+      </p>
+      <div class="cta-row">
+        <a class="button button-red" href="/register">Registrati Ora</a>
+        <a class="ghost-button hero-outline" href="/network">Scopri il Network</a>
+      </div>
+      <div class="hero-metrics">
+        <% heroMetrics.forEach(function(item) { %>
+          <article class="hero-metric">
+            <strong><%= item.value %></strong>
+            <span><%= item.label %></span>
+          </article>
+        <% }) %>
+      </div>
+    </div>
+
+    <div class="device-cluster template-device-cluster">
+      <img class="template-device-image" src="/assets/mediastream/hero-devices.jpg" alt="Mockup piattaforma CreatorSpeaker TV su laptop tablet e smartphone" />
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell feature-strip grid-4" id="funzionalita">
+    <% featureStrip.forEach(function(item) { %>
+      <article class="feature-strip-card">
+        <div class="feature-strip-icon"><span><%= item[2] %></span></div>
+        <div>
+          <h3><%= item[0] %></h3>
+          <p><%= item[1] %></p>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="section-heading narrow-center">
+      <p class="eyebrow">Come funziona</p>
+      <h2>Dalla tua voce al tuo pubblico</h2>
+      <p>Un percorso semplice per trasformare idee e contenuti in una presenza mediatica professionale</p>
+    </div>
+    <div class="journey-grid grid-3">
+      <% steps.forEach(function(step) { %>
+        <article class="journey-card">
+          <span class="journey-number"><%= step.number %></span>
+          <p class="tag"><%= step.label %></p>
+          <h3><%= step.title %></h3>
+        </article>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<section class="section section-streaming" id="esplora">
+  <div class="shell">
+    <div class="section-heading streaming-heading">
+      <div>
+        <p class="eyebrow">Esplora la piattaforma</p>
+        <h2>Una home che parla il linguaggio di una vera media platform</h2>
+      </div>
+      <a class="streaming-more" href="/network">Vedi tutto</a>
+    </div>
+
+    <div class="streaming-library">
+      <% exploreRows.forEach(function(row, rowIndex) { %>
+        <section class="streaming-library-row">
+          <div class="streaming-row-title">
+            <h3><%= row.title %></h3>
+          </div>
+          <div class="streaming-row-content">
+            <div class="stream-row-header">
+              <div></div>
+              <div class="slider-controls">
+                <button class="slider-arrow" type="button" data-slider-prev="row-<%= rowIndex %>" aria-label="Scorri a sinistra">&lt;</button>
+                <button class="slider-arrow" type="button" data-slider-next="row-<%= rowIndex %>" aria-label="Scorri a destra">&gt;</button>
+              </div>
+            </div>
+            <div class="stream-track" id="row-<%= rowIndex %>" data-slider-track>
+              <% row.items.forEach(function(item) { %>
+                <article class="stream-card stream-tone-<%= item.tone %>">
+                  <div class="stream-art">
+                    <img class="stream-art-image" src="<%= item.image %>" alt="<%= item.title %>" loading="lazy" decoding="async" />
+                    <% if (item.badge) { %><span class="stream-badge"><%= item.badge %></span><% } %>
+                    <div class="stream-overlay">
+                      <a href="/network" class="ghost-button compact-ghost">Scopri</a>
+                    </div>
+                  </div>
+                  <div class="stream-copy">
+                    <strong><%= item.title %></strong>
+                    <span><%= item.meta %></span>
+                  </div>
+                </article>
+              <% }) %>
+            </div>
+          </div>
+        </section>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell smart-tv-section grid-2">
+    <article class="info-panel smart-tv-copy">
+      <p class="eyebrow">Smart TV</p>
+      <h2>Smart TV CreatorSpeaker</h2>
+      <p>Porta il tuo contenuto direttamente sul televisore degli utenti tramite la nostra rete multicanale</p>
+      <p class="muted">
+        CreatorSpeaker TV permette di immaginare i tuoi contenuti non solo come post o video isolati, ma come parte di un ecosistema editoriale distribuito su web, podcast, social, Smart TV e piattaforme digitali
+      </p>
+      <a class="button secondary" href="/smart-tv">Scopri la distribuzione Smart TV</a>
+    </article>
+
+    <div class="device-panel">
+      <div class="smart-tv-wall">
+        <img class="smart-tv-panel-image" src="/assets/mediastream/smart-tv-panel.jpg" alt="Pannello Smart TV CreatorSpeaker" />
+        <div class="smart-tv-head">
+          <span>Smart TV</span>
+          <span>Connected Devices</span>
+          <span>Web TV</span>
+        </div>
+        <article class="smart-tv-hero-card">
+          <p class="eyebrow">CreatorSpeaker TV</p>
+          <h3>Contenuti pensati per schermi e piattaforme diverse</h3>
+        </article>
+        <div class="smart-tv-grid grid-4">
+          <% ["Podcast", "Interviste", "Business TV", "Creator TV"].forEach(function(label) { %>
+            <div class="smart-tv-card"><span><%= label %></span></div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-benefits">
+  <div class="shell">
+    <div class="section-heading narrow-center">
+      <p class="eyebrow">Vantaggi</p>
+      <h2>Perche entrare nel Network</h2>
+    </div>
+    <div class="benefits-grid grid-3">
+      <% benefits.forEach(function(item, index) { %>
+        <article class="benefit-card">
+          <span class="benefit-icon">0<%= index + 1 %></span>
+          <h3><%= item[0] %></h3>
+          <p><%= item[1] %></p>
+        </article>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<section class="section section-streaming">
+  <div class="shell">
+    <div class="section-heading">
+      <p class="eyebrow">Creator in evidenza</p>
+      <h2>Uno spazio pensato per valorizzare volti, voci e progetti del network</h2>
+    </div>
+    <div class="featured-grid grid-3">
+      <% featuredCreators.forEach(function(item, index) { %>
+        <article class="featured-card featured-tone-<%= item[3] %>">
+          <div class="featured-visual">
+            <img class="featured-visual-image" src="<%= item[4] %>" alt="<%= item[0] %>" loading="lazy" decoding="async" />
+            <span class="tag"><%= item[1] %></span>
+          </div>
+          <div class="featured-copy">
+            <h3><%= item[0] %></h3>
+            <p><%= item[2] %></p>
+            <a class="ghost-button compact-ghost" href="/network">Scopri</a>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="shell">
+    <div class="section-heading narrow-center">
+      <p class="eyebrow">Testimonianze</p>
+      <h2>Cosa dicono del network</h2>
+    </div>
+    <div class="testimonial-grid grid-3">
+      <% testimonials.forEach(function(item, index) { %>
+        <article class="testimonial-card">
+          <div class="testimonial-avatar"><span><%= String.fromCharCode(65 + index) %></span></div>
+          <strong><%= item[0] %></strong>
+          <p>"<%= item[1] %>"</p>
+        </article>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<section class="section cta-finale">
+  <div class="shell cta-finale-panel">
+    <p class="eyebrow">CreatorSpeaker TV</p>
+    <h2>Il tuo contenuto merita<br />una rete che lo valorizzi</h2>
+    <p>Unisciti a CreatorSpeaker TV e porta la tua voce piu lontano</p>
+    <div class="cta-row">
+      <a class="button" href="/register">Registrati Gratuitamente</a>
+      <a class="ghost-button hero-outline" href="/network">Scopri il Network</a>
+    </div>
+  </div>
+</section>

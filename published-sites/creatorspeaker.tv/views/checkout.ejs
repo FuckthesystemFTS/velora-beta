@@ -1,0 +1,39 @@
+<section class="page-section">
+  <div class="shell two-column">
+    <form class="info-panel stack-form" action="/checkout" method="post" id="checkout-form">
+      <%- include("partials/csrf-fields") %>
+      <p class="eyebrow">Invia richiesta</p>
+      <h1>Attiva il percorso</h1>
+      <label>Nome e cognome<input type="text" name="name" required /></label>
+      <label>Email<input type="email" name="email" required /></label>
+      <label>Telefono<input type="text" name="phone" /></label>
+      <label>Ragione sociale<input type="text" name="company" /></label>
+      <label>Metodo di pagamento
+        <select name="payment_method" required>
+          <option value="bank_transfer" <%= data.operations && data.operations.enableBankTransfer === false ? "" : "selected" %>>Bonifico</option>
+          <% if (!data.operations || data.operations.enablePaypal !== false) { %><option value="paypal">PayPal</option><% } %>
+          <% if (!data.operations || data.operations.enableStripe !== false) { %><option value="stripe">Stripe</option><% } %>
+        </select>
+      </label>
+      <label>Note sulla richiesta<textarea name="notes"></textarea></label>
+      <label class="checkbox"><input type="checkbox" name="accept_privacy" required /> Accetto la privacy policy</label>
+      <label class="checkbox"><input type="checkbox" name="accept_terms" required /> Accetto termini e condizioni</label>
+      <input type="hidden" name="cart_payload" id="cart-payload" />
+      <button class="button" type="submit">Invia richiesta</button>
+    </form>
+    <aside class="info-panel">
+      <p class="eyebrow">Riepilogo</p>
+      <h2>Selezione corrente</h2>
+      <div id="checkout-items"></div>
+      <p class="price" id="checkout-total">EUR 0,00</p>
+      <ul class="mini-list">
+        <li>Bonifico gia gestibile con istruzioni automatiche</li>
+        <li>PayPal e Stripe sono predisposti per l'attivazione con le chiavi</li>
+        <li>Ogni richiesta resta tracciata nel pannello admin e nel profilo utente</li>
+      </ul>
+    </aside>
+  </div>
+  <script>
+    window.packageCatalog = []
+  </script>
+</section>

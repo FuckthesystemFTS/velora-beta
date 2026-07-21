@@ -1,0 +1,16 @@
+<section class="app-card">
+  <div class="section-heading app-heading">
+    <span class="eyebrow"><%= copy('Premi virtuali', 'Virtual rewards') %></span>
+    <h2><%= copy('Badge, medaglie e trofei', 'Badges, medals and trophies') %></h2>
+  </div>
+  <div class="badge-grid">
+    <% badges.forEach((badge) => { %>
+      <article class="badge-card <%= badge.unlocked_at ? 'badge-card--active' : 'badge-card--locked' %>">
+        <span><%= badge.icon %></span>
+        <strong><%= badge[`name_${lang}`] || badge.name_it %></strong>
+        <small><%= badge[`description_${lang}`] || badge.description_it %></small>
+        <em><%= badge.unlocked_at ? copy('Sbloccato', 'Unlocked') : copy('Bloccato', 'Locked') %></em>
+      </article>
+    <% }) %>
+  </div>
+</section>

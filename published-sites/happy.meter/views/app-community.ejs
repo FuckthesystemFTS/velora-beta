@@ -1,0 +1,57 @@
+<section class="app-card">
+  <div class="section-heading app-heading">
+    <span class="eyebrow"><%= copy('Community globale', 'Global community', 'Globale Community') %></span>
+    <h2><%= copy('Una chat visibile a tutti e scrivibile dagli utenti registrati', 'A chat visible to everyone and writable by registered users', 'Ein Chat, den alle sehen koennen und in dem nur registrierte Nutzer schreiben koennen') %></h2>
+  </div>
+  <p><%= copy('Uno spazio leggero per condividere piccoli progressi, idee felici e segnali positivi della giornata', 'A light space for sharing small wins, happy ideas and positive signals from the day', 'Ein leichter Raum fuer kleine Fortschritte, glueckliche Ideen und positive Signale des Tages') %></p>
+
+  <% if (canPost) { %>
+    <form method="post" action="<%= postAction %>" class="stack-form">
+      <label><%= copy('Scrivi nella chat globale', 'Write in the global chat', 'In den globalen Chat schreiben') %>
+        <textarea name="content" rows="4" maxlength="500" placeholder="<%= copy('Condividi qualcosa di vero, utile o gentile', 'Share something real, useful or kind', 'Teile etwas Echtes, Hilfreiches oder Freundliches') %>" required></textarea>
+      </label>
+      <button type="submit" class="primary-btn"><%= copy('Pubblica messaggio', 'Publish message', 'Nachricht veroeffentlichen') %></button>
+    </form>
+  <% } else { %>
+    <div class="highlight-strip">
+      <strong><%= copy('Solo lettura per ospiti', 'Read only for guests', 'Nur Lesen fuer Gaeste') %></strong>
+      <span><%= copy('Accedi o registrati per scrivere nella chat globale', 'Log in or sign up to write in the global chat', 'Melde dich an oder registriere dich, um im globalen Chat zu schreiben') %></span>
+    </div>
+    <div class="cta-row">
+      <a href="/login?redirect=/community" class="primary-btn"><%= copy('Accedi', 'Log in', 'Anmelden') %></a>
+      <a href="/register?redirect=/community" class="secondary-btn"><%= copy('Registrati', 'Sign up', 'Registrieren') %></a>
+    </div>
+  <% } %>
+
+  <% if (showAppBackLink) { %>
+    <div class="cta-row">
+      <a href="/app" class="ghost-btn"><%= copy('Torna all area personale', 'Back to your personal area', 'Zurueck zum persoenlichen Bereich') %></a>
+    </div>
+  <% } %>
+</section>
+
+<section class="community-feed">
+  <% if (!posts.length) { %>
+    <article class="post-card">
+      <strong><%= copy('Nessun messaggio ancora', 'No messages yet', 'Noch keine Nachrichten') %></strong>
+      <p><%= copy('La chat globale si riempie un messaggio alla volta', 'The global chat grows one message at a time', 'Der globale Chat waechst Nachricht fuer Nachricht') %></p>
+    </article>
+  <% } %>
+
+  <% posts.forEach((post) => { %>
+    <article class="post-card">
+      <strong><%= post.author_name %></strong>
+      <p><%= post.content %></p>
+      <div class="post-card__meta">
+        <small><%= String(post.language || '').toUpperCase() %></small>
+        <% if (user) { %>
+          <form method="post" action="<%= likeActionBase %>/<%= post.id %>/like">
+            <button type="submit" class="secondary-btn"><%= copy('Reazione positiva', 'Positive reaction', 'Positive Reaktion') %> - <%= post.likes_count %></button>
+          </form>
+        <% } else { %>
+          <a href="/login?redirect=/community" class="secondary-btn"><%= copy('Accedi per reagire', 'Log in to react', 'Zum Reagieren anmelden') %> - <%= post.likes_count %></a>
+        <% } %>
+      </div>
+    </article>
+  <% }) %>
+</section>

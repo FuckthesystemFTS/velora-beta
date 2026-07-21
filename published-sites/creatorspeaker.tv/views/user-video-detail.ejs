@@ -1,0 +1,38 @@
+<section class="page-section">
+  <div class="shell two-column">
+    <article class="info-panel job-status-card" data-job-status data-job-status-url="/dashboard/video-jobs/<%= data.selectedJob.id %>/status" data-job-refresh-ms="4000">
+      <p class="eyebrow">Dettaglio video</p>
+      <h1><%= data.selectedJob.title %></h1>
+      <p><%= data.selectedJob.profile_label %> - <%= data.selectedJob.aspect_ratio || data.selectedJob.format %> - <%= data.selectedJob.credits_charged || data.selectedJob.credits_cost %> crediti</p>
+      <p>Stato <span data-job-status-label><%= data.selectedJob.status_label %></span> - avanzamento <strong data-job-progress-text><%= data.selectedJob.progress_percent %>%</strong></p>
+      <div class="upload-progress">
+        <div class="upload-progress-bar" style="width: <%= data.selectedJob.progress_percent %>%" data-job-progress-bar role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= data.selectedJob.progress_percent %>"></div>
+      </div>
+      <p class="muted" data-job-status-detail><%= data.selectedJob.status_detail || "" %></p>
+      <% if (data.selectedJob.error_message) { %><p class="muted"><%= data.selectedJob.error_message %></p><% } %>
+      <% if (data.selectedJob.output_url) { %>
+        <video controls class="preview-video" src="<%= data.selectedJob.output_url %>"></video>
+        <a class="button secondary" href="<%= data.selectedJob.download_url %>" data-job-output-link>Scarica MP4</a>
+      <% } else { %>
+        <a class="button secondary" href="#" data-job-output-link hidden>Scarica MP4</a>
+      <% } %>
+    </article>
+
+    <aside class="info-panel">
+      <h2>Timeline</h2>
+      <div class="table-list compact-list">
+        <% if (!data.timeline.length) { %>
+          <p class="muted">Timeline non disponibile per questo job</p>
+        <% } %>
+        <% data.timeline.forEach(function(item) { %>
+          <div class="admin-row">
+            <strong><%= item.sort_order + 1 %>. <%= item.original_name || "Immagine" %></strong>
+            <p><%= item.duration_seconds %> sec - transizione <%= item.transition || "none" %></p>
+            <% if (item.caption) { %><p class="muted"><%= item.caption %></p><% } %>
+          </div>
+        <% }) %>
+      </div>
+      <a class="ghost-button compact-ghost top-gap" href="/dashboard/videos">Torna ai video</a>
+    </aside>
+  </div>
+</section>

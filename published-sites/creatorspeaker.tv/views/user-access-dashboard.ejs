@@ -1,0 +1,46 @@
+<section class="page-section">
+  <div class="shell">
+    <div class="dashboard-hero subscription-hero">
+      <div>
+        <p class="eyebrow">I miei accessi</p>
+        <h1>Gestisci gli abbonamenti digitali attivi</h1>
+        <p class="lead">Qui trovi richieste in corso, accessi attivi e scadenze</p>
+      </div>
+      <div class="info-panel">
+        <h3>Area personale</h3>
+        <p class="muted">Le credenziali diventano visibili solo dopo attivazione manuale admin</p>
+      </div>
+    </div>
+
+    <% if (!page.accesses.length) { %>
+      <article class="info-panel centered">
+        <h2>Non hai ancora accessi attivi</h2>
+        <p class="muted">Puoi richiedere un accesso dalla sezione Abbonamenti digitali</p>
+        <div class="cta-row centered top-gap">
+          <a class="button secondary" href="/abbonamenti">Vai agli abbonamenti</a>
+        </div>
+      </article>
+    <% } else { %>
+      <div class="card-grid subscription-grid">
+        <% page.accesses.forEach(function(item) { %>
+          <article class="info-panel subscription-card">
+            <p class="eyebrow"><%= item.name %></p>
+            <% if (item.assignment_id) { %>
+              <h3>Piattaforma: <%= item.name %></h3>
+              <p class="muted">Stato: <span class="status-text"><%= item.assignment_status_label %></span></p>
+              <p class="muted">Scadenza: <%= item.expires_at_label || 'Da definire' %></p>
+              <div class="cta-row top-gap">
+                <a class="button secondary" href="/dashboard/accessi/<%= item.slug %>">Apri dettagli accesso</a>
+              </div>
+            <% } else { %>
+              <h3>Stato richiesta: <%= item.request_status_label %></h3>
+              <p class="muted">Pagamento o autorizzazione: <%= item.payment_status_label %></p>
+              <p class="muted">Accesso: Non ancora attivo</p>
+              <p class="muted">La richiesta e stata ricevuta. L accesso verra mostrato qui appena l admin avra completato la verifica</p>
+            <% } %>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</section>

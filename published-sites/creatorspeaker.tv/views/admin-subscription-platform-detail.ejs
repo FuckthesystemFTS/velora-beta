@@ -1,0 +1,60 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <div class="split-layout">
+      <article class="admin-card">
+        <p class="eyebrow">Piattaforma</p>
+        <h1><%= page.platform.name %></h1>
+        <p class="muted"><%= page.platform.slug %> · <%= page.platform.status %></p>
+        <div class="status-pills top-gap">
+          <span class="status-pill">Utenti attivi <%= page.platform.active_users_count %>/<%= page.platform.max_users %></span>
+          <span class="status-pill">Posti disponibili <%= page.platform.spots_left %></span>
+          <span class="status-pill">Durata <%= page.platform.duration_days %> giorni</span>
+        </div>
+        <div class="info-panel top-gap">
+          <p class="muted">Email accesso: <%= page.platform.maskedEmail %></p>
+          <p class="muted">Password accesso: <%= page.platform.maskedPassword %></p>
+          <p class="muted">Note private: <%= page.platform.hasPrivateNotes ? 'presenti' : 'non presenti' %></p>
+          <form class="top-gap" method="post" action="/admin/abbonamenti/piattaforme/<%= page.platform.id %>/mostra-credenziali" onsubmit="return confirm('Stai per visualizzare credenziali riservate. Questa azione verra registrata')">
+            <%- include("partials/csrf-fields") %>
+            <button class="ghost-button compact-ghost" type="submit">Sostituisci credenziali / mostra ora</button>
+          </form>
+          <% if (page.reveal) { %>
+            <div class="credentials-panel top-gap">
+              <div class="credential-box"><span>Email</span><strong><%= page.reveal.email %></strong></div>
+              <div class="credential-box"><span>Password</span><strong><%= page.reveal.password %></strong></div>
+            </div>
+          <% } %>
+        </div>
+      </article>
+
+      <article class="admin-card">
+        <h2>Modifica piattaforma</h2>
+        <form class="stack-form top-gap" method="post" action="/admin/abbonamenti/piattaforme/<%= page.platform.id %>">
+          <%- include("partials/csrf-fields") %>
+          <label>Nome<input type="text" name="name" value="<%= page.platform.name %>" required /></label>
+          <label>Slug<input type="text" name="slug" value="<%= page.platform.slug %>" required /></label>
+          <label>Descrizione pubblica<textarea name="public_description" required><%= page.platform.public_description %></textarea></label>
+          <label>Descrizione interna<textarea name="description" required><%= page.platform.description %></textarea></label>
+          <div class="grid-2">
+            <label>Stato<select name="status"><option value="active" <%= page.platform.status === 'active' ? 'selected' : '' %>>active</option><option value="inactive" <%= page.platform.status === 'inactive' ? 'selected' : '' %>>inactive</option></select></label>
+            <label>Numero massimo utenti<input type="number" name="max_users" min="1" value="<%= page.platform.max_users %>" required /></label>
+          </div>
+          <div class="grid-2">
+            <label>Prezzo per utente in centesimi<input type="number" name="price_per_user" min="0" value="<%= page.platform.price_per_user %>" /></label>
+            <label>Valuta<input type="text" name="currency" value="<%= page.platform.currency %>" required /></label>
+          </div>
+          <div class="grid-2">
+            <label>Durata giorni<input type="number" name="duration_days" min="1" value="<%= page.platform.duration_days %>" required /></label>
+            <label>URL piattaforma<input type="url" name="platform_url" value="<%= page.platform.platform_url %>" required /></label>
+          </div>
+          <label>URL login<input type="url" name="login_url" value="<%= page.platform.login_url %>" required /></label>
+          <label>Email accesso condiviso<input type="email" name="shared_login_email" placeholder="Lascia vuoto per non cambiare" /></label>
+          <label>Password accesso condiviso<input type="text" name="shared_login_password" placeholder="Lascia vuoto per non cambiare" /></label>
+          <label>Note private admin<textarea name="admin_private_notes" placeholder="Lascia vuoto per non cambiare"></textarea></label>
+          <label>Istruzioni visibili all utente<textarea name="user_visible_instructions"><%= page.platform.user_visible_instructions %></textarea></label>
+          <button class="button secondary" type="submit">Aggiorna piattaforma</button>
+        </form>
+      </article>
+    </div>
+  </div>
+</section>

@@ -6,6 +6,7 @@ COPY packages ./packages
 COPY apps/api ./apps/api
 COPY scripts ./scripts
 COPY releases ./releases
+COPY published-sites ./published-sites
 COPY docs ./docs
 COPY schemas ./schemas
 COPY examples ./examples

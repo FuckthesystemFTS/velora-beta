@@ -1,0 +1,99 @@
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <div class="streaming-heading">
+      <div>
+        <p class="eyebrow">Media Library</p>
+        <h1>Immagini, video e documenti</h1>
+        <p class="muted"><%= data.cloudinary.message %></p>
+      </div>
+      <div class="inline-actions">
+        <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/settings') %>">Configura Cloudinary</a>
+        <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/sections') %>">Usa nei contenuti</a>
+      </div>
+    </div>
+
+    <div class="split-layout top-gap">
+      <article class="admin-card">
+        <h2>Carica media</h2>
+        <form class="stack-form" method="post" action="<%= panelPath('/admin/media/upload') %>" enctype="multipart/form-data" data-upload-form>
+          <%- include("partials/csrf-fields") %>
+          <label>File<input type="file" name="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt" required /></label>
+          <label>Titolo<input type="text" name="title" required /></label>
+          <label>Alt text<input type="text" name="alt_text" /></label>
+          <label>Descrizione<textarea name="description"></textarea></label>
+          <div class="grid-2">
+            <label>Tipo
+              <select name="type">
+                <option value="image">immagine</option>
+                <option value="video">video</option>
+                <option value="audio">audio</option>
+                <option value="document">documento</option>
+              </select>
+            </label>
+            <label>Cartella Cloudinary<input type="text" name="folder" placeholder="home, packages, creators" /></label>
+          </div>
+          <div class="upload-progress" data-upload-progress hidden>
+            <div class="upload-progress-bar" data-upload-progress-bar></div>
+          </div>
+          <p class="muted" data-upload-progress-text hidden>Preparazione upload</p>
+          <button class="button secondary" type="submit" data-upload-submit>Carica su Cloudinary</button>
+        </form>
+      </article>
+
+      <article class="admin-card">
+        <h2>Filtri</h2>
+        <form class="stack-form" method="get" action="<%= panelPath('/admin/media') %>">
+          <label>Ricerca<input type="search" name="q" value="<%= data.filters.q || '' %>" /></label>
+          <label>Tipo
+            <select name="type">
+              <option value="">Tutti</option>
+              <option value="image" <%= data.filters.type === 'image' ? 'selected' : '' %>>Immagini</option>
+              <option value="video" <%= data.filters.type === 'video' ? 'selected' : '' %>>Video</option>
+              <option value="audio" <%= data.filters.type === 'audio' ? 'selected' : '' %>>Audio</option>
+              <option value="document" <%= data.filters.type === 'document' ? 'selected' : '' %>>Documenti</option>
+            </select>
+          </label>
+          <button class="ghost-button" type="submit">Filtra</button>
+        </form>
+      </article>
+    </div>
+
+    <div class="media-admin-grid top-gap">
+      <% if (!data.media.length) { %>
+        <div class="admin-empty-state">
+          <strong>Nessun media caricato</strong>
+          <span>Carica immagini, video o documenti. Se Cloudinary non e configurato, l errore resta qui nel pannello</span>
+        </div>
+      <% } %>
+      <% data.media.forEach(function(item) { %>
+        <article class="admin-card media-admin-card">
+          <% if (item.type === 'image' && item.cloudinary_secure_url) { %>
+            <img class="media-preview" src="<%= item.cloudinary_secure_url %>" alt="<%= item.alt_text || item.title %>" loading="lazy" />
+          <% } else if (item.type === 'video' && item.cloudinary_secure_url) { %>
+            <video class="media-preview" src="<%= item.cloudinary_secure_url %>" controls preload="metadata"></video>
+          <% } else if (item.type === 'audio' && item.cloudinary_secure_url) { %>
+            <audio class="media-preview" src="<%= item.cloudinary_secure_url %>" controls preload="metadata"></audio>
+          <% } else { %>
+            <div class="media-placeholder">File</div>
+          <% } %>
+          <form class="stack-form" method="post" action="<%= panelPath('/admin/media/' + item.id) %>">
+            <%- include("partials/csrf-fields") %>
+            <label>Titolo<input type="text" name="title" value="<%= item.title %>" /></label>
+            <label>Alt<input type="text" name="alt_text" value="<%= item.alt_text || '' %>" /></label>
+            <label>Descrizione<textarea name="description"><%= item.description || '' %></textarea></label>
+            <p class="muted">URL: <%= item.cloudinary_secure_url || 'non disponibile' %></p>
+            <p class="muted">Public ID: <%= item.cloudinary_public_id || 'non disponibile' %></p>
+            <div class="inline-actions">
+              <button class="ghost-button compact-ghost" type="submit">Salva</button>
+              <% if (item.cloudinary_secure_url) { %><a class="ghost-button compact-ghost" href="<%= item.cloudinary_secure_url %>" target="_blank" rel="noreferrer">Apri</a><% } %>
+            </div>
+          </form>
+          <form method="post" action="<%= panelPath('/admin/media/' + item.id + '/delete') %>" onsubmit="return confirm('Eliminare questo media dalla libreria?')">
+            <%- include("partials/csrf-fields") %>
+            <button class="ghost-button compact-ghost" type="submit">Elimina</button>
+          </form>
+        </article>
+      <% }) %>
+    </div>
+  </div>
+</section>

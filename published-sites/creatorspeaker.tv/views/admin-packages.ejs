@@ -1,0 +1,49 @@
+<section class="admin-section">
+  <div class="shell">
+    <div class="two-column">
+      <form class="info-panel stack-form" action="/admin/packages" method="post">
+        <%- include("partials/csrf-fields") %>
+        <h1>Nuovo pacchetto</h1>
+        <label>Area<input type="text" name="area" required /></label>
+        <label>Nome<input type="text" name="name" required /></label>
+        <label>Slug<input type="text" name="slug" /></label>
+        <label>Prezzo cents<input type="number" name="price_cents" min="0" required /></label>
+        <label>Billing
+          <select name="billing_type">
+            <option value="monthly">monthly</option>
+            <option value="one_time">one_time</option>
+            <option value="usage">usage</option>
+          </select>
+        </label>
+        <label>Descrizione<textarea name="description" required></textarea></label>
+        <label>Feature (una per riga)<textarea name="features"></textarea></label>
+        <label>Ordine<input type="number" name="sort_order" value="99" /></label>
+        <label class="checkbox"><input type="checkbox" name="active" checked /> Attivo</label>
+        <button class="button" type="submit">Crea pacchetto</button>
+      </form>
+
+      <div class="table-list">
+        <% data.packages.forEach(function(item) { %>
+          <form class="admin-row stack-form compact-form" action="/admin/packages/<%= item.id %>" method="post">
+            <%- include("partials/csrf-fields") %>
+            <strong><%= item.name %></strong>
+            <input type="text" name="area" value="<%= item.area %>" />
+            <input type="text" name="name" value="<%= item.name %>" />
+            <input type="text" name="slug" value="<%= item.slug %>" />
+            <input type="number" name="price_cents" value="<%= item.price_cents %>" />
+            <select name="billing_type">
+              <% ["monthly","one_time","usage"].forEach(function(type) { %>
+                <option value="<%= type %>" <%= item.billing_type === type ? "selected" : "" %>><%= type %></option>
+              <% }) %>
+            </select>
+            <textarea name="description"><%= item.description %></textarea>
+            <textarea name="features"><%= item.features.join("\n") %></textarea>
+            <input type="number" name="sort_order" value="<%= item.sort_order %>" />
+            <label class="checkbox"><input type="checkbox" name="active" <%= item.active ? "checked" : "" %> /> Attivo</label>
+            <button class="button compact" type="submit">Aggiorna</button>
+          </form>
+        <% }) %>
+      </div>
+    </div>
+  </div>
+</section>

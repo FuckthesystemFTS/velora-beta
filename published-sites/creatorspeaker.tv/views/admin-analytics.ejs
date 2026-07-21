@@ -1,0 +1,94 @@
+<section class="admin-section">
+  <div class="shell">
+    <div class="dashboard-hero admin-hero">
+      <div>
+        <p class="eyebrow">Analytics reali</p>
+        <h1>Visite e impressioni del sito</h1>
+        <p class="muted">Solo dati raccolti dal traffico reale delle pagine pubbliche, senza placeholder o simulazioni</p>
+      </div>
+      <div class="inline-actions">
+        <% [7, 14, 30, 90].forEach(function(days) { %>
+          <a class="<%= data.analytics.rangeDays === days ? 'button' : 'ghost-button compact-ghost' %>" href="/admin/analytics?range=<%= days %>"><%= days %> giorni</a>
+        <% }) %>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <article class="stat-card"><span>Impressioni periodo</span><strong><%= data.analytics.totals.impressions %></strong></article>
+      <article class="stat-card"><span>Visite uniche stimate</span><strong><%= data.analytics.totals.visitors %></strong></article>
+      <article class="stat-card"><span>Impressioni oggi</span><strong><%= data.analytics.totals.todayImpressions %></strong></article>
+      <article class="stat-card"><span>Visite uniche oggi</span><strong><%= data.analytics.totals.todayVisitors %></strong></article>
+      <article class="stat-card"><span>Periodo precedente impressioni</span><strong><%= data.analytics.totals.previousImpressions %></strong></article>
+      <article class="stat-card"><span>Periodo precedente visite</span><strong><%= data.analytics.totals.previousVisitors %></strong></article>
+    </div>
+
+    <div class="two-column top-gap">
+      <article class="info-panel">
+        <h2>Pagine piu viste</h2>
+        <% if (!(data.analytics.topPages || []).length) { %>
+          <p class="muted">Nessuna visita registrata nel periodo selezionato</p>
+        <% } %>
+        <% (data.analytics.topPages || []).forEach(function(item) { %>
+          <div class="row-card">
+            <strong><%= item.path %></strong>
+            <span><%= item.impressions %> impressioni - <%= item.visitors %> visite uniche</span>
+          </div>
+        <% }) %>
+      </article>
+
+      <article class="info-panel">
+        <h2>Sorgenti principali</h2>
+        <% if (!(data.analytics.referrers || []).length) { %>
+          <p class="muted">Traffico diretto prevalente o nessun referrer disponibile</p>
+        <% } %>
+        <% (data.analytics.referrers || []).forEach(function(item) { %>
+          <div class="row-card">
+            <strong><%= item.host %></strong>
+            <span><%= item.impressions %> impressioni</span>
+          </div>
+        <% }) %>
+      </article>
+    </div>
+
+    <div class="two-column top-gap">
+      <article class="info-panel">
+        <h2>Distribuzione per dispositivo</h2>
+        <% if (!(data.analytics.devices || []).length) { %>
+          <p class="muted">Nessun dato disponibile</p>
+        <% } %>
+        <% (data.analytics.devices || []).forEach(function(item) { %>
+          <div class="row-card">
+            <strong><%= item.device %></strong>
+            <span><%= item.impressions %> impressioni - <%= item.visitors %> visite uniche</span>
+          </div>
+        <% }) %>
+      </article>
+
+      <article class="info-panel">
+        <h2>Andamento giornaliero</h2>
+        <% if (!(data.analytics.dailyTrend || []).length) { %>
+          <p class="muted">Nessun andamento disponibile</p>
+        <% } %>
+        <% (data.analytics.dailyTrend || []).forEach(function(item) { %>
+          <div class="row-card">
+            <strong><%= item.label %></strong>
+            <span><%= item.impressions %> impressioni - <%= item.visitors %> visite</span>
+          </div>
+        <% }) %>
+      </article>
+    </div>
+
+    <article class="info-panel top-gap">
+      <h2>Ultimi accessi registrati</h2>
+      <% if (!(data.analytics.recentEvents || []).length) { %>
+        <p class="muted">Nessun accesso registrato</p>
+      <% } %>
+      <% (data.analytics.recentEvents || []).forEach(function(item) { %>
+        <div class="row-card">
+          <strong><%= item.path %></strong>
+          <span><%= item.created_at_label %> - <%= item.device_type %><%= item.referrer_host ? ' - ' + item.referrer_host : ' - diretto' %></span>
+        </div>
+      <% }) %>
+    </article>
+  </div>
+</section>

@@ -1,0 +1,108 @@
+<%
+  const profiles = data.renderProfiles || [];
+  const firstProfile = profiles[0] || {};
+%>
+<section class="page-section video-studio-page">
+  <div class="shell">
+    <div class="streaming-heading">
+      <div>
+        <p class="eyebrow">Video Studio</p>
+        <h1>Crea video da foto e audio</h1>
+        <p class="muted">Scegli il livello, carica gli asset e controlla durata, formato e audio prima di avviare la generazione</p>
+      </div>
+      <a class="ghost-button compact-ghost" href="/dashboard/videos">I miei video</a>
+    </div>
+
+    <form class="video-builder" action="/dashboard/video-studio/create" method="post" enctype="multipart/form-data" data-upload-form data-video-builder data-max-upload-mb="250">
+      <%- include("partials/csrf-fields") %>
+      <div class="profile-grid" role="radiogroup" aria-label="Livello video">
+        <% profiles.forEach(function(profile, index) { %>
+          <label class="profile-card">
+            <input
+              type="radio"
+              name="render_profile_slug"
+              value="<%= profile.slug %>"
+              data-profile-option
+              data-credits="<%= profile.credits_cost %>"
+              data-default-duration="<%= profile.default_duration_seconds %>"
+              data-max-images="<%= profile.max_images %>"
+              data-features='<%- JSON.stringify(profile.feature_flags || {}) %>'
+              <%= index === 0 ? "checked" : "" %>
+            />
+            <span><%= profile.name %></span>
+            <strong><%= profile.credits_cost %> crediti</strong>
+            <small><%= profile.description %></small>
+          </label>
+        <% }) %>
+      </div>
+
+      <div class="two-column top-gap">
+        <article class="info-panel stack-form">
+          <h2>Asset e impostazioni</h2>
+          <label>Titolo video
+            <input type="text" name="title" maxlength="90" required placeholder="Es. backstage nuovo singolo" />
+          </label>
+          <label>Immagini da 1 a 10
+            <input type="file" name="images" accept="image/*" multiple required data-video-images />
+          </label>
+          <p class="muted">Usa JPG, PNG o WebP. Il sistema mostra la timeline prima dell'invio</p>
+          <label>Audio
+            <input type="file" name="audio" accept="audio/*" required data-video-audio />
+          </label>
+          <audio class="audio-preview" controls data-audio-preview hidden></audio>
+          <label>Formato
+            <select name="format">
+              <option value="16:9">16:9 orizzontale</option>
+              <option value="9:16">9:16 verticale</option>
+              <option value="1:1">1:1 quadrato</option>
+            </select>
+          </label>
+          <div class="advanced-video-controls" data-advanced-audio hidden>
+            <div class="form-grid two">
+              <label>Inizio audio sec
+                <input type="number" name="audio_start_seconds" min="0" step="0.1" value="0" />
+              </label>
+              <label>Fine audio sec
+                <input type="number" name="audio_end_seconds" min="0" step="0.1" placeholder="opzionale" />
+              </label>
+              <label>Volume
+                <input type="number" name="audio_volume" min="0.1" max="2" step="0.1" value="1" />
+              </label>
+              <label>Adatta durata
+                <select name="audio_mode">
+                  <option value="fit_video">video su timeline</option>
+                  <option value="fit_audio">immagini su audio</option>
+                </select>
+              </label>
+              <label>Fade in sec
+                <input type="number" name="audio_fade_in" min="0" max="20" step="0.1" value="0" />
+              </label>
+              <label>Fade out sec
+                <input type="number" name="audio_fade_out" min="0" max="20" step="0.1" value="0" />
+              </label>
+            </div>
+          </div>
+          <p class="muted">Crediti disponibili <strong><%= data.user ? data.user.credits : (data.currentUser ? data.currentUser.credits : "") %></strong></p>
+          <div class="upload-progress" data-upload-progress hidden>
+            <div class="upload-progress-bar" data-upload-progress-bar></div>
+          </div>
+          <p class="muted" data-upload-progress-text hidden>Preparazione upload</p>
+          <button class="button" type="submit" data-upload-submit>Avvia generazione</button>
+        </article>
+
+        <aside class="info-panel">
+          <h2>Timeline</h2>
+          <div class="timeline-summary">
+            <span>Livello <strong data-selected-profile-name><%= firstProfile.name || "Video" %></strong></span>
+            <span>Costo <strong data-selected-profile-cost><%= firstProfile.credits_cost || 0 %></strong> crediti</span>
+            <span>Durata stimata <strong data-total-duration>0 sec</strong></span>
+          </div>
+          <div class="video-timeline" data-video-timeline>
+            <p class="muted">Seleziona le immagini per costruire la timeline</p>
+          </div>
+          <p class="muted" data-timeline-help>Nel livello semplice ogni immagine dura 5 secondi. I livelli superiori sbloccano la durata scena e il taglio audio</p>
+        </aside>
+      </div>
+    </form>
+  </div>
+</section>

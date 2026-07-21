@@ -1,0 +1,22 @@
+<section class="admin-section">
+  <div class="shell two-column">
+    <form class="info-panel stack-form" action="/admin/telegram" method="post">
+      <%- include("partials/csrf-fields") %>
+      <h1>Telegram</h1>
+      <label class="checkbox"><input type="checkbox" name="enabled" <%= data.telegram.enabled ? "checked" : "" %> /> Abilita pubblicazione</label>
+      <label>Bot token<input type="password" name="botToken" placeholder="<%= data.secretState %>" /></label>
+      <label>Channel ID<input type="text" name="channelId" value="<%= data.telegram.channelId || '' %>" /></label>
+      <label>Logo canale<input type="text" name="channelLogo" value="<%= data.telegram.channelLogo || '' %>" /></label>
+      <label>Frequenza pubblicazione minuti<input type="number" name="frequencyMinutes" value="<%= data.telegram.frequencyMinutes || 120 %>" /></label>
+      <label>Offerte al giorno limite<input type="number" name="dailyLimit" value="<%= data.telegram.dailyLimit || 4 %>" /></label>
+      <label>Formato messaggio<input type="text" name="messageFormat" value="<%= data.telegram.messageFormat || 'standard' %>" /></label>
+      <button class="button" type="submit">Salva Telegram</button>
+    </form>
+    <form class="info-panel stack-form" action="/admin/telegram/test" method="post">
+      <%- include("partials/csrf-fields") %>
+      <h2>Test</h2>
+      <p>Stato segreto: <strong><%= data.secretState %></strong></p>
+      <button class="button secondary" type="submit">Pubblica offerta di prova</button>
+    </form>
+  </div>
+</section>

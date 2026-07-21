@@ -1,0 +1,171 @@
+<%
+  const isStaff = currentAdmin && currentAdmin.role === 'staff';
+  const urgentItems = (data.actionQueue || []).filter(function(item) { return Number(item.value || 0) > 0; });
+  const incompleteChecks = (data.operationalChecks || []).filter(function(item) { return !item.ready; });
+%>
+<section class="admin-section">
+  <div class="shell admin-shell-inner">
+    <div class="admin-work-header">
+      <div>
+        <p class="eyebrow"><%= isStaff ? 'Area staff' : 'Pannello admin' %></p>
+        <h1><%= isStaff ? 'Lavoro sui contenuti' : 'Gestione piattaforma' %></h1>
+        <p class="muted">
+          <% if (isStaff) { %>
+            Le funzioni mostrate dipendono dai permessi assegnati dall admin principale
+          <% } else { %>
+            Da qui controlli richieste, contenuti, utenti, pagamenti, configurazione e pubblicazione
+          <% } %>
+        </p>
+      </div>
+      <div class="admin-system-state">
+        <span>Database <strong><%= data.integrationState.database %></strong></span>
+        <span>Cloudinary <strong><%= data.integrationState.cloudinary %></strong></span>
+        <span>SMTP <strong><%= data.integrationState.smtp %></strong></span>
+      </div>
+    </div>
+
+    <% if (isStaff) { %>
+      <div class="admin-summary-strip">
+        <article><span>Contenuti da gestire</span><strong><%= data.stats.pendingContent %></strong></article>
+        <article><span>Media caricati</span><strong><%= data.stats.mediaAssets %></strong></article>
+        <article><span>Creator pubblicati</span><strong><%= data.stats.publishedCreators %></strong></article>
+        <article><span>Speaker pubblicati</span><strong><%= data.stats.publishedSpeakers %></strong></article>
+      </div>
+
+      <div class="admin-dashboard-summary top-gap">
+        <article class="admin-priority-panel">
+          <div class="streaming-heading">
+            <div>
+              <h2>Menu laterale operativo</h2>
+              <p class="muted">Le funzioni staff sono raccolte nella barra laterale, con sottomenu aperti solo dove servono</p>
+            </div>
+          </div>
+          <div class="admin-kpi-row">
+            <article><span>Permessi attivi</span><strong><%= (data.staffQuickActions || []).length %></strong></article>
+            <article><span>Richieste recenti</span><strong><%= (data.notifications || []).length %></strong></article>
+            <article><span>Ultimi media</span><strong><%= (data.latestMedia || []).length %></strong></article>
+          </div>
+        </article>
+
+        <div class="two-column">
+          <article class="info-panel">
+            <h2>Ultimi media</h2>
+            <% if (!(data.latestMedia || []).length) { %><p class="muted">Nessun media caricato</p><% } %>
+            <% (data.latestMedia || []).forEach(function(item) { %>
+              <div class="row-card"><strong><%= item.title %></strong><span><%= item.type %></span></div>
+            <% }) %>
+          </article>
+
+          <article class="info-panel">
+            <h2>Richieste recenti</h2>
+            <% if (!(data.notifications || []).length) { %><p class="muted">Nessuna richiesta recente</p><% } %>
+            <% (data.notifications || []).forEach(function(item) { %>
+              <div class="row-card">
+                <strong><%= item.subject %></strong>
+                <span><%= item.status %></span>
+              </div>
+            <% }) %>
+          </article>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="admin-priority-layout">
+        <section class="admin-priority-main">
+          <article class="admin-priority-panel admin-work-card">
+            <div class="streaming-heading">
+              <div>
+                <h2>Da fare ora</h2>
+                <p class="muted">Le cose che richiedono intervento operativo</p>
+              </div>
+            </div>
+            <% if (!urgentItems.length) { %>
+              <p class="muted">Nessuna urgenza operativa al momento</p>
+            <% } %>
+            <% urgentItems.forEach(function(item) { %>
+              <a class="admin-task-row" href="<%= item.href %>">
+                <span>
+                  <strong><%= item.label %></strong>
+                  <small><%= item.detail %></small>
+                </span>
+                <em><%= item.value %></em>
+              </a>
+            <% }) %>
+          </article>
+
+          <article class="admin-priority-panel admin-work-card">
+            <div class="streaming-heading">
+              <div>
+                <h2>Menu operativo</h2>
+                <p class="muted">Le aree di lavoro sono organizzate nella barra laterale con sottomenu dedicati</p>
+              </div>
+            </div>
+            <div class="admin-kpi-row">
+              <article><span>Aree operative</span><strong><%= (data.workflowCards || []).length %></strong></article>
+              <article><span>Urgenze aperte</span><strong><%= urgentItems.length %></strong></article>
+              <article><span>Controlli da completare</span><strong><%= incompleteChecks.length %></strong></article>
+            </div>
+            <div class="admin-metric-list">
+              <% (data.workflowCards || []).slice(0, 6).forEach(function(item) { %>
+                <span><%= item.title %><strong><%= item.count || 0 %></strong></span>
+              <% }) %>
+            </div>
+          </article>
+        </section>
+
+        <aside class="admin-priority-side">
+          <article class="admin-side-panel">
+            <h2>Traffico reale</h2>
+            <div class="admin-metric-list">
+              <span>Impressioni 7 giorni <strong><%= data.analyticsSummary.totals.impressions %></strong></span>
+              <span>Visite stimate <strong><%= data.analyticsSummary.totals.visitors %></strong></span>
+              <span>Oggi <strong><%= data.analyticsSummary.totals.todayImpressions %></strong></span>
+            </div>
+            <a class="ghost-button compact-ghost" href="<%= panelPath('/admin/analytics') %>">Apri analytics</a>
+          </article>
+
+          <article class="admin-side-panel">
+            <h2>Configurazione</h2>
+            <% if (!incompleteChecks.length) { %>
+              <p class="muted">Configurazione principale completa</p>
+            <% } %>
+            <% incompleteChecks.slice(0, 5).forEach(function(item) { %>
+              <a class="admin-check-row" href="<%= item.href %>">
+                <strong><%= item.label %></strong>
+                <span><%= item.detail %></span>
+              </a>
+            <% }) %>
+          </article>
+        </aside>
+      </div>
+
+      <div class="three-column top-gap">
+        <article class="info-panel">
+          <h2>Contenuti</h2>
+          <div class="row-card"><strong>Da gestire</strong><span><%= data.stats.pendingContent %></span></div>
+          <div class="row-card"><strong>Media</strong><span><%= data.stats.mediaAssets %></span></div>
+          <div class="row-card"><strong>Pacchetti</strong><span><%= data.stats.activeCmsPackages %></span></div>
+        </article>
+
+        <article class="info-panel">
+          <h2>Network</h2>
+          <div class="row-card"><strong>Creator</strong><span><%= data.stats.publishedCreators %></span></div>
+          <div class="row-card"><strong>Speaker</strong><span><%= data.stats.publishedSpeakers %></span></div>
+          <div class="row-card"><strong>Aziende</strong><span><%= data.stats.activeBrandServices %></span></div>
+        </article>
+
+        <article class="info-panel">
+          <h2>Attivita</h2>
+          <% if (!(data.notifications || []).length && !(data.latestAuditLogs || []).length) { %>
+            <p class="muted">Nessuna attivita recente</p>
+          <% } %>
+          <% (data.notifications || []).slice(0, 3).forEach(function(item) { %>
+            <div class="row-card"><strong><%= item.subject %></strong><span><%= item.status %></span></div>
+          <% }) %>
+          <% (data.latestAuditLogs || []).slice(0, 2).forEach(function(log) { %>
+            <div class="row-card"><strong><%= log.action %></strong><span><%= log.username || 'admin' %></span></div>
+          <% }) %>
+        </article>
+      </div>
+    <% } %>
+  </div>
+</section>
