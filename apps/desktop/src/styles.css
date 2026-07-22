@@ -74,7 +74,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -84,9 +85,28 @@ button {
 
 button:focus-visible,
 input:focus-visible,
+select:focus-visible,
 summary:focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: 3px;
+}
+
+.language-select {
+  display: grid;
+  gap: 4px;
+  min-width: 142px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.language-select select {
+  width: 100%;
+  border: 1px solid rgba(216, 174, 85, 0.45);
+  border-radius: 14px;
+  background: rgba(6, 17, 31, 0.82);
+  color: var(--text);
+  padding: 10px 12px;
 }
 
 .app-shell {

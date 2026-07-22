@@ -173,6 +173,57 @@ type MiningUiStats = {
   elapsedSeconds: number;
 };
 
+type VeloraLanguage = "it" | "en" | "fr" | "de" | "es" | "ru" | "zh";
+
+const veloraLanguages: Array<[VeloraLanguage, string]> = [
+  ["it", "Italiano"],
+  ["en", "English"],
+  ["fr", "Français"],
+  ["de", "Deutsch"],
+  ["es", "Español"],
+  ["ru", "Русский"],
+  ["zh", "中文"]
+];
+
+const veloraDesktopDictionary: Record<Exclude<VeloraLanguage, "it">, Record<string, string>> = {
+  en: {
+    "L'Upper Web": "The Upper Web", "Home": "Home", "Esplora": "Explore", "Carica su Oceano": "Upload to Oceano", "Velora Tools": "Velora Tools", "Velora Cloud": "Velora Cloud", "Mining Partner": "Mining Partner", "Nodi utente": "User nodes", "Preferiti": "Favorites", "Attivita": "Activity", "Identita": "Identity", "Notifiche": "Notifications", "Pubblica sito": "Publish site", "Impostazioni": "Settings", "Esci": "Sign out",
+    "Crea il tuo accesso": "Create your access", "Accedi a Velora": "Sign in to Velora", "Registrati": "Register", "Accedi": "Sign in", "Crea account": "Create account", "Alias": "Alias", "Password": "Password",
+    "Sicuro. Veloce. Semplice. Per tutti.": "Safe. Fast. Simple. For everyone.", "Cosa vuoi trovare nell'Upper Web?": "What do you want to find in the Upper Web?", "Cerca servizi, applicazioni e zone pubblicate su Velora.": "Search services, apps and zones published on Velora.", "Vai": "Go", "Cerca": "Search",
+    "Lingua": "Language", "Riprova preparazione": "Retry setup", "Aggiornatore desktop": "Desktop updater", "Controlla aggiornamenti": "Check for updates", "Mining in corso": "Mining active", "Mining fermo": "Mining stopped", "Avvia mining": "Start mining", "Controlla": "Check", "Stato mining": "Mining status", "Potenza collettiva Velora": "Velora collective power"
+  },
+  fr: {
+    "L'Upper Web": "L’Upper Web", "Home": "Accueil", "Esplora": "Explorer", "Carica su Oceano": "Envoyer vers Oceano", "Velora Tools": "Outils Velora", "Velora Cloud": "Cloud Velora", "Mining Partner": "Mining Partner", "Nodi utente": "Nœuds utilisateur", "Preferiti": "Favoris", "Attivita": "Activité", "Identita": "Identité", "Notifiche": "Notifications", "Pubblica sito": "Publier un site", "Impostazioni": "Réglages", "Esci": "Déconnexion",
+    "Crea il tuo accesso": "Créer votre accès", "Accedi a Velora": "Connexion à Velora", "Registrati": "S’inscrire", "Accedi": "Connexion", "Crea account": "Créer un compte", "Alias": "Alias", "Password": "Mot de passe",
+    "Sicuro. Veloce. Semplice. Per tutti.": "Sûr. Rapide. Simple. Pour tous.", "Cosa vuoi trovare nell'Upper Web?": "Que voulez-vous trouver dans l’Upper Web ?", "Cerca servizi, applicazioni e zone pubblicate su Velora.": "Recherchez services, applications et zones publiées sur Velora.", "Vai": "Ouvrir", "Cerca": "Rechercher",
+    "Lingua": "Langue", "Riprova preparazione": "Relancer la préparation", "Aggiornatore desktop": "Mise à jour desktop", "Controlla aggiornamenti": "Rechercher les mises à jour", "Mining in corso": "Mining actif", "Mining fermo": "Mining arrêté", "Avvia mining": "Démarrer le mining", "Controlla": "Vérifier", "Stato mining": "État du mining", "Potenza collettiva Velora": "Puissance collective Velora"
+  },
+  de: {
+    "L'Upper Web": "Das Upper Web", "Home": "Start", "Esplora": "Entdecken", "Carica su Oceano": "Zu Oceano hochladen", "Velora Tools": "Velora Tools", "Velora Cloud": "Velora Cloud", "Mining Partner": "Mining Partner", "Nodi utente": "Benutzerknoten", "Preferiti": "Favoriten", "Attivita": "Aktivität", "Identita": "Identität", "Notifiche": "Benachrichtigungen", "Pubblica sito": "Website veröffentlichen", "Impostazioni": "Einstellungen", "Esci": "Abmelden",
+    "Crea il tuo accesso": "Zugang erstellen", "Accedi a Velora": "Bei Velora anmelden", "Registrati": "Registrieren", "Accedi": "Anmelden", "Crea account": "Konto erstellen", "Alias": "Alias", "Password": "Passwort",
+    "Sicuro. Veloce. Semplice. Per tutti.": "Sicher. Schnell. Einfach. Für alle.", "Cosa vuoi trovare nell'Upper Web?": "Was möchten Sie im Upper Web finden?", "Cerca servizi, applicazioni e zone pubblicate su Velora.": "Suchen Sie Dienste, Apps und veröffentlichte Velora-Zonen.", "Vai": "Öffnen", "Cerca": "Suchen",
+    "Lingua": "Sprache", "Riprova preparazione": "Setup erneut versuchen", "Aggiornatore desktop": "Desktop-Updater", "Controlla aggiornamenti": "Updates prüfen", "Mining in corso": "Mining aktiv", "Mining fermo": "Mining gestoppt", "Avvia mining": "Mining starten", "Controlla": "Prüfen", "Stato mining": "Mining-Status", "Potenza collettiva Velora": "Kollektive Velora-Leistung"
+  },
+  es: {
+    "L'Upper Web": "La Upper Web", "Home": "Inicio", "Esplora": "Explorar", "Carica su Oceano": "Subir a Oceano", "Velora Tools": "Herramientas Velora", "Velora Cloud": "Cloud Velora", "Mining Partner": "Mining Partner", "Nodi utente": "Nodos de usuario", "Preferiti": "Favoritos", "Attivita": "Actividad", "Identita": "Identidad", "Notifiche": "Notificaciones", "Pubblica sito": "Publicar sitio", "Impostazioni": "Ajustes", "Esci": "Salir",
+    "Crea il tuo accesso": "Crea tu acceso", "Accedi a Velora": "Acceder a Velora", "Registrati": "Registrarse", "Accedi": "Entrar", "Crea account": "Crear cuenta", "Alias": "Alias", "Password": "Contraseña",
+    "Sicuro. Veloce. Semplice. Per tutti.": "Seguro. Rápido. Simple. Para todos.", "Cosa vuoi trovare nell'Upper Web?": "¿Qué quieres encontrar en la Upper Web?", "Cerca servizi, applicazioni e zone pubblicate su Velora.": "Busca servicios, aplicaciones y zonas publicadas en Velora.", "Vai": "Ir", "Cerca": "Buscar",
+    "Lingua": "Idioma", "Riprova preparazione": "Reintentar preparación", "Aggiornatore desktop": "Actualizador desktop", "Controlla aggiornamenti": "Buscar actualizaciones", "Mining in corso": "Mining activo", "Mining fermo": "Mining detenido", "Avvia mining": "Iniciar mining", "Controlla": "Comprobar", "Stato mining": "Estado mining", "Potenza collettiva Velora": "Potencia colectiva Velora"
+  },
+  ru: {
+    "L'Upper Web": "Upper Web", "Home": "Главная", "Esplora": "Обзор", "Carica su Oceano": "Загрузить в Oceano", "Velora Tools": "Инструменты Velora", "Velora Cloud": "Cloud Velora", "Mining Partner": "Mining Partner", "Nodi utente": "Узлы пользователя", "Preferiti": "Избранное", "Attivita": "Активность", "Identita": "Идентичность", "Notifiche": "Уведомления", "Pubblica sito": "Опубликовать сайт", "Impostazioni": "Настройки", "Esci": "Выйти",
+    "Crea il tuo accesso": "Создайте доступ", "Accedi a Velora": "Войти в Velora", "Registrati": "Регистрация", "Accedi": "Войти", "Crea account": "Создать аккаунт", "Alias": "Alias", "Password": "Пароль",
+    "Sicuro. Veloce. Semplice. Per tutti.": "Безопасно. Быстро. Просто. Для всех.", "Cosa vuoi trovare nell'Upper Web?": "Что вы хотите найти в Upper Web?", "Cerca servizi, applicazioni e zone pubblicate su Velora.": "Ищите сервисы, приложения и зоны, опубликованные в Velora.", "Vai": "Открыть", "Cerca": "Поиск",
+    "Lingua": "Язык", "Riprova preparazione": "Повторить подготовку", "Aggiornatore desktop": "Обновление desktop", "Controlla aggiornamenti": "Проверить обновления", "Mining in corso": "Майнинг активен", "Mining fermo": "Майнинг остановлен", "Avvia mining": "Запустить mining", "Controlla": "Проверить", "Stato mining": "Статус mining", "Potenza collettiva Velora": "Общая мощность Velora"
+  },
+  zh: {
+    "L'Upper Web": "Upper Web", "Home": "首页", "Esplora": "探索", "Carica su Oceano": "上传到 Oceano", "Velora Tools": "Velora 工具", "Velora Cloud": "Velora 云", "Mining Partner": "Mining Partner", "Nodi utente": "用户节点", "Preferiti": "收藏", "Attivita": "活动", "Identita": "身份", "Notifiche": "通知", "Pubblica sito": "发布网站", "Impostazioni": "设置", "Esci": "退出",
+    "Crea il tuo accesso": "创建访问权限", "Accedi a Velora": "登录 Velora", "Registrati": "注册", "Accedi": "登录", "Crea account": "创建账户", "Alias": "别名", "Password": "密码",
+    "Sicuro. Veloce. Semplice. Per tutti.": "安全。快速。简单。面向所有人。", "Cosa vuoi trovare nell'Upper Web?": "你想在 Upper Web 中找到什么？", "Cerca servizi, applicazioni e zone pubblicate su Velora.": "搜索 Velora 上发布的服务、应用和区域。", "Vai": "打开", "Cerca": "搜索",
+    "Lingua": "语言", "Riprova preparazione": "重试准备", "Aggiornatore desktop": "桌面更新器", "Controlla aggiornamenti": "检查更新", "Mining in corso": "正在挖矿", "Mining fermo": "挖矿已停止", "Avvia mining": "启动挖矿", "Controlla": "检查", "Stato mining": "挖矿状态", "Potenza collettiva Velora": "Velora 集体算力"
+  }
+};
+
 type MiningProgressWorker = {
   coin: string;
   worker_id: string;
@@ -348,8 +399,36 @@ const publisherPlans = [
   ["Publisher Pro", "19,90 EUR/mese", "Supporto prioritario, strumenti avanzati e visibilita publisher."]
 ];
 
+function initialVeloraLanguage(): VeloraLanguage {
+  const saved = window.localStorage.getItem("velora.language") as VeloraLanguage | null;
+  if (saved && veloraLanguages.some(([code]) => code === saved)) return saved;
+  const browser = window.navigator.language.slice(0, 2).toLowerCase() as VeloraLanguage;
+  return veloraLanguages.some(([code]) => code === browser) ? browser : "it";
+}
+
+function applyDesktopLanguage(language: VeloraLanguage) {
+  window.localStorage.setItem("velora.language", language);
+  document.documentElement.lang = language;
+  const dictionary = language === "it" ? {} : veloraDesktopDictionary[language];
+  const translate = (value: string) => dictionary[value.trim()] ?? value;
+  document.querySelectorAll<HTMLElement>("button,a,b,span,p,h1,h2,h3,label,small,strong,li,option").forEach((element) => {
+    if (element.closest("[data-no-translate]") || element.childElementCount > 0) return;
+    const source = element.dataset.vlSrc || element.textContent?.trim() || "";
+    if (!source) return;
+    element.dataset.vlSrc = source;
+    element.textContent = translate(source);
+  });
+  document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("input,textarea").forEach((element) => {
+    const source = element.dataset.vlPhSrc || element.placeholder;
+    if (!source) return;
+    element.dataset.vlPhSrc = source;
+    element.placeholder = translate(source);
+  });
+}
+
 function App() {
   const [workspace, setWorkspace] = React.useState<Workspace>("home");
+  const [language, setLanguage] = React.useState<VeloraLanguage>(() => initialVeloraLanguage());
   const [networkState, setNetworkState] = React.useState<NetworkState>("syncing");
   const [nodeMessage, setNodeMessage] = React.useState("Preparazione di Velora");
   const [query, setQuery] = React.useState("");
@@ -402,6 +481,10 @@ function App() {
   const [cloudProtection, setCloudProtection] = React.useState<CloudProtection | null>(null);
   const [cloudCosigner, setCloudCosigner] = React.useState("");
   const siteApi = createVeloraSiteApi(apiBaseUrl);
+
+  React.useEffect(() => {
+    window.setTimeout(() => applyDesktopLanguage(language), 0);
+  });
 
   function setMiningForm(form: MiningForm) {
     setMiningFormState(form);
@@ -1360,7 +1443,7 @@ function App() {
     <div className="app-shell">
       <Sidebar workspace={workspace} setWorkspace={setWorkspace} networkState={networkState} />
       <main className="main">
-        <TopBar networkState={networkState} nodeMessage={nodeMessage} session={session} onLogout={logout} />
+        <TopBar networkState={networkState} nodeMessage={nodeMessage} session={session} language={language} setLanguage={setLanguage} onLogout={logout} />
         {!session ? (
           <AccountGate
             mode={authMode}
@@ -1453,7 +1536,7 @@ function App() {
         {workspace === "activity" ? <Activity /> : null}
         {workspace === "identity" ? <Identity session={session} onVerify={() => void verifyIdentity()} onRecoverySeen={() => void markRecoverySeen()} /> : null}
         {workspace === "notifications" ? <Notifications /> : null}
-        {workspace === "settings" ? <Settings nodeMessage={nodeMessage} releaseCheck={releaseCheck} releaseMessage={releaseMessage} onRetry={() => void prepareVelora()} onCheckUpdates={() => void checkForUpdates()} /> : null}
+        {workspace === "settings" ? <Settings nodeMessage={nodeMessage} releaseCheck={releaseCheck} releaseMessage={releaseMessage} language={language} setLanguage={setLanguage} onRetry={() => void prepareVelora()} onCheckUpdates={() => void checkForUpdates()} /> : null}
         {workspace === "dev" ? (
           <VeloraDev
             sitePath={publisherSitePath}
@@ -1520,7 +1603,17 @@ function Sidebar({ workspace, setWorkspace, networkState }: { workspace: Workspa
   );
 }
 
-function TopBar({ networkState, nodeMessage, session, onLogout }: { networkState: NetworkState; nodeMessage: string; session: AccountSession | null; onLogout: () => void }) {
+function LanguageSelect({ language, setLanguage }: { language: VeloraLanguage; setLanguage: (language: VeloraLanguage) => void }) {
+  return (
+    <label className="language-select">Lingua
+      <select value={language} onChange={(event) => setLanguage(event.target.value as VeloraLanguage)}>
+        {veloraLanguages.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function TopBar({ networkState, nodeMessage, session, language, setLanguage, onLogout }: { networkState: NetworkState; nodeMessage: string; session: AccountSession | null; language: VeloraLanguage; setLanguage: (language: VeloraLanguage) => void; onLogout: () => void }) {
   return (
     <header className="topbar">
       <div>
@@ -1529,6 +1622,7 @@ function TopBar({ networkState, nodeMessage, session, onLogout }: { networkState
       </div>
       <div className="top-actions">
         <span className={`status-dot ${networkState}`} />
+        <LanguageSelect language={language} setLanguage={setLanguage} />
         <button type="button" aria-label="Notifiche">Notifiche</button>
         {session ? <button type="button" aria-label="Profilo">{session.mail.address}</button> : null}
         {session ? <button type="button" className="secondary" onClick={onLogout}>Esci</button> : null}
@@ -2291,11 +2385,12 @@ function Notifications() {
   return <section className="page-card"><h1>Notifiche</h1><p>Nessuna notifica. Velora ti avvisera quando una zona, release o replica richiede attenzione.</p></section>;
 }
 
-function Settings({ nodeMessage, releaseCheck, releaseMessage, onRetry, onCheckUpdates }: { nodeMessage: string; releaseCheck: ReleaseCheck | null; releaseMessage: string; onRetry: () => void; onCheckUpdates: () => void }) {
+function Settings({ nodeMessage, releaseCheck, releaseMessage, language, setLanguage, onRetry, onCheckUpdates }: { nodeMessage: string; releaseCheck: ReleaseCheck | null; releaseMessage: string; language: VeloraLanguage; setLanguage: (language: VeloraLanguage) => void; onRetry: () => void; onCheckUpdates: () => void }) {
   return (
     <section className="page-card">
       <h1>Impostazioni</h1>
       <p>{nodeMessage}</p>
+      <LanguageSelect language={language} setLanguage={setLanguage} />
       <button type="button" onClick={onRetry}>Riprova preparazione</button>
       <div className="review-box ok">
         <strong>Aggiornatore desktop</strong>

@@ -3208,7 +3208,7 @@ function applePortalPage(section: string) {
     .brand{display:flex;align-items:center;gap:12px;margin-bottom:18px}.logo{width:42px;height:42px;border:1px solid var(--gold);border-radius:14px;display:grid;place-items:center;color:var(--gold);font-weight:1000}.brand b{letter-spacing:.08em}.brand span{display:block;color:var(--muted);font-size:12px}
     .nav{display:grid;gap:7px}.nav button,.bottom button,.toolbar button,.primary,.ghost{border:1px solid var(--line);border-radius:15px;background:rgba(255,255,255,.04);color:var(--ink);padding:11px 12px;text-align:left}.nav button.active,.primary{background:linear-gradient(135deg,var(--gold),#f7df91);color:#06131f;border-color:transparent;font-weight:900}.bottom{margin-top:auto;display:grid;gap:8px;padding-top:14px}
     .main{min-width:0}.toolbar{position:sticky;top:0;z-index:4;display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:10px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);background:rgba(6,19,31,.75);backdrop-filter:blur(18px)}.light .toolbar{background:rgba(255,255,255,.75)}
-    .searchbox,input,textarea,select{width:100%;border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,.18);color:var(--ink);padding:12px 14px}.light .searchbox,.light input,.light textarea,.light select{background:#fff}textarea{min-height:110px;resize:vertical}
+    .searchbox,input,textarea,select{width:100%;border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,.18);color:var(--ink);padding:12px 14px}.lang-select{max-width:150px}.light .searchbox,.light input,.light textarea,.light select{background:#fff}textarea{min-height:110px;resize:vertical}
     .content{padding:18px;max-width:1500px;margin:auto}.hero,.panel{border:1px solid var(--line);border-radius:28px;background:linear-gradient(150deg,rgba(16,39,59,.92),rgba(7,26,42,.88));box-shadow:0 18px 70px rgba(0,0,0,.22)}.light .hero,.light .panel{background:linear-gradient(150deg,#fff,#f6fbff);box-shadow:0 18px 50px rgba(44,78,104,.12)}
     .hero{padding:26px;margin-bottom:16px}.kicker{color:var(--gold);font-size:12px;font-weight:1000;letter-spacing:.15em;text-transform:uppercase}h1{font-size:clamp(36px,6vw,72px);line-height:.92;margin:10px 0 14px}h2{margin:0 0 12px;font-size:23px}h3{margin:16px 0 8px}p{margin:0 0 10px;color:var(--muted);line-height:1.45}
     .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}.span-3{grid-column:span 3}.span-4{grid-column:span 4}.span-6{grid-column:span 6}.span-8{grid-column:span 8}.span-12{grid-column:1/-1}.panel{padding:16px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.card,.item{border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(255,255,255,.045);padding:13px}.light .card,.light .item{background:#fff}.card b{display:block;color:var(--gold);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.card span{font-size:22px;font-weight:1000}.list{display:grid;gap:10px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.muted{color:var(--muted)}.ok{color:var(--green)}.bad{color:var(--red)}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;word-break:break-all}
@@ -3229,6 +3229,7 @@ function applePortalPage(section: string) {
       <header class="toolbar">
         <input id="globalSearch" class="searchbox" placeholder="Cerca Velora o inserisci una zona" aria-label="Ricerca globale">
         <button onclick="runGlobalSearch()">Cerca</button>
+        ${languageSelectorHtml()}
         <button onclick="toggleTheme()">Tema</button>
         <button onclick="showModule('settings')" id="profileButton">Profilo</button>
       </header>
@@ -3244,6 +3245,7 @@ function applePortalPage(section: string) {
     </section>
   </div>
   <nav class="mobile-tabs" id="mobileNav"></nav>
+  ${veloraI18nScript()}
   <script>
     const initialSection = ${JSON.stringify(initialSection)};
     const tokenKey='velora.apple.token';
@@ -3262,9 +3264,9 @@ function applePortalPage(section: string) {
     async function api(path,options={}){const res=await fetch(path,options);const text=await res.text();let data=text;try{data=text?JSON.parse(text):{}}catch{}if(!res.ok)throw new Error(typeof data==='object'&&data.message?data.message:text||String(res.status));return data}
     function card(k,v){return '<div class="card"><b>'+esc(k)+'</b><span>'+esc(v)+'</span></div>'}
     function item(t,b){return '<div class="item"><b>'+esc(t)+'</b><p>'+esc(b||'')+'</p></div>'}
-    function renderNav(){const html=modules.map(([id,label])=>'<button class="'+(id===currentSection?'active':'')+'" onclick="showModule(\\''+id+'\\')">'+label+'</button>').join('');sideNav.innerHTML=html;mobileNav.innerHTML=modules.filter(x=>['home','search','browser','tools','settings'].includes(x[0])).map(([id,label])=>'<button class="'+(id===currentSection?'active':'')+'" onclick="showModule(\\''+id+'\\')">'+(id==='settings'?'Account':label)+'</button>').join('')}
+    function renderNav(){const html=modules.map(([id,label])=>'<button class="'+(id===currentSection?'active':'')+'" onclick="showModule(\\''+id+'\\')">'+label+'</button>').join('');sideNav.innerHTML=html;mobileNav.innerHTML=modules.filter(x=>['home','search','browser','tools','settings'].includes(x[0])).map(([id,label])=>'<button class="'+(id===currentSection?'active':'')+'" onclick="showModule(\\''+id+'\\')">'+(id==='settings'?'Account':label)+'</button>').join('');window.veloraApplyLanguage&&window.veloraApplyLanguage()}
     function portalBase(){return location.pathname.startsWith('/apple')?'/apple':'/portal'}
-    function showModule(id){currentSection=id;document.querySelectorAll('.module').forEach(el=>el.classList.toggle('active',el.id==='m-'+id));history.replaceState(null,'',portalBase()+'/'+id);renderNav();loadModule(id)}
+    function showModule(id){currentSection=id;document.querySelectorAll('.module').forEach(el=>el.classList.toggle('active',el.id==='m-'+id));history.replaceState(null,'',portalBase()+'/'+id);renderNav();loadModule(id);window.veloraApplyLanguage&&window.veloraApplyLanguage()}
     function saveSession(data){localStorage.setItem(tokenKey,data.accessToken||data.token||'');if(data.refreshToken)localStorage.setItem(refreshKey,data.refreshToken);localStorage.setItem(userKey,JSON.stringify(data.user||{}))}
     function sessionUser(){try{return JSON.parse(localStorage.getItem(userKey)||'{}')}catch{return {}}}
     function setSessionState(){const u=sessionUser();const logged=Boolean(token());sessionState.textContent=logged?'Connesso come '+(u.username||'utente Velora'):'Accesso non effettuato';profileButton.textContent=logged?(u.username||'Profilo'):'Profilo';if(document.getElementById('authForm'))authForm.classList.toggle('hidden',logged);if(document.getElementById('accountBox'))accountBox.classList.toggle('hidden',!logged);if(document.getElementById('accountName'))accountName.textContent=u.username||'utente Velora';if(document.getElementById('accountMail'))accountMail.textContent=(u.mail||u.username||'account')+'';}
@@ -3301,7 +3303,7 @@ function applePortalPage(section: string) {
     async function preparePublisher(){if(!token())return publisherStatus.textContent='Accedi per preparare una pubblicazione';try{const payload={address:publisherAddress.value.trim(),title:publisherTitle.value.trim(),description:publisherDescription.value.trim(),category:publisherCategory.value,keywords:publisherKeywords.value.split(',').map(x=>x.trim()).filter(Boolean),version:publisherVersion.value.trim()||'1.0.0',entryFile:'index.html',languages:['it'],ageRating:'EVERYONE',familySafe:true,permissions:{externalNetwork:false,clipboardRead:false,clipboardWrite:false,notifications:false,fileDownload:false},allowedExternalOrigins:[]};const data=await api('/api/v1/sites/portal-prepare',{method:'POST',headers:headers(true),body:JSON.stringify(payload)});publisherStatus.innerHTML=(data.ready?'<b class="ok">Pronto per pubblicare</b>':'<b class="bad">Correggi prima di pubblicare</b>')+'<pre>'+esc(JSON.stringify(data,null,2))+'</pre>';publisherManifest.value=JSON.stringify(data.manifest,null,2)}catch(e){publisherStatus.textContent=e.message}}
     async function queuePublish(){if(!token())return publisherStatus.textContent='Accedi per continuare';try{await preparePublisher();await api('/api/v1/execution/operations',{method:'POST',headers:headers(true),body:JSON.stringify({operation:'PUBLISH_VALIDATE',targetType:'SERVER',idempotencyKey:'publish-'+Date.now(),payload:{address:publisherAddress.value.trim(),source:'portal'}})});publisherStatus.innerHTML+='<p class="ok">Controllo registrato. Ora puoi completare la pubblicazione dal tuo dispositivo autorizzato.</p>'}catch(e){publisherStatus.textContent=e.message}}
     async function loadPublisher(){publisherStatus.textContent='Compila i campi, controlla il sito e prepara la pubblicazione.'}
-    function loadModule(id){if(id==='home')loadHome();if(id==='search'||id==='oceano')loadSearch();if(id==='mail')loadMail();if(id==='cloud')loadCloud();if(id==='tools')loadTools();if(id==='forum')loadForum();if(id==='mining')loadMining();if(id==='nodes'||id==='nas')loadNodes();if(id==='publisher')loadPublisher();}
+    function loadModule(id){if(id==='home')loadHome();if(id==='search'||id==='oceano')loadSearch();if(id==='mail')loadMail();if(id==='cloud')loadCloud();if(id==='tools')loadTools();if(id==='forum')loadForum();if(id==='mining')loadMining();if(id==='nodes'||id==='nas')loadNodes();if(id==='publisher')loadPublisher();setTimeout(()=>window.veloraApplyLanguage&&window.veloraApplyLanguage(),0)}
     document.addEventListener('keydown',e=>{if(!e.metaKey)return;if(e.key.toLowerCase()==='k'){e.preventDefault();globalSearch.focus()}if(e.key.toLowerCase()==='l'){e.preventDefault();globalSearch.focus()}if(e.key.toLowerCase()==='r'){e.preventDefault();loadModule(currentSection)}if(e.key.toLowerCase()==='t'){e.preventDefault();showModule('browser')}})
     if(localStorage.getItem('velora.apple.theme')==='light')toggleTheme();renderNav();setSessionState();refreshSession();showModule(initialSection);
   </script>
@@ -3363,7 +3365,7 @@ function mobilePage() {
     main{padding:16px 14px 96px;max-width:760px;margin:auto}.hero,.panel{border:1px solid var(--line);border-radius:26px;background:linear-gradient(160deg,rgba(16,39,59,.95),rgba(7,27,43,.9));box-shadow:0 18px 60px rgba(0,0,0,.28)}
     .hero{padding:22px;margin-bottom:14px}.hero p{color:var(--muted);line-height:1.45}.kicker{color:var(--gold);font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}h1{font-size:34px;line-height:.96;margin:10px 0 12px}h2{margin:0 0 12px;font-size:21px}h3{margin:14px 0 8px}p{margin:0 0 10px}
     .panel{padding:16px;margin:14px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(255,255,255,.045);padding:12px}.card b{display:block;color:var(--gold);font-size:12px;text-transform:uppercase;letter-spacing:.08em}.card span{font-size:18px;font-weight:900}
-    input,textarea,button,select{width:100%;border:1px solid var(--line);border-radius:16px;background:#06121d;color:var(--ink);padding:13px 14px;font:inherit}textarea{min-height:110px;resize:vertical}button{font-weight:900;background:linear-gradient(135deg,#264a64,#11263a);cursor:pointer}button.primary{background:linear-gradient(135deg,var(--gold),#f7df91);border:0;color:#07131e}.username-wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;border:1px solid var(--line);border-radius:16px;background:#06121d;overflow:hidden}.username-wrap input{border:0;background:transparent;border-radius:0}.username-suffix{padding:0 14px;color:var(--gold);font-weight:900;white-space:nowrap}
+    input,textarea,button,select{width:100%;border:1px solid var(--line);border-radius:16px;background:#06121d;color:var(--ink);padding:13px 14px;font:inherit}textarea{min-height:110px;resize:vertical}button{font-weight:900;background:linear-gradient(135deg,#264a64,#11263a);cursor:pointer}button.primary{background:linear-gradient(135deg,var(--gold),#f7df91);border:0;color:#07131e}.lang-select{max-width:150px}.username-wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;border:1px solid var(--line);border-radius:16px;background:#06121d;overflow:hidden}.username-wrap input{border:0;background:transparent;border-radius:0}.username-suffix{padding:0 14px;color:var(--gold);font-weight:900;white-space:nowrap}
     .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stack{display:grid;gap:10px}.muted{color:var(--muted)}.ok{color:var(--green)}.bad{color:var(--red)}.list{display:grid;gap:10px}.item{border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:12px;background:rgba(0,0,0,.13)}.item small{color:var(--muted)}
     nav.mobile{position:fixed;left:10px;right:10px;bottom:10px;z-index:10;background:rgba(6,19,31,.92);border:1px solid var(--line);border-radius:24px;padding:8px;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;backdrop-filter:blur(18px)}nav.mobile button{padding:10px 4px;border-radius:16px;font-size:12px}nav.mobile button.active{background:linear-gradient(135deg,var(--gold),#f6df95);color:#07131e}
     section[data-page]{display:none}section[data-page].active{display:block}.install{display:none}.install.show{display:block}
@@ -3373,6 +3375,7 @@ function mobilePage() {
 <body>
   <header>
     <div class="brand"><div class="logo">V</div><div><b>VELORA</b><span>Mobile beta</span></div></div>
+    ${languageSelectorHtml()}
     <button id="installBtn" style="max-width:150px">Installa</button>
   </header>
   <main>
@@ -3490,6 +3493,7 @@ function mobilePage() {
     <button data-tab="tools" onclick="showPage('tools',this)">Tools</button>
     <button data-tab="account" onclick="showPage('account',this)">Account</button>
   </nav>
+  ${veloraI18nScript()}
   <script>
     let deferredInstall = null;
     let currentForumSlug = 'global';
@@ -3506,7 +3510,7 @@ function mobilePage() {
     function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
     async function api(path,options){ const res=await fetch(path,options||{}); const text=await res.text(); let data=text; try{ data=text?JSON.parse(text):{}; }catch{} if(!res.ok) throw new Error(typeof data==='object' && data.message ? data.message : text || res.status); return data; }
     function track(event,targetType,targetId,payload){ fetch('/api/v1/analytics',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({event,targetType,targetId,summary:event,payload:payload||{}})}).catch(()=>undefined); }
-    function showPage(page,button){ document.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===page)); document.querySelectorAll('nav.mobile button').forEach(el=>el.classList.remove('active')); if(button) button.classList.add('active'); location.hash=page; if(page==='tools') loadTools(); }
+    function showPage(page,button){ document.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===page)); document.querySelectorAll('nav.mobile button').forEach(el=>el.classList.remove('active')); if(button) button.classList.add('active'); location.hash=page; if(page==='tools') loadTools(); setTimeout(()=>window.veloraApplyLanguage&&window.veloraApplyLanguage(),0); }
     async function runMobileSearch(){ try{ const q=mobileSearch.value.trim()||'velora'; const data=await api('/api/v1/search?q='+encodeURIComponent(q)); if(!(data.results||[]).length)track('SEARCH_EMPTY','SEARCH',q); mobileSearchResults.innerHTML=(data.results||[]).map(r=>'<div class="item"><b>'+esc(r.title||r.address)+'</b><br><small>'+esc(r.description||r.summary||'')+'</small><button onclick="openMobileZone(\\''+esc(r.address||r.zone||'')+'\\')">Apri</button></div>').join('')||item('Search','Nessun risultato disponibile'); }catch(e){ track('SEARCH_ERROR','SEARCH',mobileSearch.value,{message:e.message}); mobileSearchResults.innerHTML=item('Search',e.message); } }
     function openMobileZone(zone){ if(!zone)return; track('ZONE_OPEN','ZONE',zone); mobileZone.value=zone; showPage('browser',document.querySelector('[data-tab=browser]')); mobileFrame.src='/zone/'+encodeURIComponent(zone); }
     function authUsername(){ return (username.value||'').trim().replace(/@velora$/i,'') + '@velora'; }
@@ -3766,6 +3770,7 @@ async function publicPage(page: string) {
     nav{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
     nav a{color:#c8d9ea;text-decoration:none}
     nav a:first-child{color:#f1d68b;font-weight:900;letter-spacing:.18em}
+    .lang-select{width:auto;border:1px solid rgba(216,174,85,.5);border-radius:14px;background:rgba(6,17,31,.78);color:#f7fbff;padding:10px 12px}
     .hero,.panel,.cards article,.quick-grid article{border:1px solid rgba(150,202,255,.18);background:rgba(10,30,50,.72);border-radius:30px;box-shadow:0 28px 80px rgba(0,0,0,.42)}
     .hero{padding:clamp(28px,6vw,72px);margin-top:28px;position:relative;overflow:hidden}
     .home-hero{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(300px,.72fr);gap:36px;align-items:center;min-height:620px}
@@ -3791,10 +3796,11 @@ async function publicPage(page: string) {
   </style>
 </head>
 <body>
-  <header><nav><a href="/">VELORA</a><a href="/portal">Portale</a><a href="/download">Download</a><a href="/what-is-velora">Upper Web</a><a href="/security">Sicurezza</a><a href="/publishers">Publisher</a><a href="/publishers/guide">Guida</a><a href="/developers">Developers</a><a href="/pricing">Pricing</a><a href="/status">Status</a></nav></header>
+  <header><nav><a href="/">VELORA</a><a href="/portal">Portale</a><a href="/download">Download</a><a href="/what-is-velora">Upper Web</a><a href="/security">Sicurezza</a><a href="/publishers">Publisher</a><a href="/publishers/guide">Guida</a><a href="/developers">Developers</a><a href="/pricing">Pricing</a><a href="/status">Status</a>${languageSelectorHtml()}</nav></header>
   <main>${body}</main>
   <footer><p>Velora Beta pubblica</p><p><a href="/legal/privacy">Privacy</a> · <a href="/legal/cookie">Cookie</a> · <a href="/legal/terms">Termini</a> · Supporto: srivarola104 gmail.com · Account Velora: simonefolletto velora</p></footer>
   <div class="cookie-banner" id="cookieBanner"><p>Velora usa solo cookie e storage tecnici necessari per accesso, sicurezza e preferenze essenziali.</p><div><a class="ghost" href="/legal/cookie">Leggi policy</a><button onclick="localStorage.setItem('velora.cookie.ok','1');cookieBanner.classList.remove('show')">Accetta</button></div></div>
+  ${veloraI18nScript()}
   <script>if(!localStorage.getItem('velora.cookie.ok'))cookieBanner.classList.add('show')</script>
 </body>
 </html>`;
@@ -3802,6 +3808,175 @@ async function publicPage(page: string) {
 
 function routeParam(params: unknown, key: string) {
   return String((params as Record<string, string>)[key]);
+}
+
+function languageSelectorHtml() {
+  return `<select class="lang-select" data-velora-language aria-label="Language">
+    <option value="it">Italiano</option>
+    <option value="en">English</option>
+    <option value="fr">Français</option>
+    <option value="de">Deutsch</option>
+    <option value="es">Español</option>
+    <option value="ru">Русский</option>
+    <option value="zh">中文</option>
+  </select>`;
+}
+
+function veloraI18nScript() {
+  return `<script>
+(() => {
+  const key = "velora.language";
+  const supported = ["it","en","fr","de","es","ru","zh"];
+  const names = { it:"Italiano", en:"English", fr:"Français", de:"Deutsch", es:"Español", ru:"Русский", zh:"中文" };
+  const pick = () => {
+    const saved = localStorage.getItem(key);
+    if (supported.includes(saved)) return saved;
+    const nav = (navigator.language || "it").slice(0,2).toLowerCase();
+    return supported.includes(nav) ? nav : "it";
+  };
+  const dict = ${JSON.stringify(veloraI18nDictionary())};
+  const placeholders = ${JSON.stringify(veloraPlaceholderDictionary())};
+  function tr(text, lang = pick()) {
+    const source = String(text || "").trim();
+    if (!source || lang === "it") return source;
+    return dict[lang]?.[source] || source;
+  }
+  function apply(root = document) {
+    const lang = pick();
+    document.documentElement.lang = lang;
+    document.querySelectorAll("[data-velora-language]").forEach(select => {
+      select.value = lang;
+      select.onchange = () => { localStorage.setItem(key, select.value); apply(document); window.dispatchEvent(new CustomEvent("velora:language", { detail: { language: select.value } })); };
+    });
+    root.querySelectorAll("button,a,b,span,p,h1,h2,h3,dt,dd,li,label,summary,small,option,div.card span,div.card b").forEach(el => {
+      if (el.closest("[data-no-translate]")) return;
+      if (el.childElementCount > 0) return;
+      const raw = el.dataset.vlSrc || el.textContent.trim();
+      if (!raw) return;
+      el.dataset.vlSrc = raw;
+      const next = tr(raw, lang);
+      if (next && el.textContent !== next) el.textContent = next;
+    });
+    root.querySelectorAll("input,textarea").forEach(el => {
+      const raw = el.dataset.vlPhSrc || el.getAttribute("placeholder") || "";
+      if (!raw) return;
+      el.dataset.vlPhSrc = raw;
+      el.setAttribute("placeholder", placeholders[lang]?.[raw] || raw);
+      const label = el.getAttribute("aria-label");
+      if (label) el.setAttribute("aria-label", dict[lang]?.[label] || label);
+    });
+  }
+  window.veloraLanguage = () => pick();
+  window.veloraTranslate = tr;
+  window.veloraApplyLanguage = apply;
+  window.addEventListener("DOMContentLoaded", () => {
+    if (!localStorage.getItem(key)) localStorage.setItem(key, pick());
+    apply(document);
+    const observer = new MutationObserver(() => apply(document));
+    observer.observe(document.body, { childList: true, subtree: true });
+  });
+})();
+</script>`;
+}
+
+function zoneTranslationRuntime(address: string) {
+  return `<script>
+(() => {
+  function ready(){
+    const lang=(localStorage.getItem("velora.language")||navigator.language||"it").slice(0,2).toLowerCase();
+    const box=document.querySelector("[data-velora-zone-translate]");
+    if(!box || lang==="it") return;
+    box.style.display="inline-flex";
+    const label={en:"Translate page",fr:"Traduire la page",de:"Seite übersetzen",es:"Traducir página",ru:"Перевести страницу",zh:"翻译页面"}[lang]||"Translate page";
+    box.textContent=label;
+    box.onclick=()=>{window.veloraApplyLanguage&&window.veloraApplyLanguage(document);document.body.dataset.veloraTranslated=lang;box.textContent={en:"Translated",fr:"Traduit",de:"Übersetzt",es:"Traducida",ru:"Переведено",zh:"已翻译"}[lang]||"Translated";};
+  }
+  window.addEventListener("DOMContentLoaded",ready);
+  window.addEventListener("velora:language",ready);
+})();
+</script>`;
+}
+
+function veloraI18nDictionary() {
+  return {
+    en: {
+      "Portale": "Portal", "Sicurezza": "Security", "Guida": "Guide", "Termini": "Terms", "Accetta": "Accept", "Leggi policy": "Read policy",
+      "Velora Beta pubblica": "Velora Public Beta", "Apri Velora": "Open Velora", "Scarica app beta": "Download beta app", "Scarica Velora": "Download Velora",
+      "Entra in Velora": "Enter Velora", "Portale Velora": "Velora Portal", "Scarica per Windows": "Download for Windows", "Scarica per Mac Apple Silicon": "Download for Mac Apple Silicon", "Scarica per Mac Intel": "Download for Mac Intel", "Scarica nodo NAS": "Download NAS node", "Verifica SHA-256": "Verify SHA-256",
+      "Versione": "Version", "Data build": "Build date", "Stato Mac": "Mac status", "Installazione su Mac": "Installation on Mac", "Wallet Mining Partner": "Mining Partner Wallet",
+      "Home": "Home", "Browser": "Browser", "Search": "Search", "VeloMail": "VeloMail", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Tools", "Forum": "Forum", "Mining": "Mining", "Nodi": "Nodes", "Oceano": "Oceano", "Impostazioni": "Settings", "Account": "Account",
+      "Cerca": "Search", "Tema": "Theme", "Profilo": "Profile", "Installa": "Install", "Esci": "Sign out", "Accedi a Velora": "Sign in to Velora", "Crea account": "Create account", "Accedi": "Sign in", "Account attivo": "Active account", "Accesso non effettuato": "Not signed in", "Accesso effettuato": "Signed in", "Account creato": "Account created",
+      "Portale universale": "Universal portal", "Velora senza installazione": "Velora without installation", "Dashboard": "Dashboard", "Cosa posso fare ora": "What can I do now", "Uso rapido": "Quick start", "Come salvarlo": "How to save it",
+      "Cerca ora": "Search now", "Apri VeloMail": "Open VeloMail", "Prepara sito": "Prepare site", "Apri zona": "Open zone", "Carica": "Upload", "File": "Files", "Tools disponibili": "Available tools", "Invia": "Send", "Aggiorna": "Refresh", "Controlla NAS": "Check NAS",
+      "Traduci": "Translate", "Riassumi": "Summarize", "Wallet check": "Wallet check", "Privacy check": "Privacy check", "Risultato pronto qui": "Result appears here"
+    },
+    fr: {
+      "Portale": "Portail", "Sicurezza": "Sécurité", "Guida": "Guide", "Termini": "Conditions", "Accetta": "Accepter", "Leggi policy": "Lire la politique",
+      "Velora Beta pubblica": "Bêta publique Velora", "Apri Velora": "Ouvrir Velora", "Scarica app beta": "Télécharger la bêta", "Scarica Velora": "Télécharger Velora",
+      "Entra in Velora": "Entrer dans Velora", "Portale Velora": "Portail Velora", "Scarica per Windows": "Télécharger pour Windows", "Scarica per Mac Apple Silicon": "Télécharger pour Mac Apple Silicon", "Scarica per Mac Intel": "Télécharger pour Mac Intel", "Scarica nodo NAS": "Télécharger le nœud NAS", "Verifica SHA-256": "Vérifier SHA-256",
+      "Versione": "Version", "Data build": "Date de build", "Stato Mac": "État Mac", "Installazione su Mac": "Installation sur Mac", "Wallet Mining Partner": "Wallet Mining Partner",
+      "Home": "Accueil", "Browser": "Navigateur", "Search": "Recherche", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Outils", "Forum": "Forum", "Mining": "Mining", "Nodi": "Nœuds", "Oceano": "Oceano", "Impostazioni": "Réglages", "Account": "Compte",
+      "Cerca": "Rechercher", "Tema": "Thème", "Profilo": "Profil", "Installa": "Installer", "Esci": "Déconnexion", "Accedi a Velora": "Connexion à Velora", "Crea account": "Créer un compte", "Accedi": "Connexion", "Account attivo": "Compte actif", "Accesso non effettuato": "Non connecté", "Accesso effettuato": "Connexion réussie", "Account creato": "Compte créé",
+      "Portale universale": "Portail universel", "Velora senza installazione": "Velora sans installation", "Dashboard": "Tableau de bord", "Cosa posso fare ora": "Que puis-je faire maintenant", "Uso rapido": "Démarrage rapide", "Come salvarlo": "Comment l’enregistrer",
+      "Cerca ora": "Rechercher maintenant", "Apri VeloMail": "Ouvrir VeloMail", "Prepara sito": "Préparer le site", "Apri zona": "Ouvrir la zone", "Carica": "Téléverser", "File": "Fichiers", "Tools disponibili": "Outils disponibles", "Invia": "Envoyer", "Aggiorna": "Actualiser", "Controlla NAS": "Vérifier le NAS",
+      "Traduci": "Traduire", "Riassumi": "Résumer", "Wallet check": "Vérifier wallet", "Privacy check": "Contrôle confidentialité", "Risultato pronto qui": "Le résultat s’affiche ici"
+    },
+    de: {
+      "Portale": "Portal", "Sicurezza": "Sicherheit", "Guida": "Anleitung", "Termini": "Bedingungen", "Accetta": "Akzeptieren", "Leggi policy": "Richtlinie lesen",
+      "Velora Beta pubblica": "Öffentliche Velora Beta", "Apri Velora": "Velora öffnen", "Scarica app beta": "Beta-App laden", "Scarica Velora": "Velora herunterladen",
+      "Entra in Velora": "Velora starten", "Portale Velora": "Velora Portal", "Scarica per Windows": "Für Windows herunterladen", "Scarica per Mac Apple Silicon": "Für Mac Apple Silicon herunterladen", "Scarica per Mac Intel": "Für Mac Intel herunterladen", "Scarica nodo NAS": "NAS-Knoten laden", "Verifica SHA-256": "SHA-256 prüfen",
+      "Versione": "Version", "Data build": "Build-Datum", "Stato Mac": "Mac-Status", "Installazione su Mac": "Installation auf Mac", "Wallet Mining Partner": "Mining-Partner-Wallet",
+      "Home": "Start", "Browser": "Browser", "Search": "Suche", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Tools", "Forum": "Forum", "Mining": "Mining", "Nodi": "Knoten", "Oceano": "Oceano", "Impostazioni": "Einstellungen", "Account": "Konto",
+      "Cerca": "Suchen", "Tema": "Design", "Profilo": "Profil", "Installa": "Installieren", "Esci": "Abmelden", "Accedi a Velora": "Bei Velora anmelden", "Crea account": "Konto erstellen", "Accedi": "Anmelden", "Account attivo": "Aktives Konto", "Accesso non effettuato": "Nicht angemeldet", "Accesso effettuato": "Angemeldet", "Account creato": "Konto erstellt",
+      "Portale universale": "Universelles Portal", "Velora senza installazione": "Velora ohne Installation", "Dashboard": "Dashboard", "Cosa posso fare ora": "Was kann ich jetzt tun", "Uso rapido": "Schnellstart", "Come salvarlo": "So speichern",
+      "Cerca ora": "Jetzt suchen", "Apri VeloMail": "VeloMail öffnen", "Prepara sito": "Website vorbereiten", "Apri zona": "Zone öffnen", "Carica": "Hochladen", "File": "Dateien", "Tools disponibili": "Verfügbare Tools", "Invia": "Senden", "Aggiorna": "Aktualisieren", "Controlla NAS": "NAS prüfen",
+      "Traduci": "Übersetzen", "Riassumi": "Zusammenfassen", "Wallet check": "Wallet prüfen", "Privacy check": "Datenschutz prüfen", "Risultato pronto qui": "Ergebnis erscheint hier"
+    },
+    es: {
+      "Portale": "Portal", "Sicurezza": "Seguridad", "Guida": "Guía", "Termini": "Términos", "Accetta": "Aceptar", "Leggi policy": "Leer política",
+      "Velora Beta pubblica": "Beta pública de Velora", "Apri Velora": "Abrir Velora", "Scarica app beta": "Descargar beta", "Scarica Velora": "Descargar Velora",
+      "Entra in Velora": "Entrar en Velora", "Portale Velora": "Portal Velora", "Scarica per Windows": "Descargar para Windows", "Scarica per Mac Apple Silicon": "Descargar para Mac Apple Silicon", "Scarica per Mac Intel": "Descargar para Mac Intel", "Scarica nodo NAS": "Descargar nodo NAS", "Verifica SHA-256": "Verificar SHA-256",
+      "Versione": "Versión", "Data build": "Fecha de build", "Stato Mac": "Estado Mac", "Installazione su Mac": "Instalación en Mac", "Wallet Mining Partner": "Wallet Mining Partner",
+      "Home": "Inicio", "Browser": "Navegador", "Search": "Buscar", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Herramientas", "Forum": "Foro", "Mining": "Mining", "Nodi": "Nodos", "Oceano": "Oceano", "Impostazioni": "Ajustes", "Account": "Cuenta",
+      "Cerca": "Buscar", "Tema": "Tema", "Profilo": "Perfil", "Installa": "Instalar", "Esci": "Salir", "Accedi a Velora": "Acceder a Velora", "Crea account": "Crear cuenta", "Accedi": "Entrar", "Account attivo": "Cuenta activa", "Accesso non effettuato": "Sin sesión", "Accesso effettuato": "Sesión iniciada", "Account creato": "Cuenta creada",
+      "Portale universale": "Portal universal", "Velora senza installazione": "Velora sin instalación", "Dashboard": "Panel", "Cosa posso fare ora": "Qué puedo hacer ahora", "Uso rapido": "Inicio rápido", "Come salvarlo": "Cómo guardarlo",
+      "Cerca ora": "Buscar ahora", "Apri VeloMail": "Abrir VeloMail", "Prepara sito": "Preparar sitio", "Apri zona": "Abrir zona", "Carica": "Subir", "File": "Archivos", "Tools disponibili": "Herramientas disponibles", "Invia": "Enviar", "Aggiorna": "Actualizar", "Controlla NAS": "Comprobar NAS",
+      "Traduci": "Traducir", "Riassumi": "Resumir", "Wallet check": "Comprobar wallet", "Privacy check": "Comprobar privacidad", "Risultato pronto qui": "El resultado aparece aquí"
+    },
+    ru: {
+      "Portale": "Портал", "Sicurezza": "Безопасность", "Guida": "Руководство", "Termini": "Условия", "Accetta": "Принять", "Leggi policy": "Открыть правила",
+      "Velora Beta pubblica": "Публичная бета Velora", "Apri Velora": "Открыть Velora", "Scarica app beta": "Скачать бета-приложение", "Scarica Velora": "Скачать Velora",
+      "Entra in Velora": "Войти в Velora", "Portale Velora": "Портал Velora", "Scarica per Windows": "Скачать для Windows", "Scarica per Mac Apple Silicon": "Скачать для Mac Apple Silicon", "Scarica per Mac Intel": "Скачать для Mac Intel", "Scarica nodo NAS": "Скачать NAS-узел", "Verifica SHA-256": "Проверить SHA-256",
+      "Versione": "Версия", "Data build": "Дата сборки", "Stato Mac": "Статус Mac", "Installazione su Mac": "Установка на Mac", "Wallet Mining Partner": "Кошелёк Mining Partner",
+      "Home": "Главная", "Browser": "Браузер", "Search": "Поиск", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Инструменты", "Forum": "Форум", "Mining": "Mining", "Nodi": "Узлы", "Oceano": "Oceano", "Impostazioni": "Настройки", "Account": "Аккаунт",
+      "Cerca": "Поиск", "Tema": "Тема", "Profilo": "Профиль", "Installa": "Установить", "Esci": "Выйти", "Accedi a Velora": "Войти в Velora", "Crea account": "Создать аккаунт", "Accedi": "Войти", "Account attivo": "Активный аккаунт", "Accesso non effettuato": "Вход не выполнен", "Accesso effettuato": "Вход выполнен", "Account creato": "Аккаунт создан",
+      "Portale universale": "Универсальный портал", "Velora senza installazione": "Velora без установки", "Dashboard": "Панель", "Cosa posso fare ora": "Что можно сделать сейчас", "Uso rapido": "Быстрый старт", "Come salvarlo": "Как сохранить",
+      "Cerca ora": "Искать сейчас", "Apri VeloMail": "Открыть VeloMail", "Prepara sito": "Подготовить сайт", "Apri zona": "Открыть зону", "Carica": "Загрузить", "File": "Файлы", "Tools disponibili": "Доступные инструменты", "Invia": "Отправить", "Aggiorna": "Обновить", "Controlla NAS": "Проверить NAS",
+      "Traduci": "Перевести", "Riassumi": "Кратко изложить", "Wallet check": "Проверка кошелька", "Privacy check": "Проверка приватности", "Risultato pronto qui": "Результат появится здесь"
+    },
+    zh: {
+      "Portale": "门户", "Sicurezza": "安全", "Guida": "指南", "Termini": "条款", "Accetta": "接受", "Leggi policy": "阅读政策",
+      "Velora Beta pubblica": "Velora 公开测试版", "Apri Velora": "打开 Velora", "Scarica app beta": "下载测试版应用", "Scarica Velora": "下载 Velora",
+      "Entra in Velora": "进入 Velora", "Portale Velora": "Velora 门户", "Scarica per Windows": "下载 Windows 版", "Scarica per Mac Apple Silicon": "下载 Mac Apple Silicon 版", "Scarica per Mac Intel": "下载 Mac Intel 版", "Scarica nodo NAS": "下载 NAS 节点", "Verifica SHA-256": "验证 SHA-256",
+      "Versione": "版本", "Data build": "构建日期", "Stato Mac": "Mac 状态", "Installazione su Mac": "在 Mac 上安装", "Wallet Mining Partner": "Mining Partner 钱包",
+      "Home": "首页", "Browser": "浏览器", "Search": "搜索", "Cloud": "云", "Publisher": "发布", "Tools": "工具", "Forum": "论坛", "Mining": "挖矿", "Nodi": "节点", "Oceano": "Oceano", "Impostazioni": "设置", "Account": "账户",
+      "Cerca": "搜索", "Tema": "主题", "Profilo": "资料", "Installa": "安装", "Esci": "退出", "Accedi a Velora": "登录 Velora", "Crea account": "创建账户", "Accedi": "登录", "Account attivo": "当前账户", "Accesso non effettuato": "未登录", "Accesso effettuato": "已登录", "Account creato": "账户已创建",
+      "Portale universale": "通用门户", "Velora senza installazione": "无需安装即可使用 Velora", "Dashboard": "仪表板", "Cosa posso fare ora": "现在可以做什么", "Uso rapido": "快速开始", "Come salvarlo": "如何保存",
+      "Cerca ora": "立即搜索", "Apri VeloMail": "打开 VeloMail", "Prepara sito": "准备网站", "Apri zona": "打开区域", "Carica": "上传", "File": "文件", "Tools disponibili": "可用工具", "Invia": "发送", "Aggiorna": "刷新", "Controlla NAS": "检查 NAS",
+      "Traduci": "翻译", "Riassumi": "摘要", "Wallet check": "钱包检查", "Privacy check": "隐私检查", "Risultato pronto qui": "结果显示在这里"
+    }
+  };
+}
+
+function veloraPlaceholderDictionary() {
+  return {
+    en: { "Cerca Velora o inserisci una zona": "Search Velora or enter a zone", "nomeutente": "username", "Password": "Password", "Cerca zone, Oceano, tools, guide": "Search zones, Oceano, tools, guides", "Testo, wallet, link o contenuto": "Text, wallet, link or content" },
+    fr: { "Cerca Velora o inserisci una zona": "Rechercher dans Velora ou saisir une zone", "nomeutente": "nom utilisateur", "Password": "Mot de passe", "Cerca zone, Oceano, tools, guide": "Rechercher zones, Oceano, outils, guides", "Testo, wallet, link o contenuto": "Texte, wallet, lien ou contenu" },
+    de: { "Cerca Velora o inserisci una zona": "Velora durchsuchen oder Zone eingeben", "nomeutente": "Benutzername", "Password": "Passwort", "Cerca zone, Oceano, tools, guide": "Zonen, Oceano, Tools, Anleitungen suchen", "Testo, wallet, link o contenuto": "Text, Wallet, Link oder Inhalt" },
+    es: { "Cerca Velora o inserisci una zona": "Buscar en Velora o introducir una zona", "nomeutente": "usuario", "Password": "Contraseña", "Cerca zone, Oceano, tools, guide": "Buscar zonas, Oceano, herramientas, guías", "Testo, wallet, link o contenuto": "Texto, wallet, enlace o contenido" },
+    ru: { "Cerca Velora o inserisci una zona": "Искать в Velora или ввести зону", "nomeutente": "имя пользователя", "Password": "Пароль", "Cerca zone, Oceano, tools, guide": "Поиск зон, Oceano, инструментов и руководств", "Testo, wallet, link o contenuto": "Текст, кошелёк, ссылка или контент" },
+    zh: { "Cerca Velora o inserisci una zona": "搜索 Velora 或输入区域", "nomeutente": "用户名", "Password": "密码", "Cerca zone, Oceano, tools, guide": "搜索区域、Oceano、工具、指南", "Testo, wallet, link o contenuto": "文本、钱包、链接或内容" }
+  };
 }
 
 function normalizeVeloraUsername(value: unknown) {
@@ -4049,10 +4224,11 @@ async function findPublishedSiteRoot(address: string) {
 function injectZoneRuntime(html: string, address: string, row: any) {
   const baseTag = `<base href="/zone-assets/${escapeHtml(address)}/">`;
   const status = row?.release_status ?? row?.zone_status ?? "LOCAL_RUNTIME";
-  const shell = `<div data-velora-runtime style="position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483647;display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid rgba(232,196,105,.45);border-radius:16px;background:rgba(6,19,31,.9);color:#f6fbff;font:13px system-ui;box-shadow:0 12px 35px rgba(0,0,0,.28)"><span>Zona ${escapeHtml(address)} · ${escapeHtml(String(status))}</span><button data-velora-auth style="border:0;border-radius:12px;background:#e8c469;color:#06131f;padding:8px 10px;font-weight:800">Login Velora</button><span data-velora-auth-state>non collegato</span></div>`;
+  const shell = `<div data-velora-runtime style="position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483647;display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid rgba(232,196,105,.45);border-radius:16px;background:rgba(6,19,31,.9);color:#f6fbff;font:13px system-ui;box-shadow:0 12px 35px rgba(0,0,0,.28)"><span data-no-translate>Zona ${escapeHtml(address)} · ${escapeHtml(String(status))}</span><button data-velora-zone-translate style="display:none;border:0;border-radius:12px;background:#15324a;color:#f6fbff;padding:8px 10px;font-weight:800">Traduci pagina</button><button data-velora-auth style="border:0;border-radius:12px;background:#e8c469;color:#06131f;padding:8px 10px;font-weight:800">Login Velora</button><span data-velora-auth-state>non collegato</span></div>`;
   const bridge = `<script>(()=>{const s=document.querySelector("[data-velora-auth-state]");document.addEventListener("click",e=>{const t=e.target&&e.target.closest?e.target.closest("[data-velora-auth],a[href^='velora://auth']"):null;if(!t)return;e.preventDefault();window.parent.postMessage({type:"VELORA_AUTH_REQUEST",zone:${JSON.stringify(address)}},"*")});window.addEventListener("message",e=>{if(!e.data||e.data.type!=="VELORA_AUTH_STATE")return;if(s)s.textContent=e.data.loggedIn?"collegato: "+(e.data.mail||e.data.username||"utente"):"serve accesso Velora"})})();</script>`;
   const withBase = /<head[^>]*>/i.test(html) ? html.replace(/<head([^>]*)>/i, `<head$1>${baseTag}`) : `${baseTag}${html}`;
-  return /<\/body>/i.test(withBase) ? withBase.replace(/<\/body>/i, `${shell}${bridge}</body>`) : `${withBase}${shell}${bridge}`;
+  const runtime = `${shell}${veloraI18nScript()}${zoneTranslationRuntime(address)}${bridge}`;
+  return /<\/body>/i.test(withBase) ? withBase.replace(/<\/body>/i, `${runtime}</body>`) : `${withBase}${runtime}`;
 }
 
 function mimeFromPath(filePath: string) {
