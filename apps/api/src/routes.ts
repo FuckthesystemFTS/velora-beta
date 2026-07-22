@@ -3719,34 +3719,36 @@ async function publicPage(page: string) {
     <section class="panel"><h1>Status</h1><p>API pubblica: <a href="/health">/health</a>. Download Windows e macOS Apple Silicon: operativi.</p></section>` : `
     <section class="hero home-hero">
       <div class="hero-copy">
-        <span>VELORA - L'UPPER WEB</span>
-        <h1>Un nuovo livello per navigare, pubblicare e proteggere contenuti</h1>
-        <p class="lead">Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.</p>
+        <span>VELORA BETA PUBBLICA</span>
+        <h1>Naviga zone. Pubblica siti. Proteggi dati.</h1>
+        <p class="lead">Un portale operativo sopra il web tradizionale: account unico, ricerca interna, siti pubblicati, VeloMail, Cloud, Tools e nodi nello stesso ambiente.</p>
         <div class="hero-actions"><a class="cta" href="/portal">Apri Velora</a><a class="ghost" href="/download">Scarica app beta</a></div>
-        <div class="trust-row"><span>HTTPS attivo</span><span>Account unico</span><span>Beta pubblica</span></div>
+        <div class="trust-row"><span>Portale online</span><span>Account @velora</span><span>Windows e Mac</span><span>Mobile ready</span></div>
       </div>
-      <div class="hero-orbit" aria-hidden="true">
-        <div class="planet">V</div>
-        <div class="ring ring-one"></div>
-        <div class="ring ring-two"></div>
-        <div class="signal s1">Search</div>
-        <div class="signal s2">Cloud</div>
-        <div class="signal s3">Mail</div>
-        <div class="signal s4">Tools</div>
+      <div class="product-preview" aria-hidden="true">
+        <div class="preview-top"><span></span><span></span><span></span><b>Velora Search</b></div>
+        <div class="preview-search"><span>happy.meter</span><button>Apri</button></div>
+        <div class="preview-grid">
+          <article><small>Zona</small><b>happy.meter</b><em>online</em></article>
+          <article><small>Account</small><b>@velora</b><em>attivo</em></article>
+          <article><small>Cloud</small><b>25 MB</b><em>protetto</em></article>
+          <article><small>Tools</small><b>Core</b><em>pronti</em></article>
+        </div>
+        <div class="preview-stream"><span></span><p>Search, VeloMail, Cloud e Publisher condividono la stessa sessione</p></div>
       </div>
     </section>
     <section class="quick-grid">
-      <article><span>01</span><b>Entra dal portale</b><p>Usa Velora subito da browser, iPhone, Android, Windows e Mac senza installazione obbligatoria.</p></article>
-      <article><span>02</span><b>Cerca zone e contenuti</b><p>Apri siti pubblicati, contenuti Oceano e strumenti Velora da un motore interno dedicato.</p></article>
-      <article><span>03</span><b>Pubblica siti Velora</b><p>Prepara manifest, login Velora e validazione per rendere online progetti e applicazioni.</p></article>
-      <article><span>04</span><b>Proteggi account e cloud</b><p>Guardian, audit, policy cookie, privacy e controlli sicurezza sono integrati nel sistema.</p></article>
+      <article><span>01</span><b>Entra senza attrito</b><p>Da browser o desktop. Un solo account per portale, mail, cloud, forum e pubblicazione.</p></article>
+      <article><span>02</span><b>Apri zone reali</b><p>Il motore interno porta a siti pubblicati, contenuti Oceano e strumenti Velora.</p></article>
+      <article><span>03</span><b>Pubblica con controllo</b><p>Manifest, validazione, login Velora e stato pubblicazione leggibile prima di andare online.</p></article>
+      <article><span>04</span><b>Gestisci sicurezza</b><p>Guardian, audit, privacy, cookie tecnici e protezione Cloud sono parte dell’esperienza.</p></article>
     </section>
     <section class="panel manifesto">
       <div>
-        <span>VISIONE</span>
-        <h2>Velora non sostituisce Internet. Lo eleva.</h2>
+        <span>PER CHI LO PROVA OGGI</span>
+        <h2>Velora è già usabile dal portale. Il desktop aggiunge potenza locale.</h2>
       </div>
-      <p>Un ambiente sopra il web tradizionale dove identita, pubblicazione, ricerca, comunicazione e protezione lavorano insieme invece di restare separati.</p>
+      <p>La beta serve a testare accesso, ricerca, zone pubblicate, VeloMail, Cloud, Tools e Publisher con persone reali, non con schermate simulate.</p>
     </section>`;
   return `<!doctype html>
 <html lang="it">
@@ -3764,20 +3766,21 @@ async function publicPage(page: string) {
   <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />
   <meta name="twitter:card" content="summary_large_image" />
   <style>
-    :root{color:#f7fbff;background:#06111f;font-family:Aptos,Segoe UI,sans-serif}
-    body{margin:0;background:radial-gradient(circle at 82% 5%,rgba(241,214,139,.22),transparent 28%),radial-gradient(circle at 12% 12%,rgba(69,178,255,.28),transparent 33%),linear-gradient(140deg,#071522 0%,#0b2740 44%,#03070d 100%);min-height:100vh}
+    :root{color:#f7fbff;background:#050b12;font-family:"Aptos Display","Segoe UI Variable Display","Segoe UI",sans-serif}
+    body{margin:0;background:linear-gradient(115deg,#06192d 0%,#0a1721 42%,#071016 100%);min-height:100vh}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 18% 18%,rgba(90,180,255,.22),transparent 26%),radial-gradient(circle at 78% 12%,rgba(216,174,85,.16),transparent 24%),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(0deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:auto,auto,72px 72px,72px 72px;mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.72) 55%,transparent 100%)}
     header,main,footer{max-width:1180px;margin:auto;padding:24px}
     nav{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
     nav a{color:#c8d9ea;text-decoration:none}
     nav a:first-child{color:#f1d68b;font-weight:900;letter-spacing:.18em}
     .lang-select{width:auto;border:1px solid rgba(216,174,85,.5);border-radius:14px;background:rgba(6,17,31,.78);color:#f7fbff;padding:10px 12px}
-    .hero,.panel,.cards article,.quick-grid article{border:1px solid rgba(150,202,255,.18);background:rgba(10,30,50,.72);border-radius:30px;box-shadow:0 28px 80px rgba(0,0,0,.42)}
+    .hero,.panel,.cards article,.quick-grid article{border:1px solid rgba(150,202,255,.18);background:linear-gradient(180deg,rgba(12,35,55,.82),rgba(7,20,32,.78));border-radius:28px;box-shadow:0 28px 80px rgba(0,0,0,.36)}
     .hero{padding:clamp(28px,6vw,72px);margin-top:28px;position:relative;overflow:hidden}
-    .home-hero{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(300px,.72fr);gap:36px;align-items:center;min-height:620px}
-    .hero:before{content:"";position:absolute;inset:auto -14% -38% 35%;height:420px;background:radial-gradient(circle,rgba(92,200,255,.18),transparent 65%);pointer-events:none}
+    .home-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,.82fr);gap:44px;align-items:center;min-height:610px}
+    .hero:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.08),transparent 34%),radial-gradient(circle at 88% 72%,rgba(95,205,255,.16),transparent 28%);pointer-events:none}
     .hero span,.manifesto span{color:#f1d68b;letter-spacing:.18em;font-weight:900}
-    h1{font-size:clamp(48px,7vw,88px);line-height:.9;margin:14px 0;letter-spacing:-.06em;max-width:900px}
-    h2{font-size:clamp(30px,4vw,54px);line-height:.98;margin:8px 0 0;letter-spacing:-.04em}
+    h1{font-size:clamp(48px,6.8vw,84px);line-height:.92;margin:16px 0;letter-spacing:-.065em;max-width:860px}
+    h2{font-size:clamp(30px,3.8vw,52px);line-height:1;margin:8px 0 0;letter-spacing:-.045em}
     p,dd{color:#c8d9ea;font-size:18px}
     .lead{font-size:clamp(18px,2vw,22px);max-width:760px;line-height:1.45}
     .cta,.ghost{display:inline-flex;margin:18px 12px 0 0;padding:14px 18px;border-radius:16px;text-decoration:none;border:1px solid rgba(216,174,85,.5)}
@@ -3785,14 +3788,18 @@ async function publicPage(page: string) {
     .ghost{color:#f1d68b}
     .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.hero-actions .cta,.hero-actions .ghost{margin-top:0}
     .trust-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}.trust-row span{letter-spacing:0;color:#dcecff;border:1px solid rgba(150,202,255,.25);background:rgba(255,255,255,.06);border-radius:999px;padding:9px 12px;font-size:14px}
-    .hero-orbit{position:relative;min-height:430px;display:grid;place-items:center}.planet{width:152px;height:152px;border-radius:42px;display:grid;place-items:center;background:linear-gradient(135deg,#f1d68b,#906a20);color:#06111f;font-size:72px;font-weight:1000;box-shadow:0 0 70px rgba(241,214,139,.35)}.ring{position:absolute;border:1px solid rgba(241,214,139,.38);border-radius:50%}.ring-one{width:310px;height:310px}.ring-two{width:420px;height:210px;transform:rotate(-18deg)}.signal{position:absolute;border:1px solid rgba(150,202,255,.28);background:rgba(5,18,30,.86);border-radius:16px;padding:10px 13px;color:#e9f5ff;font-weight:900}.s1{top:42px;left:32px}.s2{right:10px;top:118px}.s3{left:8px;bottom:95px}.s4{right:48px;bottom:36px}
+    .product-preview{position:relative;border:1px solid rgba(150,202,255,.22);background:rgba(4,13,22,.72);border-radius:30px;padding:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 28px 80px rgba(0,0,0,.35);transform:rotate(-1deg)}
+    .preview-top{display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(150,202,255,.14);padding:4px 4px 16px}.preview-top span{width:10px;height:10px;border-radius:50%;background:#f1d68b;letter-spacing:0}.preview-top span:nth-child(2){background:#67d9ff}.preview-top span:nth-child(3){background:#57e39b}.preview-top b{margin-left:auto;color:#dcecff}
+    .preview-search{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:20px 0;padding:14px 16px;border:1px solid rgba(216,174,85,.42);border-radius:18px;background:#07131f}.preview-search span{letter-spacing:0;color:#f7fbff}.preview-search button{border:0;border-radius:12px;background:#f1d68b;color:#06111f;font-weight:900;padding:10px 14px}
+    .preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.preview-grid article{border:1px solid rgba(150,202,255,.16);background:linear-gradient(180deg,rgba(18,50,76,.82),rgba(9,27,43,.82));border-radius:18px;padding:16px}.preview-grid small{color:#9fb4c8;text-transform:uppercase;letter-spacing:.12em}.preview-grid b{display:block;font-size:22px;margin:8px 0}.preview-grid em{color:#57e39b;font-style:normal}
+    .preview-stream{display:flex;gap:12px;align-items:center;margin-top:18px;padding:14px;border-radius:18px;background:rgba(87,227,155,.08);border:1px solid rgba(87,227,155,.18)}.preview-stream span{width:10px;height:10px;border-radius:50%;background:#57e39b;box-shadow:0 0 22px #57e39b;letter-spacing:0}.preview-stream p{font-size:15px;margin:0;color:#dcecff}
     .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:22px}
     .quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-top:22px}.quick-grid article{padding:22px;min-height:220px}.quick-grid span{color:#f1d68b;font-weight:1000}.quick-grid b{display:block;font-size:24px;line-height:1.05;margin:18px 0 10px}.quick-grid p{font-size:16px}
     .manifesto{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:24px;align-items:end;margin-top:22px}.manifesto p{font-size:22px;line-height:1.35;margin:0}
     .cards article,.panel{padding:24px}
     dt{color:#f1d68b;margin-top:14px}
     dd{margin-left:0;overflow-wrap:anywhere}
-    footer{color:#9fb4c8}.cookie-banner{position:fixed;left:18px;right:18px;bottom:18px;z-index:30;display:none;gap:14px;align-items:center;justify-content:space-between;max-width:980px;margin:auto;padding:16px;border:1px solid rgba(216,174,85,.45);border-radius:22px;background:rgba(6,17,31,.96);box-shadow:0 20px 70px rgba(0,0,0,.45)}.cookie-banner.show{display:flex}.cookie-banner p{margin:0;font-size:15px}.cookie-banner button{width:auto;border:0;border-radius:14px;background:#f1d68b;color:#06111f;padding:11px 16px;font-weight:900;cursor:pointer}@media(max-width:900px){.home-hero{grid-template-columns:1fr;min-height:auto}.hero-orbit{min-height:300px}.ring-one{width:240px;height:240px}.ring-two{width:320px;height:160px}.quick-grid,.manifesto{grid-template-columns:1fr}.quick-grid article{min-height:0}}@media(max-width:720px){header,main,footer{padding:16px}.hero{border-radius:24px}.hero-orbit{display:none}h1{font-size:42px}.cookie-banner{display:none;flex-direction:column;align-items:flex-start}.cookie-banner.show{display:flex}}
+    footer{color:#9fb4c8}.cookie-banner{position:fixed;left:18px;right:18px;bottom:18px;z-index:30;display:none;gap:14px;align-items:center;justify-content:space-between;max-width:980px;margin:auto;padding:16px;border:1px solid rgba(216,174,85,.45);border-radius:22px;background:rgba(6,17,31,.96);box-shadow:0 20px 70px rgba(0,0,0,.45)}.cookie-banner.show{display:flex}.cookie-banner p{margin:0;font-size:15px}.cookie-banner button{width:auto;border:0;border-radius:14px;background:#f1d68b;color:#06111f;padding:11px 16px;font-weight:900;cursor:pointer}@media(max-width:900px){.home-hero{grid-template-columns:1fr;min-height:auto}.product-preview{transform:none}.quick-grid,.manifesto{grid-template-columns:1fr}.quick-grid article{min-height:0}}@media(max-width:720px){header,main,footer{padding:16px}.hero{border-radius:24px}h1{font-size:42px}.product-preview{display:none}.cookie-banner{display:none;flex-direction:column;align-items:flex-start}.cookie-banner.show{display:flex}}
   </style>
 </head>
 <body>
@@ -3907,6 +3914,9 @@ function zoneTranslationRuntime(address: string) {
 function veloraI18nDictionary() {
   return {
     en: {
+      "VELORA BETA PUBBLICA": "VELORA PUBLIC BETA", "Naviga zone. Pubblica siti. Proteggi dati.": "Browse zones. Publish sites. Protect data.", "Un portale operativo sopra il web tradizionale: account unico, ricerca interna, siti pubblicati, VeloMail, Cloud, Tools e nodi nello stesso ambiente.": "An operational portal above the traditional web: unified account, internal search, published sites, VeloMail, Cloud, Tools and nodes in one environment.",
+      "Portale online": "Portal online", "Account @velora": "@velora account", "Windows e Mac": "Windows and Mac", "Mobile ready": "Mobile ready", "Apri": "Open", "Zona": "Zone", "online": "online", "attivo": "active", "protetto": "protected", "pronti": "ready", "Search, VeloMail, Cloud e Publisher condividono la stessa sessione": "Search, VeloMail, Cloud and Publisher share the same session",
+      "Entra senza attrito": "Enter without friction", "Apri zone reali": "Open real zones", "Pubblica con controllo": "Publish with control", "Gestisci sicurezza": "Manage security", "Da browser o desktop. Un solo account per portale, mail, cloud, forum e pubblicazione.": "From browser or desktop. One account for portal, mail, cloud, forum and publishing.", "Il motore interno porta a siti pubblicati, contenuti Oceano e strumenti Velora.": "The internal engine opens published sites, Oceano content and Velora tools.", "Manifest, validazione, login Velora e stato pubblicazione leggibile prima di andare online.": "Manifest, validation, Velora Login and readable publishing status before going online.", "Guardian, audit, privacy, cookie tecnici e protezione Cloud sono parte dell’esperienza.": "Guardian, audit, privacy, technical cookies and Cloud protection are part of the experience.", "PER CHI LO PROVA OGGI": "FOR PEOPLE TRYING IT TODAY", "Velora è già usabile dal portale. Il desktop aggiunge potenza locale.": "Velora is already usable from the portal. Desktop adds local power.", "La beta serve a testare accesso, ricerca, zone pubblicate, VeloMail, Cloud, Tools e Publisher con persone reali, non con schermate simulate.": "The beta tests access, search, published zones, VeloMail, Cloud, Tools and Publisher with real people, not simulated screens.",
       "VELORA - L'UPPER WEB": "VELORA - THE UPPER WEB", "Un nuovo livello per navigare, pubblicare e proteggere contenuti": "A new level for browsing, publishing and protecting content", "HTTPS attivo": "HTTPS active", "Account unico": "Unified account", "Beta pubblica": "Public beta", "Entra dal portale": "Enter from the portal", "Cerca zone e contenuti": "Search zones and content", "Pubblica siti Velora": "Publish Velora sites", "Proteggi account e cloud": "Protect account and cloud", "VISIONE": "VISION", "Velora non sostituisce Internet. Lo eleva.": "Velora does not replace the Internet. It elevates it.",
       "Usa Velora subito da browser, iPhone, Android, Windows e Mac senza installazione obbligatoria.": "Use Velora immediately from browser, iPhone, Android, Windows and Mac with no mandatory installation.", "Apri siti pubblicati, contenuti Oceano e strumenti Velora da un motore interno dedicato.": "Open published sites, Oceano content and Velora tools from a dedicated internal engine.", "Prepara manifest, login Velora e validazione per rendere online progetti e applicazioni.": "Prepare manifests, Velora Login and validation to bring projects and applications online.", "Guardian, audit, policy cookie, privacy e controlli sicurezza sono integrati nel sistema.": "Guardian, audit, cookie policy, privacy and security checks are built into the system.", "Un ambiente sopra il web tradizionale dove identita, pubblicazione, ricerca, comunicazione e protezione lavorano insieme invece di restare separati.": "An environment above the traditional web where identity, publishing, search, communication and protection work together instead of staying separate.",
       "Portale": "Portal", "Sicurezza": "Security", "Guida": "Guide", "Termini": "Terms", "Accetta": "Accept", "Leggi policy": "Read policy",
