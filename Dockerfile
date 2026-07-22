@@ -5,6 +5,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages ./packages
 COPY apps/api ./apps/api
 COPY scripts ./scripts
+COPY oceano ./oceano
 COPY releases ./releases
 COPY published-sites ./published-sites
 COPY docs ./docs

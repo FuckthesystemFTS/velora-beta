@@ -1,0 +1,13 @@
+{
+  "address": "atlas.salute",
+  "title": "Atlante Salute",
+  "description": "Educazione alla salute, prevenzione, benessere, abitudini, sicurezza domestica e orientamento informativo",
+  "category": "ATLAS_SALUTE",
+  "language": "it",
+  "entries": 2500,
+  "generatedAt": "2026-07-22T12:34:59.538Z",
+  "contentHash": "ee85d2432793e078d7349137720e3740839f32dfd865da66719c5685606462a0",
+  "files": [
+    "entries.jsonl"
+  ]
+}

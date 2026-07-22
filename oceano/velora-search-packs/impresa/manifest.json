@@ -1,0 +1,13 @@
+{
+  "address": "atlas.impresa",
+  "title": "Atlante Lavoro e Impresa",
+  "description": "Produttivita, impresa, finanza personale, marketing, contratti, organizzazione e crescita professionale",
+  "category": "ATLAS_IMPRESA",
+  "language": "it",
+  "entries": 2500,
+  "generatedAt": "2026-07-22T12:34:59.538Z",
+  "contentHash": "19b4cd1ab994fd4edaa8af7289dddfffd1afa3d3f5c0adeec18fae922a5374c8",
+  "files": [
+    "entries.jsonl"
+  ]
+}

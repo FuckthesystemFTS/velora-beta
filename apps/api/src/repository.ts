@@ -920,7 +920,15 @@ export class PostgresRepository implements VeloraRepository {
   }
 
   async searchDocuments(query: string) {
-    const normalized = `%${query.toLowerCase()}%`;
+    const terms = query
+      .toLowerCase()
+      .normalize("NFKC")
+      .split(/\s+/)
+      .map((term) => term.replace(/[^\p{L}\p{N}.-]/gu, ""))
+      .filter(Boolean)
+      .slice(0, 10);
+    const normalized = `%${terms.join(" ")}%`;
+    const termPatterns = terms.map((term) => `%${term}%`);
     const result = await this.pool.query(
       `SELECT address, category, slug, title, description, publisher, age_rating, family_safe, trust_level, content_cid, release_version, availability, updated_at
        FROM search_documents
@@ -928,13 +936,21 @@ export class PostgresRepository implements VeloraRepository {
           OR lower(title) LIKE $1
           OR lower(description) LIKE $1
           OR lower(searchable_text) LIKE $1
+          OR lower(address) LIKE ANY($4::text[])
+          OR lower(title) LIKE ANY($4::text[])
+          OR lower(description) LIKE ANY($4::text[])
+          OR lower(searchable_text) LIKE ANY($4::text[])
        ORDER BY
          CASE WHEN lower(address) = $2 THEN 0 ELSE 1 END,
          CASE WHEN lower(category) = ANY($3::text[]) THEN 0 ELSE 1 END,
+         (
+           SELECT COUNT(*) FROM unnest($4::text[]) AS term
+           WHERE lower(title) LIKE term OR lower(description) LIKE term OR lower(searchable_text) LIKE term
+         ) DESC,
          availability DESC,
          updated_at DESC
        LIMIT 25`,
-      [normalized, query.toLowerCase(), query.toLowerCase().split(/\s+/)]
+      [normalized, terms.join(" "), terms, termPatterns]
     );
     return result.rows;
   }

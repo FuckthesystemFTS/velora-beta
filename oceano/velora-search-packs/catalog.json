@@ -1,0 +1,42 @@
+{
+  "title": "Velora Search Packs",
+  "generatedAt": "2026-07-22T12:34:59.538Z",
+  "packs": [
+    {
+      "slug": "scienza",
+      "address": "atlas.scienza",
+      "title": "Atlante Scienza",
+      "entries": 2500,
+      "contentHash": "6dcdfae86ea0f164e32371cb18a65c4a1e0bef732655659634f08d40ea562ea0"
+    },
+    {
+      "slug": "tecnologia",
+      "address": "atlas.tecnologia",
+      "title": "Atlante Tecnologia",
+      "entries": 2500,
+      "contentHash": "a504edd014c01fed686ee76d4c0e1e453256bba6af517b43c87215203c6e865e"
+    },
+    {
+      "slug": "salute",
+      "address": "atlas.salute",
+      "title": "Atlante Salute",
+      "entries": 2500,
+      "contentHash": "ee85d2432793e078d7349137720e3740839f32dfd865da66719c5685606462a0"
+    },
+    {
+      "slug": "impresa",
+      "address": "atlas.impresa",
+      "title": "Atlante Lavoro e Impresa",
+      "entries": 2500,
+      "contentHash": "19b4cd1ab994fd4edaa8af7289dddfffd1afa3d3f5c0adeec18fae922a5374c8"
+    },
+    {
+      "slug": "cultura",
+      "address": "atlas.cultura",
+      "title": "Atlante Cultura e Vita Pratica",
+      "entries": 2500,
+      "contentHash": "7310d5f87d0dc85960f5dd0ec6caa4125033bb2412b384ad701ff03750bd8719"
+    }
+  ],
+  "totalEntries": 12500
+}
