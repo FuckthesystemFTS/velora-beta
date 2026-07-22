@@ -931,6 +931,17 @@ export class PostgresRepository implements VeloraRepository {
     const normalized = `%${terms.join(" ")}%`;
     const termPatterns = terms.map((term) => `%${term}%`);
     const categoryFilter = String(category ?? "").trim().toLowerCase();
+    if (!terms.length && categoryFilter) {
+      const result = await this.pool.query(
+        `SELECT address, category, slug, title, description, publisher, age_rating, family_safe, trust_level, content_cid, release_version, availability, updated_at
+         FROM search_documents
+         WHERE lower(category) = $1
+         ORDER BY availability DESC, updated_at DESC, title ASC
+         LIMIT 35`,
+        [categoryFilter]
+      );
+      return result.rows;
+    }
     const result = await this.pool.query(
       `SELECT address, category, slug, title, description, publisher, age_rating, family_safe, trust_level, content_cid, release_version, availability, updated_at
        FROM search_documents
@@ -963,13 +974,14 @@ export class PostgresRepository implements VeloraRepository {
 
   async listSearchCategories() {
     const result = await this.pool.query(
-      `SELECT lower(category) AS code,
+      `SELECT lower(search_documents.category) AS code,
               COUNT(*)::int AS indexed_count,
-              COUNT(DISTINCT address)::int AS zone_count,
-              MAX(updated_at) AS updated_at
+              COUNT(DISTINCT COALESCE(nz.address, search_documents.address))::int AS zone_count,
+              MAX(search_documents.updated_at) AS updated_at
        FROM search_documents
-       WHERE family_safe = true
-       GROUP BY lower(category)
+       LEFT JOIN navigation_zones nz ON nz.id = search_documents.zone_id
+       WHERE search_documents.family_safe = true
+       GROUP BY lower(search_documents.category)
        ORDER BY zone_count DESC, indexed_count DESC, code ASC`
     );
     return result.rows;
