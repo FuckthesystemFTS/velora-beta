@@ -16,7 +16,7 @@ jobs:
       matrix:
         include:
           - target: aarch64-apple-darwin
-            miner_asset: mac-arm64
+            miner_asset: mac
             artifact_arch: aarch64
             label: Apple Silicon
           - target: x86_64-apple-darwin
