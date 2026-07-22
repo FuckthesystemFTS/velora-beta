@@ -7,16 +7,27 @@ function App() {
   return (
     <main className="shell">
       <section className="hero">
-        <p className="eyebrow">{portalBranding.portalName}</p>
-        <h1>Accesso privato, pubblicazione firmata, rete distribuita.</h1>
+        <div className="brand-row">
+          <div className="mark">V</div>
+          <div>
+            <p className="eyebrow">Velora Next</p>
+            <strong>{portalBranding.portalName}</strong>
+          </div>
+        </div>
+        <h1>Portale, account e pubblicazione in una sola esperienza.</h1>
         <p className="lede">
-          {portalBranding.projectName} gestisce registrazione, licenze, bootstrap iniziale e richieste
-          di zona senza trasformare Heroku nel punto di osservazione di tutta la navigazione.
+          {portalBranding.projectName} mantiene registrazione, licenze, richieste zona e sicurezza nello stesso
+          flusso, con un layout piu compatto per desktop e mobile.
         </p>
+        <div className="actions">
+          <a href="/portal">Apri portale</a>
+          <a href="/download">Download beta</a>
+        </div>
       </section>
 
       <section className="grid">
         <article className="panel">
+          <span>Account</span>
           <h2>Registrazione rapida</h2>
           <form className="stack">
             <input placeholder="Username" />
@@ -27,6 +38,7 @@ function App() {
         </article>
 
         <article className="panel">
+          <span>Release</span>
           <h2>Download e verifica</h2>
           <ul className="list">
             <li>Windows x64 MSI</li>
@@ -37,6 +49,7 @@ function App() {
         </article>
 
         <article className="panel wide">
+          <span>Dashboard</span>
           <h2>Area utente</h2>
           <div className="status-grid">
             <div>
