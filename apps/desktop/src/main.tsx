@@ -558,6 +558,8 @@ function App() {
   const [viewerMessage, setViewerMessage] = React.useState("Cerca o apri una zona dell'Upper Web.");
   const [favorites, setFavorites] = React.useState<string[]>(["velora.guide"]);
   const [searchResults, setSearchResults] = React.useState<SearchCard[]>([]);
+  const [hasSearchResults, setHasSearchResults] = React.useState(false);
+  const [searchCategory, setSearchCategory] = React.useState("");
   const [oceanoDraft, setOceanoDraft] = React.useState({ title: "", summary: "", body: "", contentType: "ARTICLE", sourceUrl: "", tags: "" });
   const [oceanoSubmissions, setOceanoSubmissions] = React.useState<OceanoSubmission[]>([]);
   const [oceanoUploadMessage, setOceanoUploadMessage] = React.useState("Compila il contenuto e invialo alla revisione admin.");
@@ -850,6 +852,7 @@ function App() {
 
     setAddress(normalized);
     setWorkspace("explore");
+    setHasSearchResults(false);
     setViewerState("loading");
     setViewerMessage("Ricerca provider");
     try {
@@ -870,7 +873,7 @@ function App() {
     }
   }
 
-  async function runSearch(value = query) {
+  async function runSearch(value = query, category = searchCategory) {
     const normalized = value.trim().toLowerCase();
     if (looksLikeTraditionalWeb(normalized)) {
       setWorkspace("home");
@@ -885,19 +888,23 @@ function App() {
 
     setWorkspace("explore");
     setLoadedSite(null);
+    setHasSearchResults(true);
     setViewerState("idle");
     setViewerMessage("Seleziona un risultato per aprirlo a pagina intera.");
     const localTools = veloraTools.filter((toolItem) => {
       const haystack = `${toolItem.title} ${toolItem.zone} ${toolItem.description} ${toolItem.category} ${toolItem.publisher} ${toolItem.group}`.toLowerCase();
-      return !normalized || haystack.includes(normalized);
+      const matchesCategory = !category || toolItem.category.toLowerCase() === category || toolItem.group.toLowerCase().includes(category);
+      return matchesCategory && (!normalized || haystack.includes(normalized));
     });
     const localResults = normalized ? localTools : [...defaultFeaturedSites, ...localTools].filter((site) => {
       const haystack = `${site.title} ${site.zone} ${site.description} ${site.category} ${site.publisher}`.toLowerCase();
-      return !normalized || haystack.includes(normalized);
+      const matchesCategory = !category || site.category.toLowerCase() === category;
+      return matchesCategory && (!normalized || haystack.includes(normalized));
     });
 
     try {
-      const result = normalized ? await siteApi.search(normalized) : { results: [] };
+      const searchRemote = siteApi.search as (searchQuery: string, searchCategory?: string) => Promise<{ query: string; results: PublisherSearchResult[] }>;
+      const result = normalized || category ? await searchRemote(normalized, category) : { results: [] };
       const remoteResults = (result.results ?? []).map<SearchCard>((item) => ({
         title: item.title ?? item.address,
         zone: item.address,
@@ -1585,6 +1592,9 @@ function App() {
             viewerState={viewerState}
             viewerMessage={viewerMessage}
             searchResults={searchResults}
+            hasSearchResults={hasSearchResults}
+            searchCategory={searchCategory}
+            setSearchCategory={setSearchCategory}
             favorites={favorites}
             onOpen={openZone}
             onSearch={runSearch}
@@ -1845,9 +1855,12 @@ function Explore(props: {
   viewerState: ViewerState;
   viewerMessage: string;
   searchResults: SearchCard[];
+  hasSearchResults: boolean;
+  searchCategory: string;
+  setSearchCategory: (category: string) => void;
   favorites: string[];
   onOpen: (zone: string) => void;
-  onSearch: (query?: string) => void;
+  onSearch: (query?: string, category?: string) => void;
   onFavorite: (zone: string) => void;
 }) {
   return (
@@ -1878,7 +1891,16 @@ function Explore(props: {
           )}
         </div>
       </div>
-      {props.loadedSite && props.viewerState === "ready" ? null : <SearchResults results={props.searchResults} onOpen={props.onOpen} />}
+      <SearchResults
+        results={props.searchResults}
+        visible={props.hasSearchResults && !(props.loadedSite && props.viewerState === "ready")}
+        activeCategory={props.searchCategory}
+        onCategory={(category) => {
+          props.setSearchCategory(category);
+          void props.onSearch(props.query, category);
+        }}
+        onOpen={props.onOpen}
+      />
     </section>
   );
 }
@@ -1985,17 +2007,47 @@ function ViewerStateCard({ state, message }: { state: ViewerState; message: stri
   );
 }
 
-function SearchResults({ results, onOpen }: { results: SearchCard[]; onOpen: (zone: string) => void }) {
+const searchFilterCategories = [
+  ["", "Tutte"],
+  ["merchant", "Merchant"],
+  ["shop", "Shop"],
+  ["auto", "Auto"],
+  ["tv", "TV"],
+  ["sport", "Sport"],
+  ["culture", "Culture"],
+  ["info", "Info"],
+  ["news", "News"],
+  ["tools", "Tools"],
+  ["health", "Health"]
+] as const;
+
+function SearchResults({ results, visible, activeCategory, onCategory, onOpen }: { results: SearchCard[]; visible: boolean; activeCategory: string; onCategory: (category: string) => void; onOpen: (zone: string) => void }) {
+  if (!visible) {
+    return null;
+  }
   return (
-    <aside className="results-panel">
-      <h2>Risultati Velora</h2>
-      {results.length ? results.map((result) => <SiteCard key={result.zone} site={result} onOpen={onOpen} />) : (
+    <section className="results-panel">
+      <header className="results-heading">
+        <div>
+          <h2>Risultati Velora</h2>
+          <p>Filtra per categoria e apri la zona nel browser.</p>
+        </div>
+        <span>{results.length} risultati</span>
+      </header>
+      <div className="search-filters" aria-label="Filtri ricerca">
+        {searchFilterCategories.map(([code, label]) => (
+          <button key={code || "all"} type="button" className={activeCategory === code ? "active" : ""} onClick={() => onCategory(code)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {results.length ? <div className="results-list">{results.map((result) => <SiteCard key={result.zone} site={result} onOpen={onOpen} />)}</div> : (
         <div className="empty-state">
           <h3>Nessun risultato trovato</h3>
           <p>Prova un'altra parola o esplora le categorie.</p>
         </div>
       )}
-    </aside>
+    </section>
   );
 }
 

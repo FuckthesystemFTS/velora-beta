@@ -142,7 +142,7 @@ export interface VeloraSiteApi {
   activateRelease(input: { address: string; releaseId: string; reason?: string }): Promise<PublisherReleaseMutation>;
   revokeRelease(input: { address: string; releaseId: string; reason?: string }): Promise<PublisherReleaseMutation>;
   rollbackRelease(input: { address: string; version: string; reason?: string }): Promise<PublisherReleaseMutation>;
-  search(query: string): Promise<{ query: string; results: PublisherSearchResult[] }>;
+  search(query: string, category?: string): Promise<{ query: string; results: PublisherSearchResult[] }>;
   getContent(contentCid: string): Promise<PublisherContentObject>;
 }
 
@@ -268,11 +268,15 @@ export function createVeloraSiteApi(baseUrl: string, fetchImpl: typeof fetch = e
         publisherReleaseMutationSchema
       );
     },
-    search(query: string) {
+    search(query: string, category = "") {
+      const params = new URLSearchParams({ q: query });
+      if (category) {
+        params.set("category", category);
+      }
       return requestJson(
-        `/api/v1/search?q=${encodeURIComponent(query)}`,
+        `/api/v1/search?${params.toString()}`,
         undefined,
-        z.object({ query: z.string(), results: z.array(publisherSearchResultSchema) })
+        z.object({ query: z.string(), category: z.string().optional(), results: z.array(publisherSearchResultSchema) })
       );
     },
     getContent(contentCid: string) {
