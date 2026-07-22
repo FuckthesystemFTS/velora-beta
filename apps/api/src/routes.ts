@@ -3586,7 +3586,7 @@ async function publicPage(page: string) {
   const zephyrWalletUrl = "https://zephyrprotocol.com/";
   const body = page === "download" ? `
     <section class="panel">
-      <h1>Entra in Velora</h1>
+      <h1>Velora</h1>
       <p>Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.</p>
       <section class="cards">
         <article>
@@ -4290,7 +4290,7 @@ function veloraI18nDictionary() {
       "Usa Velora subito da browser, iPhone, Android, Windows e Mac senza installazione obbligatoria.": "Use Velora immediately from browser, iPhone, Android, Windows and Mac with no mandatory installation.", "Apri siti pubblicati, contenuti Oceano e strumenti Velora da un motore interno dedicato.": "Open published sites, Oceano content and Velora tools from a dedicated internal engine.", "Prepara manifest, login Velora e validazione per rendere online progetti e applicazioni.": "Prepare manifests, Velora Login and validation to bring projects and applications online.", "Guardian, audit, policy cookie, privacy e controlli sicurezza sono integrati nel sistema.": "Guardian, audit, cookie policy, privacy and security checks are built into the system.", "Un ambiente sopra il web tradizionale dove identita, pubblicazione, ricerca, comunicazione e protezione lavorano insieme invece di restare separati.": "An environment above the traditional web where identity, publishing, search, communication and protection work together instead of staying separate.",
       "Portale": "Portal", "Sicurezza": "Security", "Guida": "Guide", "Termini": "Terms", "Accetta": "Accept", "Leggi policy": "Read policy",
       "Velora Beta pubblica": "Velora Public Beta", "Apri Velora": "Open Velora", "Scarica app beta": "Download beta app", "Scarica Velora": "Download Velora",
-      "Entra in Velora": "Enter Velora", "Portale Velora": "Velora Portal", "Scarica per Windows": "Download for Windows", "Scarica per Mac Apple Silicon": "Download for Mac Apple Silicon", "Scarica per Mac Intel": "Download for Mac Intel", "Scarica nodo NAS": "Download NAS node", "Verifica SHA-256": "Verify SHA-256",
+      "Entra in Velora": "Velora", "Portale Velora": "Velora Portal", "Scarica per Windows": "Download for Windows", "Scarica per Mac Apple Silicon": "Download for Mac Apple Silicon", "Scarica per Mac Intel": "Download for Mac Intel", "Scarica nodo NAS": "Download NAS node", "Verifica SHA-256": "Verify SHA-256",
       "Versione": "Version", "Data build": "Build date", "Stato Mac": "Mac status", "Installazione su Mac": "Installation on Mac", "Wallet Mining Partner": "Mining Partner Wallet",
       "Home": "Home", "Browser": "Browser", "Search": "Search", "VeloMail": "VeloMail", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Tools", "Forum": "Forum", "Mining": "Mining", "Nodi": "Nodes", "Oceano": "Oceano", "Impostazioni": "Settings", "Account": "Account",
       "Cerca": "Search", "Tema": "Theme", "Profilo": "Profile", "Installa": "Install", "Esci": "Sign out", "Accedi a Velora": "Sign in to Velora", "Crea account": "Create account", "Accedi": "Sign in", "Account attivo": "Active account", "Accesso non effettuato": "Not signed in", "Accesso effettuato": "Signed in", "Account creato": "Account created",
@@ -4301,7 +4301,7 @@ function veloraI18nDictionary() {
     fr: {
       "Portale": "Portail", "Sicurezza": "Sécurité", "Guida": "Guide", "Termini": "Conditions", "Accetta": "Accepter", "Leggi policy": "Lire la politique",
       "Velora Beta pubblica": "Bêta publique Velora", "Apri Velora": "Ouvrir Velora", "Scarica app beta": "Télécharger la bêta", "Scarica Velora": "Télécharger Velora",
-      "Entra in Velora": "Entrer dans Velora", "Portale Velora": "Portail Velora", "Scarica per Windows": "Télécharger pour Windows", "Scarica per Mac Apple Silicon": "Télécharger pour Mac Apple Silicon", "Scarica per Mac Intel": "Télécharger pour Mac Intel", "Scarica nodo NAS": "Télécharger le nœud NAS", "Verifica SHA-256": "Vérifier SHA-256",
+      "Entra in Velora": "Velora", "Portale Velora": "Portail Velora", "Scarica per Windows": "Télécharger pour Windows", "Scarica per Mac Apple Silicon": "Télécharger pour Mac Apple Silicon", "Scarica per Mac Intel": "Télécharger pour Mac Intel", "Scarica nodo NAS": "Télécharger le nœud NAS", "Verifica SHA-256": "Vérifier SHA-256",
       "Versione": "Version", "Data build": "Date de build", "Stato Mac": "État Mac", "Installazione su Mac": "Installation sur Mac", "Wallet Mining Partner": "Wallet Mining Partner",
       "Home": "Accueil", "Browser": "Navigateur", "Search": "Recherche", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Outils", "Forum": "Forum", "Mining": "Mining", "Nodi": "Nœuds", "Oceano": "Oceano", "Impostazioni": "Réglages", "Account": "Compte",
       "Cerca": "Rechercher", "Tema": "Thème", "Profilo": "Profil", "Installa": "Installer", "Esci": "Déconnexion", "Accedi a Velora": "Connexion à Velora", "Crea account": "Créer un compte", "Accedi": "Connexion", "Account attivo": "Compte actif", "Accesso non effettuato": "Non connecté", "Accesso effettuato": "Connexion réussie", "Account creato": "Compte créé",
@@ -4312,7 +4312,7 @@ function veloraI18nDictionary() {
     de: {
       "Portale": "Portal", "Sicurezza": "Sicherheit", "Guida": "Anleitung", "Termini": "Bedingungen", "Accetta": "Akzeptieren", "Leggi policy": "Richtlinie lesen",
       "Velora Beta pubblica": "Öffentliche Velora Beta", "Apri Velora": "Velora öffnen", "Scarica app beta": "Beta-App laden", "Scarica Velora": "Velora herunterladen",
-      "Entra in Velora": "Velora starten", "Portale Velora": "Velora Portal", "Scarica per Windows": "Für Windows herunterladen", "Scarica per Mac Apple Silicon": "Für Mac Apple Silicon herunterladen", "Scarica per Mac Intel": "Für Mac Intel herunterladen", "Scarica nodo NAS": "NAS-Knoten laden", "Verifica SHA-256": "SHA-256 prüfen",
+      "Entra in Velora": "Velora", "Portale Velora": "Velora Portal", "Scarica per Windows": "Für Windows herunterladen", "Scarica per Mac Apple Silicon": "Für Mac Apple Silicon herunterladen", "Scarica per Mac Intel": "Für Mac Intel herunterladen", "Scarica nodo NAS": "NAS-Knoten laden", "Verifica SHA-256": "SHA-256 prüfen",
       "Versione": "Version", "Data build": "Build-Datum", "Stato Mac": "Mac-Status", "Installazione su Mac": "Installation auf Mac", "Wallet Mining Partner": "Mining-Partner-Wallet",
       "Home": "Start", "Browser": "Browser", "Search": "Suche", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Tools", "Forum": "Forum", "Mining": "Mining", "Nodi": "Knoten", "Oceano": "Oceano", "Impostazioni": "Einstellungen", "Account": "Konto",
       "Cerca": "Suchen", "Tema": "Design", "Profilo": "Profil", "Installa": "Installieren", "Esci": "Abmelden", "Accedi a Velora": "Bei Velora anmelden", "Crea account": "Konto erstellen", "Accedi": "Anmelden", "Account attivo": "Aktives Konto", "Accesso non effettuato": "Nicht angemeldet", "Accesso effettuato": "Angemeldet", "Account creato": "Konto erstellt",
@@ -4323,7 +4323,7 @@ function veloraI18nDictionary() {
     es: {
       "Portale": "Portal", "Sicurezza": "Seguridad", "Guida": "Guía", "Termini": "Términos", "Accetta": "Aceptar", "Leggi policy": "Leer política",
       "Velora Beta pubblica": "Beta pública de Velora", "Apri Velora": "Abrir Velora", "Scarica app beta": "Descargar beta", "Scarica Velora": "Descargar Velora",
-      "Entra in Velora": "Entrar en Velora", "Portale Velora": "Portal Velora", "Scarica per Windows": "Descargar para Windows", "Scarica per Mac Apple Silicon": "Descargar para Mac Apple Silicon", "Scarica per Mac Intel": "Descargar para Mac Intel", "Scarica nodo NAS": "Descargar nodo NAS", "Verifica SHA-256": "Verificar SHA-256",
+      "Entra in Velora": "Velora", "Portale Velora": "Portal Velora", "Scarica per Windows": "Descargar para Windows", "Scarica per Mac Apple Silicon": "Descargar para Mac Apple Silicon", "Scarica per Mac Intel": "Descargar para Mac Intel", "Scarica nodo NAS": "Descargar nodo NAS", "Verifica SHA-256": "Verificar SHA-256",
       "Versione": "Versión", "Data build": "Fecha de build", "Stato Mac": "Estado Mac", "Installazione su Mac": "Instalación en Mac", "Wallet Mining Partner": "Wallet Mining Partner",
       "Home": "Inicio", "Browser": "Navegador", "Search": "Buscar", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Herramientas", "Forum": "Foro", "Mining": "Mining", "Nodi": "Nodos", "Oceano": "Oceano", "Impostazioni": "Ajustes", "Account": "Cuenta",
       "Cerca": "Buscar", "Tema": "Tema", "Profilo": "Perfil", "Installa": "Instalar", "Esci": "Salir", "Accedi a Velora": "Acceder a Velora", "Crea account": "Crear cuenta", "Accedi": "Entrar", "Account attivo": "Cuenta activa", "Accesso non effettuato": "Sin sesión", "Accesso effettuato": "Sesión iniciada", "Account creato": "Cuenta creada",
@@ -4334,7 +4334,7 @@ function veloraI18nDictionary() {
     ru: {
       "Portale": "Портал", "Sicurezza": "Безопасность", "Guida": "Руководство", "Termini": "Условия", "Accetta": "Принять", "Leggi policy": "Открыть правила",
       "Velora Beta pubblica": "Публичная бета Velora", "Apri Velora": "Открыть Velora", "Scarica app beta": "Скачать бета-приложение", "Scarica Velora": "Скачать Velora",
-      "Entra in Velora": "Войти в Velora", "Portale Velora": "Портал Velora", "Scarica per Windows": "Скачать для Windows", "Scarica per Mac Apple Silicon": "Скачать для Mac Apple Silicon", "Scarica per Mac Intel": "Скачать для Mac Intel", "Scarica nodo NAS": "Скачать NAS-узел", "Verifica SHA-256": "Проверить SHA-256",
+      "Entra in Velora": "Velora", "Portale Velora": "Портал Velora", "Scarica per Windows": "Скачать для Windows", "Scarica per Mac Apple Silicon": "Скачать для Mac Apple Silicon", "Scarica per Mac Intel": "Скачать для Mac Intel", "Scarica nodo NAS": "Скачать NAS-узел", "Verifica SHA-256": "Проверить SHA-256",
       "Versione": "Версия", "Data build": "Дата сборки", "Stato Mac": "Статус Mac", "Installazione su Mac": "Установка на Mac", "Wallet Mining Partner": "Кошелёк Mining Partner",
       "Home": "Главная", "Browser": "Браузер", "Search": "Поиск", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Инструменты", "Forum": "Форум", "Mining": "Mining", "Nodi": "Узлы", "Oceano": "Oceano", "Impostazioni": "Настройки", "Account": "Аккаунт",
       "Cerca": "Поиск", "Tema": "Тема", "Profilo": "Профиль", "Installa": "Установить", "Esci": "Выйти", "Accedi a Velora": "Войти в Velora", "Crea account": "Создать аккаунт", "Accedi": "Войти", "Account attivo": "Активный аккаунт", "Accesso non effettuato": "Вход не выполнен", "Accesso effettuato": "Вход выполнен", "Account creato": "Аккаунт создан",
@@ -4345,7 +4345,7 @@ function veloraI18nDictionary() {
     zh: {
       "Portale": "门户", "Sicurezza": "安全", "Guida": "指南", "Termini": "条款", "Accetta": "接受", "Leggi policy": "阅读政策",
       "Velora Beta pubblica": "Velora 公开测试版", "Apri Velora": "打开 Velora", "Scarica app beta": "下载测试版应用", "Scarica Velora": "下载 Velora",
-      "Entra in Velora": "进入 Velora", "Portale Velora": "Velora 门户", "Scarica per Windows": "下载 Windows 版", "Scarica per Mac Apple Silicon": "下载 Mac Apple Silicon 版", "Scarica per Mac Intel": "下载 Mac Intel 版", "Scarica nodo NAS": "下载 NAS 节点", "Verifica SHA-256": "验证 SHA-256",
+      "Entra in Velora": "Velora", "Portale Velora": "Velora 门户", "Scarica per Windows": "下载 Windows 版", "Scarica per Mac Apple Silicon": "下载 Mac Apple Silicon 版", "Scarica per Mac Intel": "下载 Mac Intel 版", "Scarica nodo NAS": "下载 NAS 节点", "Verifica SHA-256": "验证 SHA-256",
       "Versione": "版本", "Data build": "构建日期", "Stato Mac": "Mac 状态", "Installazione su Mac": "在 Mac 上安装", "Wallet Mining Partner": "Mining Partner 钱包",
       "Home": "首页", "Browser": "浏览器", "Search": "搜索", "Cloud": "云", "Publisher": "发布", "Tools": "工具", "Forum": "论坛", "Mining": "挖矿", "Nodi": "节点", "Oceano": "Oceano", "Impostazioni": "设置", "Account": "账户",
       "Cerca": "搜索", "Tema": "主题", "Profilo": "资料", "Installa": "安装", "Esci": "退出", "Accedi a Velora": "登录 Velora", "Crea account": "创建账户", "Accedi": "登录", "Account attivo": "当前账户", "Accesso non effettuato": "未登录", "Accesso effettuato": "已登录", "Account creato": "账户已创建",
