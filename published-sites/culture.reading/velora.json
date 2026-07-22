@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "culture.reading",
+  "title": "Percorsi Lettura",
+  "description": "Percorsi tematici per libri, articoli, saggi e note personali",
+  "category": "culture",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "culture",
+    "percorsi lettura",
+    "culture.reading",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "info.civic",
+  "title": "Info Civica",
+  "description": "Schede chiare su documenti, scadenze, uffici e procedure quotidiane",
+  "category": "info",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "info",
+    "info civica",
+    "info.civic",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "merchant.catalog",
+  "title": "Catalogo Merchant",
+  "description": "Schede prodotto, listini e richieste commerciali in un formato ordinato per piccole aziende",
+  "category": "merchant",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "merchant",
+    "catalogo merchant",
+    "merchant.catalog",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

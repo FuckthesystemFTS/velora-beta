@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "merchant.crm",
+  "title": "Clienti Attivi",
+  "description": "Mini CRM per seguire contatti, trattative, note e prossime azioni",
+  "category": "merchant",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "merchant",
+    "clienti attivi",
+    "merchant.crm",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

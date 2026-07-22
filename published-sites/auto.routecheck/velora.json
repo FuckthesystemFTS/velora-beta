@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "auto.routecheck",
+  "title": "Route Check",
+  "description": "Pianificazione sintetica di viaggi, soste, costi, tempi e criticita del percorso",
+  "category": "auto",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "auto",
+    "route check",
+    "auto.routecheck",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "auto.maintenance",
+  "title": "Manutenzione Auto",
+  "description": "Promemoria per tagliandi, gomme, revisione, assicurazione e controlli stagionali",
+  "category": "auto",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "auto",
+    "manutenzione auto",
+    "auto.maintenance",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

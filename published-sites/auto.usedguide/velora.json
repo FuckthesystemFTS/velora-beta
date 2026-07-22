@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "auto.usedguide",
+  "title": "Usato Sicuro",
+  "description": "Checklist per valutare un'auto usata prima di acquisto, prova e passaggio",
+  "category": "auto",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "auto",
+    "usato sicuro",
+    "auto.usedguide",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

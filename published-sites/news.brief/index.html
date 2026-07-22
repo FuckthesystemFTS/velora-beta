@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Brief Giornaliero - Velora</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1117;--panel:#101a22;--line:#2f4658;--gold:#e9c766;--ink:#f7fbff;--muted:#aebdca;--green:#37d89b}
+    *{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#0b1117,#102635 60%,#121916);color:var(--ink);font-family:Segoe UI,ui-sans-serif,system-ui,sans-serif}
+    main{max-width:1120px;margin:auto;padding:42px 18px 82px}header{display:grid;gap:14px;margin-bottom:28px}.kicker{color:var(--gold);font-weight:900;letter-spacing:.16em;text-transform:uppercase;font-size:12px}h1{font-size:48px;line-height:1;margin:0;letter-spacing:0}p{color:var(--muted);font-size:18px;line-height:1.5;max-width:820px}.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.panel,.tile{border:1px solid var(--line);background:rgba(16,26,34,.82);border-radius:8px;padding:20px}.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tile b{display:block;color:var(--gold);margin-bottom:8px}.action{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}button{border:0;border-radius:6px;padding:12px 15px;background:var(--gold);color:#111820;font-weight:900}button.secondary{background:#1c3141;color:var(--ink);border:1px solid var(--line)}input,textarea{width:100%;border:1px solid var(--line);background:#071019;color:var(--ink);border-radius:6px;padding:12px;margin-top:10px}textarea{min-height:116px}.status{color:var(--green);font-weight:900}@media(max-width:820px){main{padding-top:24px}.grid,.tiles{grid-template-columns:1fr}h1{font-size:36px}}
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="kicker">Velora News</div>
+      <h1>Brief Giornaliero</h1>
+      <p>Sintesi ordinata di temi da seguire, priorita e aggiornamenti</p>
+      <div class="status">Zona attiva: news.brief</div>
+    </header>
+    <section class="grid">
+      <div class="panel">
+        <h2>Centro operativo</h2>
+        <div class="tiles">
+          <div class="tile"><b>01</b>Panoramica immediata</div><div class="tile"><b>02</b>Lista operativa</div><div class="tile"><b>03</b>Priorita del giorno</div><div class="tile"><b>04</b>Note salvabili</div><div class="tile"><b>05</b>Verifica finale</div>
+        </div>
+        <div class="action">
+          <button onclick="addNote()">Aggiungi nota</button>
+          <button class="secondary" onclick="clearNotes()">Pulisci</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Note</h2>
+        <input id="noteTitle" placeholder="Titolo rapido">
+        <textarea id="noteBody" placeholder="Scrivi una nota utile"></textarea>
+        <div id="notes"></div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const key='velora-zone-news.brief-notes';
+    function esc(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+    function render(){const rows=JSON.parse(localStorage.getItem(key)||'[]');notes.innerHTML=rows.map(n=>'<div class="tile"><b>'+esc(n.title)+'</b>'+esc(n.body)+'</div>').join('')}
+    function addNote(){const title=noteTitle.value.trim()||'Nota';const body=noteBody.value.trim();if(!body)return;const rows=JSON.parse(localStorage.getItem(key)||'[]');rows.unshift({title,body});localStorage.setItem(key,JSON.stringify(rows.slice(0,12)));noteTitle.value='';noteBody.value='';render()}
+    function clearNotes(){localStorage.removeItem(key);render()}
+    render()
+  </script>
+</body>
+</html>

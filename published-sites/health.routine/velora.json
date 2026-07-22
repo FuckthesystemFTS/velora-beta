@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "health.routine",
+  "title": "Routine Salute",
+  "description": "Tracciamento leggero di sonno, acqua, movimento, pause e umore",
+  "category": "health",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "health",
+    "routine salute",
+    "health.routine",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

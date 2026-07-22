@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "shop.giftfinder",
+  "title": "Gift Finder",
+  "description": "Idee regalo filtrate per occasione, budget, eta e interesse",
+  "category": "shop",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "shop",
+    "gift finder",
+    "shop.giftfinder",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

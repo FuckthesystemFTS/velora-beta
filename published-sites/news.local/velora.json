@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "news.local",
+  "title": "News Locale",
+  "description": "Spazio per notizie locali, servizi, traffico, lavori e avvisi cittadini",
+  "category": "news",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "news",
+    "news locale",
+    "news.local",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

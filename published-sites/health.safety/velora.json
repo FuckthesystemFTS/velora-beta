@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "health.safety",
+  "title": "Sicurezza Casa",
+  "description": "Checklist per prevenzione domestica, farmaci, emergenze e numeri utili",
+  "category": "health",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "health",
+    "sicurezza casa",
+    "health.safety",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

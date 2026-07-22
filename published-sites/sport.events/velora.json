@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "sport.events",
+  "title": "Eventi Sport",
+  "description": "Calendario essenziale per eventi, gare, iscrizioni e promemoria",
+  "category": "sport",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "sport",
+    "eventi sport",
+    "sport.events",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

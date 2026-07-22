@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "news.science",
+  "title": "Science Brief",
+  "description": "Notizie scientifiche spiegate con contesto, limite e impatto pratico",
+  "category": "news",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "news",
+    "science brief",
+    "news.science",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

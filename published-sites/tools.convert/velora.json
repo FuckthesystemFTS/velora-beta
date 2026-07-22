@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "tools.convert",
+  "title": "Convertitore Rapido",
+  "description": "Conversioni comuni per testo, misure, date, liste e formati",
+  "category": "tools",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "tools",
+    "convertitore rapido",
+    "tools.convert",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

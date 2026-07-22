@@ -1,0 +1,246 @@
+{
+  "generatedAt": "2026-07-22T16:42:02.776Z",
+  "totalSites": 30,
+  "sites": [
+    {
+      "address": "merchant.catalog",
+      "title": "Catalogo Merchant",
+      "description": "Schede prodotto, listini e richieste commerciali in un formato ordinato per piccole aziende",
+      "category": "merchant",
+      "contentHash": "2d867574508a1576941f0972996d274bbfcc7adea9f1f8d16f4b3f0cb358c243",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "merchant.invoice",
+      "title": "Fatture Smart",
+      "description": "Registro leggero per preventivi, fatture, scadenze e pagamenti da controllare velocemente",
+      "category": "merchant",
+      "contentHash": "ffbcb56dd3462618ec3e65129c29077767f5fc33f78672872a4b61a65f34f25e",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "merchant.crm",
+      "title": "Clienti Attivi",
+      "description": "Mini CRM per seguire contatti, trattative, note e prossime azioni",
+      "category": "merchant",
+      "contentHash": "8245ee3bf70764bec853baa98aac96499bdb0e0bab3dacc9ba14698c88d73b87",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "shop.pricewatch",
+      "title": "Price Watch",
+      "description": "Osservatorio prezzi per confrontare offerte, storico e soglie di acquisto",
+      "category": "shop",
+      "contentHash": "20720ead6bccbd40a65c1706163955c7d943887825bb4599c4e5529dbaaaa2a8",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "shop.giftfinder",
+      "title": "Gift Finder",
+      "description": "Idee regalo filtrate per occasione, budget, eta e interesse",
+      "category": "shop",
+      "contentHash": "0cc78e379a5a022e47e4b9afe9ebeaa4f8c1fc4608edff47059796406e7cd683",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "shop.localstock",
+      "title": "Local Stock",
+      "description": "Vetrina per disponibilita locali, prodotti essenziali e ritiro in zona",
+      "category": "shop",
+      "contentHash": "203d591fc90d7016d531d27d1dd5d8f2b11b7652c99d2dc1c08a3f3381e4b2d8",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "auto.maintenance",
+      "title": "Manutenzione Auto",
+      "description": "Promemoria per tagliandi, gomme, revisione, assicurazione e controlli stagionali",
+      "category": "auto",
+      "contentHash": "af6afce5a3ad3c4f311f75d0e15443e029f642a90cf1e9317b108aff734906d6",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "auto.routecheck",
+      "title": "Route Check",
+      "description": "Pianificazione sintetica di viaggi, soste, costi, tempi e criticita del percorso",
+      "category": "auto",
+      "contentHash": "51f2be050aaf74c7002fe61914c7f3b260c70ec6514a6981fe4a8c1d1adffd38",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "auto.usedguide",
+      "title": "Usato Sicuro",
+      "description": "Checklist per valutare un'auto usata prima di acquisto, prova e passaggio",
+      "category": "auto",
+      "contentHash": "459090363a9b81614b80a678ba222fc6ada505a086f0b7cc7902940602cef4a0",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "tv.guide",
+      "title": "Guida TV Pulita",
+      "description": "Griglia semplice per programmi, film, eventi e promemoria senza distrazioni",
+      "category": "tv",
+      "contentHash": "739cceaeb81180d5b397ff56132557a2cbfaa518dd1ab6094b0b72b3bfb5ecd6",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "tv.familywatch",
+      "title": "Family Watch",
+      "description": "Selezione di contenuti adatti alla famiglia con fascia eta e tema",
+      "category": "tv",
+      "contentHash": "4f61757eee74b61e33d1a3a076b14508f265c66235e15f764117601b9d938ebf",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "tv.streamcheck",
+      "title": "Stream Check",
+      "description": "Confronto rapido tra contenuti, piattaforme, disponibilita e priorita di visione",
+      "category": "tv",
+      "contentHash": "8fb79e3d40c3fa1b56112e21f9fa46ff4567f2c8ab04bde9fce00c52eb9042fa",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "sport.training",
+      "title": "Training Log",
+      "description": "Diario allenamenti con obiettivi, carico, recupero e progressi",
+      "category": "sport",
+      "contentHash": "922651e300d13a9adf2afe450dffe4d2fd2b4e5495566a30fbca2e9f30a48a59",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "sport.events",
+      "title": "Eventi Sport",
+      "description": "Calendario essenziale per eventi, gare, iscrizioni e promemoria",
+      "category": "sport",
+      "contentHash": "9d7cd1eb3fb912a5b8de5dc4beb859e94b11ab761b330801ee6f9d6f30231e52",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "sport.recovery",
+      "title": "Recovery Coach",
+      "description": "Schede di recupero, sonno, stretching e gestione dello sforzo",
+      "category": "sport",
+      "contentHash": "8c1714e26661197fa5e76e2c70545d727b9e4a5b8585f12c97418249c7ae8c81",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "culture.agenda",
+      "title": "Agenda Cultura",
+      "description": "Eventi culturali, mostre, letture e appuntamenti da seguire",
+      "category": "culture",
+      "contentHash": "0b42aa16fbd14401169034f4118ed72a4154d0f4d37cbb48788b783180a8f9ca",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "culture.archive",
+      "title": "Archivio Idee",
+      "description": "Raccolta di concetti, autori, movimenti e collegamenti culturali",
+      "category": "culture",
+      "contentHash": "ff8fe94348feaa5f8a3eeef4a6cc6182083432d0fc83043ac56eb9bd22c362c2",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "culture.reading",
+      "title": "Percorsi Lettura",
+      "description": "Percorsi tematici per libri, articoli, saggi e note personali",
+      "category": "culture",
+      "contentHash": "858dddf98c7bbc70c2c3485b17a0899044486f3938ee878d3526a7e7305ae6a2",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "info.civic",
+      "title": "Info Civica",
+      "description": "Schede chiare su documenti, scadenze, uffici e procedure quotidiane",
+      "category": "info",
+      "contentHash": "6238a1df8470a9120426dc2d95de994dead81a837a21a497572450e2f83db574",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "info.weatherdesk",
+      "title": "Meteo Desk",
+      "description": "Lettura pratica di meteo, allerte, viaggio e preparazione giornaliera",
+      "category": "info",
+      "contentHash": "75a29c48f50b874a22872578e811b2920a9590d36c6c43772c8fbe205e3c6077",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "info.factcheck",
+      "title": "Fact Check Base",
+      "description": "Metodo rapido per verificare fonti, date, autore e coerenza di una notizia",
+      "category": "info",
+      "contentHash": "3c67ae410392909f6639140c51483e1b7d9b521e535f8a730b98d8871770f5b6",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "news.brief",
+      "title": "Brief Giornaliero",
+      "description": "Sintesi ordinata di temi da seguire, priorita e aggiornamenti",
+      "category": "news",
+      "contentHash": "f75534e53a6b406def40a513a7dcd26f2a83fe8ac59309c02fcb9c9343e32cab",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "news.local",
+      "title": "News Locale",
+      "description": "Spazio per notizie locali, servizi, traffico, lavori e avvisi cittadini",
+      "category": "news",
+      "contentHash": "a7f1185628b2d036599cc24207877e6c02fa2edc945b766a14dc1fc7431eb83f",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "news.science",
+      "title": "Science Brief",
+      "description": "Notizie scientifiche spiegate con contesto, limite e impatto pratico",
+      "category": "news",
+      "contentHash": "2424d8384b0265883bf9924f20c5e06cb5302403c35ea8d7c96062948e1dd406",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "tools.convert",
+      "title": "Convertitore Rapido",
+      "description": "Conversioni comuni per testo, misure, date, liste e formati",
+      "category": "tools",
+      "contentHash": "8aba8d29479b2a0b7520464a424b6ec5e56cf2c565f77b72d0a01a8450472110",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "tools.plan",
+      "title": "Piano Giorno",
+      "description": "Planner essenziale per priorita, blocchi lavoro, promemoria e fine giornata",
+      "category": "tools",
+      "contentHash": "00ef04e8a8d18e467f99a259ad8bf95eca36a1ccd2ecd28b400e5dcb06110fef",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "tools.checklist",
+      "title": "Checklist Veloci",
+      "description": "Liste pronte per casa, lavoro, viaggio, pubblicazione e controllo sicurezza",
+      "category": "tools",
+      "contentHash": "5c9e50dc2535152714775138d33475493f746f059f5ded9e359aa1fb0a051d4e",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "health.routine",
+      "title": "Routine Salute",
+      "description": "Tracciamento leggero di sonno, acqua, movimento, pause e umore",
+      "category": "health",
+      "contentHash": "88f6e2dee2b7782319d4b1217bf616a1a523f7ef7a04928bb755cd5eabf91ade",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "health.sleep",
+      "title": "Sleep Focus",
+      "description": "Guida pratica per regolarita del sonno, ambiente e abitudini serali",
+      "category": "health",
+      "contentHash": "95941c5286a92f86c468f1de222d92aaf33f882a430f4b5ce8eba63c46a51ac3",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    },
+    {
+      "address": "health.safety",
+      "title": "Sicurezza Casa",
+      "description": "Checklist per prevenzione domestica, farmaci, emergenze e numeri utili",
+      "category": "health",
+      "contentHash": "70d9e3dcd766fc0d0decb77b0c04100ad28bf38c2073666886c5fb51fb907eda",
+      "generatedAt": "2026-07-22T16:42:02.776Z"
+    }
+  ]
+}

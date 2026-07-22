@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "sport.training",
+  "title": "Training Log",
+  "description": "Diario allenamenti con obiettivi, carico, recupero e progressi",
+  "category": "sport",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "sport",
+    "training log",
+    "sport.training",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

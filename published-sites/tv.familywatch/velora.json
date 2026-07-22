@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "tv.familywatch",
+  "title": "Family Watch",
+  "description": "Selezione di contenuti adatti alla famiglia con fascia eta e tema",
+  "category": "tv",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "tv",
+    "family watch",
+    "tv.familywatch",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

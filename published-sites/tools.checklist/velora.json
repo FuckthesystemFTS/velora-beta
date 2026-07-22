@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "tools.checklist",
+  "title": "Checklist Veloci",
+  "description": "Liste pronte per casa, lavoro, viaggio, pubblicazione e controllo sicurezza",
+  "category": "tools",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "tools",
+    "checklist veloci",
+    "tools.checklist",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

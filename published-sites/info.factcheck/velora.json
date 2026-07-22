@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "info.factcheck",
+  "title": "Fact Check Base",
+  "description": "Metodo rapido per verificare fonti, date, autore e coerenza di una notizia",
+  "category": "info",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "info",
+    "fact check base",
+    "info.factcheck",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "shop.pricewatch",
+  "title": "Price Watch",
+  "description": "Osservatorio prezzi per confrontare offerte, storico e soglie di acquisto",
+  "category": "shop",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "shop",
+    "price watch",
+    "shop.pricewatch",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

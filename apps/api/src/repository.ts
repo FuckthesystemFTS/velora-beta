@@ -137,7 +137,8 @@ export interface VeloraRepository {
   getContentObject(contentCid: string): Promise<Record<string, unknown> | undefined>;
   getContentChunks(contentCid: string): Promise<Array<Record<string, unknown>>>;
   getContentProviders(contentCid: string): Promise<Array<Record<string, unknown>>>;
-  searchDocuments(query: string): Promise<Array<Record<string, unknown>>>;
+  searchDocuments(query: string, category?: string): Promise<Array<Record<string, unknown>>>;
+  listSearchCategories(): Promise<Array<Record<string, unknown>>>;
   approveZoneRequest(id: string, command: SignedAdminCommand): Promise<Record<string, unknown> | null>;
   rejectZoneRequest(id: string, command: SignedAdminCommand, reason: string): Promise<ZoneRequestRecord | null>;
   createAdminChallenge(adminId: string, deviceId: string): Promise<{ challengeId: string; challenge: string; expiresAt: string }>;
@@ -919,7 +920,7 @@ export class PostgresRepository implements VeloraRepository {
     return result.rows;
   }
 
-  async searchDocuments(query: string) {
+  async searchDocuments(query: string, category?: string) {
     const terms = query
       .toLowerCase()
       .normalize("NFKC")
@@ -929,10 +930,14 @@ export class PostgresRepository implements VeloraRepository {
       .slice(0, 10);
     const normalized = `%${terms.join(" ")}%`;
     const termPatterns = terms.map((term) => `%${term}%`);
+    const categoryFilter = String(category ?? "").trim().toLowerCase();
     const result = await this.pool.query(
       `SELECT address, category, slug, title, description, publisher, age_rating, family_safe, trust_level, content_cid, release_version, availability, updated_at
        FROM search_documents
-       WHERE lower(address) LIKE $1
+       WHERE ($5 = '' OR lower(category) = $5)
+         AND (
+          $6 = true
+          OR lower(address) LIKE $1
           OR lower(title) LIKE $1
           OR lower(description) LIKE $1
           OR lower(searchable_text) LIKE $1
@@ -940,6 +945,7 @@ export class PostgresRepository implements VeloraRepository {
           OR lower(title) LIKE ANY($4::text[])
           OR lower(description) LIKE ANY($4::text[])
           OR lower(searchable_text) LIKE ANY($4::text[])
+         )
        ORDER BY
          CASE WHEN lower(address) = $2 THEN 0 ELSE 1 END,
          CASE WHEN lower(category) = ANY($3::text[]) THEN 0 ELSE 1 END,
@@ -950,7 +956,21 @@ export class PostgresRepository implements VeloraRepository {
          availability DESC,
          updated_at DESC
        LIMIT 25`,
-      [normalized, terms.join(" "), terms, termPatterns]
+      [normalized, terms.join(" "), terms, termPatterns, categoryFilter, terms.length === 0]
+    );
+    return result.rows;
+  }
+
+  async listSearchCategories() {
+    const result = await this.pool.query(
+      `SELECT lower(category) AS code,
+              COUNT(*)::int AS indexed_count,
+              COUNT(DISTINCT address)::int AS zone_count,
+              MAX(updated_at) AS updated_at
+       FROM search_documents
+       WHERE family_safe = true
+       GROUP BY lower(category)
+       ORDER BY zone_count DESC, indexed_count DESC, code ASC`
     );
     return result.rows;
   }

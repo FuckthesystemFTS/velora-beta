@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "sport.recovery",
+  "title": "Recovery Coach",
+  "description": "Schede di recupero, sonno, stretching e gestione dello sforzo",
+  "category": "sport",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "sport",
+    "recovery coach",
+    "sport.recovery",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

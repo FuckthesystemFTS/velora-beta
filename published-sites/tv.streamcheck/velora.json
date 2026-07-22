@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "tv.streamcheck",
+  "title": "Stream Check",
+  "description": "Confronto rapido tra contenuti, piattaforme, disponibilita e priorita di visione",
+  "category": "tv",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "tv",
+    "stream check",
+    "tv.streamcheck",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}

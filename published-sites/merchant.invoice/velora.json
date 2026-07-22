@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "address": "merchant.invoice",
+  "title": "Fatture Smart",
+  "description": "Registro leggero per preventivi, fatture, scadenze e pagamenti da controllare velocemente",
+  "category": "merchant",
+  "entryFile": "index.html",
+  "languages": [
+    "it"
+  ],
+  "keywords": [
+    "merchant",
+    "fatture smart",
+    "merchant.invoice",
+    "velora"
+  ],
+  "version": "1.0.0",
+  "ageRating": "EVERYONE",
+  "familySafe": true,
+  "permissions": {
+    "externalNetwork": false,
+    "clipboardRead": false,
+    "clipboardWrite": false,
+    "notifications": false,
+    "fileDownload": false
+  },
+  "allowedExternalOrigins": []
+}
