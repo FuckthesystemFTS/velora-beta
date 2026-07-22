@@ -3246,7 +3246,6 @@ function applePortalPage(section: string) {
   </div>
   <nav class="mobile-tabs" id="mobileNav"></nav>
   ${veloraI18nScript()}
-  ${publicHomeInteractionScript()}
   <script>
     const initialSection = ${JSON.stringify(initialSection)};
     const tokenKey='velora.apple.token';
@@ -3495,6 +3494,7 @@ function mobilePage() {
     <button data-tab="account" onclick="showPage('account',this)">Account</button>
   </nav>
   ${veloraI18nScript()}
+  ${publicHomeInteractionScript()}
   <script>
     let deferredInstall = null;
     let currentForumSlug = 'global';
