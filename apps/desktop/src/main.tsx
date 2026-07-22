@@ -402,11 +402,11 @@ const isAdminSessionEnabled = false;
 
 const featuredSites: SearchCard[] = [
   {
-    title: "HappyMeter",
-    zone: "happy.meter",
-    description: "Feliciometro adattato per Velora con accesso collegato all'identita unica.",
-    category: "Benessere",
-    publisher: "HappyMeter",
+    title: "Velora Search",
+    zone: "velora.search",
+    description: "Motore interno per trovare zone, strumenti, guide e servizi Velora.",
+    category: "Sistema",
+    publisher: "Velora",
     identityLevel: "Livello 0",
     verified: true,
     familySafe: true,
@@ -414,11 +414,11 @@ const featuredSites: SearchCard[] = [
     updatedAt: "Pubblicato"
   },
   {
-    title: "CreatorSpeaker TV",
-    zone: "video.creatorspeaker-tv",
-    description: "Canale video adattato per Velora con esperienza leggera e accesso Velora.",
-    category: "Media",
-    publisher: "CreatorSpeaker TV",
+    title: "VeloMail",
+    zone: "velora.mail",
+    description: "Messaggi tra account Velora con sessione unica e stato persistente.",
+    category: "Comunicazione",
+    publisher: "Velora",
     identityLevel: "Livello 1",
     verified: true,
     familySafe: true,
@@ -426,13 +426,13 @@ const featuredSites: SearchCard[] = [
     updatedAt: "Pubblicato"
   },
   {
-    title: "V Social",
-    zone: "v.social",
-    description: "Social community adattato per Velora con profilo, feed e accesso unico.",
-    category: "Community",
-    publisher: "V Social",
+    title: "Velora Cloud",
+    zone: "velora.cloud",
+    description: "Spazio personale collegato all'account Velora e protetto da Guardian.",
+    category: "Cloud",
+    publisher: "Velora",
     identityLevel: "Livello 1",
-    verified: false,
+    verified: true,
     familySafe: true,
     availability: "Online",
     updatedAt: "Pubblicato"
@@ -455,7 +455,7 @@ const veloraTools: ToolDefinition[] = [
   tool("Wallet Check", "tools.wallet", "Velora Core", "Valida indirizzi pubblici XMR e ZEPH senza salvare chiavi.", "wallet-check", "Wallet pubblico", "Incolla indirizzo XMR o ZEPH"),
   tool("Mining Monitor", "tools.mining", "Velora Core", "Legge lo stato mining, worker, hashrate e soglia payout.", "mining-summary", "Stato mining", "Premi Esegui per riepilogo mining"),
   tool("Publisher Validator", "tools.publisher-validator", "Velora Core", "Controlla struttura minima, manifest e indirizzo di una zona Velora.", "publisher-validator", "Manifest o appunti sito", "Incolla contenuto velora-site.json o percorso/zona"),
-  tool("Zone Explorer", "tools.zone-explorer", "Velora Core", "Apre una zona Velora valida dalla sezione Esplora.", "zone-open", "Zona", "happy.meter"),
+  tool("Zone Explorer", "tools.zone-explorer", "Velora Core", "Apre una zona Velora valida dalla sezione Esplora.", "zone-open", "Zona", "velora.guide"),
   tool("Velora Login Tester", "tools.login-test", "Velora Core", "Verifica se una pagina espone richiesta login Velora o SDK.", "login-test", "HTML o URL zona", "Incolla HTML o testo della pagina"),
   tool("Mail Tester", "tools.mail-test", "Velora Core", "Prepara un messaggio test VeloMail tra due account.", "mail-test", "Destinatario", "alias@velora"),
   tool("Node Health", "tools.node-health", "Velora Core", "Mostra stato nodo locale e rete Velora.", "node-health", "Nodo", "Premi Esegui per controllare"),
@@ -482,12 +482,12 @@ const veloraTools: ToolDefinition[] = [
   tool("File Signature Check", "tools.file-signature", "Sicurezza", "Riconosce tipo file da nome, estensione o firma nota.", "file-signature", "Nome o firma file", "setup.exe oppure %PDF"),
   tool("Breach Note", "tools.breach-note", "Sicurezza", "Crea piano azione dopo possibile furto account.", "breach-note", "Servizio coinvolto", "email, social, wallet"),
   tool("Safe Message", "tools.safe-message", "Sicurezza", "Riscrive messaggi delicati senza dati privati inutili.", "safe-message", "Messaggio", "Incolla messaggio da rendere sicuro"),
-  tool("Manifest Generator", "tools.manifest", "Creator Studio", "Genera velora-site.json base valido per pubblicazione.", "manifest", "Dati sito", "zona: happy.meter; titolo: HappyMeter"),
+  tool("Manifest Generator", "tools.manifest", "Creator Studio", "Genera velora-site.json base valido per pubblicazione.", "manifest", "Dati sito", "zona: velora.guide; titolo: Velora Guide"),
   tool("Landing Builder", "tools.landing", "Creator Studio", "Crea HTML landing minimale pronta per Velora.", "landing", "Idea pagina", "Titolo, sottotitolo, sezioni"),
   tool("SEO Velora", "tools.seo", "Creator Studio", "Genera titolo, descrizione e tag per ricerca interna.", "seo", "Descrizione sito", "Incolla descrizione del sito"),
   tool("Accessibility Check", "tools.accessibility", "Creator Studio", "Controlla leggibilita base, contrasto testuale e alternative.", "accessibility", "HTML o testo", "Incolla HTML o testo pagina"),
   tool("Changelog Writer", "tools.changelog", "Creator Studio", "Crea changelog leggibile per sito o app.", "changelog", "Modifiche", "Incolla elenco modifiche"),
-  tool("Mini Logo Maker", "tools.logo", "Creator Studio", "Genera concept testuale per logo e palette.", "logo", "Nome progetto", "HappyMeter"),
+  tool("Mini Logo Maker", "tools.logo", "Creator Studio", "Genera concept testuale per logo e palette.", "logo", "Nome progetto", "Velora Tools"),
   tool("Cover Builder", "tools.cover", "Creator Studio", "Genera brief copertina per sito/zona.", "cover", "Tema", "Benessere quotidiano"),
   tool("Content Packager", "tools.content-pack", "Creator Studio", "Suggerisce alleggerimento contenuti prima della pubblicazione.", "content-pack", "Lista file", "Incolla nomi file o dimensioni"),
   tool("Prompt Sito Velora", "tools.prompt-site", "Creator Studio", "Crea prompt per adattare un sito a Velora.", "prompt-site", "Percorso o nome sito", "C:\\\\sito-da-convertire"),
@@ -551,18 +551,18 @@ function App() {
   const [networkState, setNetworkState] = React.useState<NetworkState>("syncing");
   const [nodeMessage, setNodeMessage] = React.useState("Preparazione di Velora");
   const [query, setQuery] = React.useState("");
-  const [address, setAddress] = React.useState("happy.meter");
+  const [address, setAddress] = React.useState("velora.guide");
   const [loadedSite, setLoadedSite] = React.useState<LoadedSiteDocument | null>(null);
   const [activeToolZone, setActiveToolZone] = React.useState("tools.tts");
   const [viewerState, setViewerState] = React.useState<ViewerState>("idle");
   const [viewerMessage, setViewerMessage] = React.useState("Cerca o apri una zona dell'Upper Web.");
-  const [favorites, setFavorites] = React.useState<string[]>(["happy.meter"]);
+  const [favorites, setFavorites] = React.useState<string[]>(["velora.guide"]);
   const [searchResults, setSearchResults] = React.useState<SearchCard[]>([]);
   const [oceanoDraft, setOceanoDraft] = React.useState({ title: "", summary: "", body: "", contentType: "ARTICLE", sourceUrl: "", tags: "" });
   const [oceanoSubmissions, setOceanoSubmissions] = React.useState<OceanoSubmission[]>([]);
   const [oceanoUploadMessage, setOceanoUploadMessage] = React.useState("Compila il contenuto e invialo alla revisione admin.");
   const [publisherSitePath, setPublisherSitePath] = React.useState(demoSitePath);
-  const [publisherAddress, setPublisherAddress] = React.useState("happy.meter");
+  const [publisherAddress, setPublisherAddress] = React.useState("velora.guide");
   const [validation, setValidation] = React.useState<VeloraValidationResult | null>(null);
   const [packaged, setPackaged] = React.useState<PublisherPackageResponse | null>(null);
   const [releases, setReleases] = React.useState<PublisherReleaseRecord[]>([]);
@@ -2231,9 +2231,9 @@ function NetworkHighlights() {
       <h2>Zone online</h2>
       <p>Apri i siti pubblicati, salva i preferiti e controlla nuove zone direttamente dal motore di ricerca.</p>
       <div className="tag-cloud">
-        <span>happy.meter</span>
-        <span>video.creatorspeaker-tv</span>
-        <span>v.social</span>
+        <span>velora.search</span>
+        <span>velora.mail</span>
+        <span>velora.cloud</span>
       </div>
     </article>
   );
@@ -2702,7 +2702,7 @@ async function runToolAction(toolItem: ToolDefinition, input: string, context: {
       return publisherQuickCheck(text);
     case "zone-open":
       if (!looksLikeToolZoneInput(text)) {
-        return "Inserisci una zona valida, esempio happy.meter";
+        return "Inserisci una zona valida, esempio velora.guide";
       }
       context.onOpenZone(text.toLowerCase());
       return `Apertura zona: ${text.toLowerCase()}`;
