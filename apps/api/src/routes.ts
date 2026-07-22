@@ -3664,7 +3664,7 @@ async function publicPage(page: string) {
       <div class="cards">
         <article><b>Dati account</b><p>Username Velora, sessioni, dispositivi autorizzati e log di sicurezza necessari al funzionamento.</p></article>
         <article><b>Contenuti utente</b><p>File cloud, messaggi, siti pubblicati e richieste vengono conservati per fornire il servizio e prevenire abusi.</p></article>
-        <article><b>Contatti</b><p>Email supporto: srivarola104 gmail.com<br>Account Velora: simonefolletto velora</p></article>
+        <article><b>Contatti</b><p>Email supporto: srivarola104 gmail.com</p></article>
       </div>
       <p>Non chiediamo seed phrase, chiavi private, password wallet o file wallet. Le credenziali sensibili non devono essere inviate tramite form pubblici.</p>
       <a class="ghost" href="/legal/cookie">Cookie Policy</a>
@@ -3798,7 +3798,7 @@ async function publicPage(page: string) {
 <body>
   <header><nav><a href="/">VELORA</a><a href="/portal">Portale</a><a href="/download">Download</a><a href="/what-is-velora">Upper Web</a><a href="/security">Sicurezza</a><a href="/publishers">Publisher</a><a href="/publishers/guide">Guida</a><a href="/developers">Developers</a><a href="/pricing">Pricing</a><a href="/status">Status</a>${languageSelectorHtml()}</nav></header>
   <main>${body}</main>
-  <footer><p>Velora Beta pubblica</p><p><a href="/legal/privacy">Privacy</a> · <a href="/legal/cookie">Cookie</a> · <a href="/legal/terms">Termini</a> · Supporto: srivarola104 gmail.com · Account Velora: simonefolletto velora</p></footer>
+  <footer><p>Velora Beta pubblica</p><p><a href="/legal/privacy">Privacy</a> · <a href="/legal/cookie">Cookie</a> · <a href="/legal/terms">Termini</a> · Supporto: srivarola104 gmail.com</p></footer>
   <div class="cookie-banner" id="cookieBanner"><p>Velora usa solo cookie e storage tecnici necessari per accesso, sicurezza e preferenze essenziali.</p><div><a class="ghost" href="/legal/cookie">Leggi policy</a><button onclick="localStorage.setItem('velora.cookie.ok','1');cookieBanner.classList.remove('show')">Accetta</button></div></div>
   ${veloraI18nScript()}
   <script>if(!localStorage.getItem('velora.cookie.ok'))cookieBanner.classList.add('show')</script>
@@ -3835,11 +3835,18 @@ function veloraI18nScript() {
     return supported.includes(nav) ? nav : "it";
   };
   const dict = ${JSON.stringify(veloraI18nDictionary())};
+  const phrases = ${JSON.stringify(veloraPhraseDictionary())};
   const placeholders = ${JSON.stringify(veloraPlaceholderDictionary())};
   function tr(text, lang = pick()) {
     const source = String(text || "").trim();
     if (!source || lang === "it") return source;
-    return dict[lang]?.[source] || source;
+    const exact = dict[lang]?.[source];
+    if (exact) return exact;
+    let translated = source;
+    Object.entries(phrases[lang] || {}).sort((a,b) => b[0].length - a[0].length).forEach(([from,to]) => {
+      translated = translated.split(from).join(String(to));
+    });
+    return translated;
   }
   function apply(root = document) {
     const lang = pick();
@@ -3970,12 +3977,167 @@ function veloraI18nDictionary() {
 
 function veloraPlaceholderDictionary() {
   return {
-    en: { "Cerca Velora o inserisci una zona": "Search Velora or enter a zone", "nomeutente": "username", "Password": "Password", "Cerca zone, Oceano, tools, guide": "Search zones, Oceano, tools, guides", "Testo, wallet, link o contenuto": "Text, wallet, link or content" },
-    fr: { "Cerca Velora o inserisci una zona": "Rechercher dans Velora ou saisir une zone", "nomeutente": "nom utilisateur", "Password": "Mot de passe", "Cerca zone, Oceano, tools, guide": "Rechercher zones, Oceano, outils, guides", "Testo, wallet, link o contenuto": "Texte, wallet, lien ou contenu" },
-    de: { "Cerca Velora o inserisci una zona": "Velora durchsuchen oder Zone eingeben", "nomeutente": "Benutzername", "Password": "Passwort", "Cerca zone, Oceano, tools, guide": "Zonen, Oceano, Tools, Anleitungen suchen", "Testo, wallet, link o contenuto": "Text, Wallet, Link oder Inhalt" },
-    es: { "Cerca Velora o inserisci una zona": "Buscar en Velora o introducir una zona", "nomeutente": "usuario", "Password": "Contraseña", "Cerca zone, Oceano, tools, guide": "Buscar zonas, Oceano, herramientas, guías", "Testo, wallet, link o contenuto": "Texto, wallet, enlace o contenido" },
-    ru: { "Cerca Velora o inserisci una zona": "Искать в Velora или ввести зону", "nomeutente": "имя пользователя", "Password": "Пароль", "Cerca zone, Oceano, tools, guide": "Поиск зон, Oceano, инструментов и руководств", "Testo, wallet, link o contenuto": "Текст, кошелёк, ссылка или контент" },
-    zh: { "Cerca Velora o inserisci una zona": "搜索 Velora 或输入区域", "nomeutente": "用户名", "Password": "密码", "Cerca zone, Oceano, tools, guide": "搜索区域、Oceano、工具、指南", "Testo, wallet, link o contenuto": "文本、钱包、链接或内容" }
+    en: { "Cerca Velora o inserisci una zona": "Search Velora or enter a zone", "nomeutente": "username", "Password": "Password", "Cerca zone, Oceano, tools, guide": "Search zones, Oceano, tools, guides", "Testo, wallet, link o contenuto": "Text, wallet, link or content", "happy.meter, v.social, guida": "happy.meter, v.social, guide", "Scrivi o incolla testo": "Write or paste text", "Email per nuova registrazione": "Email for new registration", "Wallet payout pubblico": "Public payout wallet" },
+    fr: { "Cerca Velora o inserisci una zona": "Rechercher dans Velora ou saisir une zone", "nomeutente": "nom utilisateur", "Password": "Mot de passe", "Cerca zone, Oceano, tools, guide": "Rechercher zones, Oceano, outils, guides", "Testo, wallet, link o contenuto": "Texte, wallet, lien ou contenu", "happy.meter, v.social, guida": "happy.meter, v.social, guide", "Scrivi o incolla testo": "Écrire ou coller du texte", "Email per nuova registrazione": "Email pour nouvelle inscription", "Wallet payout pubblico": "Wallet public de payout" },
+    de: { "Cerca Velora o inserisci una zona": "Velora durchsuchen oder Zone eingeben", "nomeutente": "Benutzername", "Password": "Passwort", "Cerca zone, Oceano, tools, guide": "Zonen, Oceano, Tools, Anleitungen suchen", "Testo, wallet, link o contenuto": "Text, Wallet, Link oder Inhalt", "happy.meter, v.social, guida": "happy.meter, v.social, Anleitung", "Scrivi o incolla testo": "Text schreiben oder einfügen", "Email per nuova registrazione": "E-Mail für neue Registrierung", "Wallet payout pubblico": "Öffentliche Payout-Wallet" },
+    es: { "Cerca Velora o inserisci una zona": "Buscar en Velora o introducir una zona", "nomeutente": "usuario", "Password": "Contraseña", "Cerca zone, Oceano, tools, guide": "Buscar zonas, Oceano, herramientas, guías", "Testo, wallet, link o contenuto": "Texto, wallet, enlace o contenido", "happy.meter, v.social, guida": "happy.meter, v.social, guía", "Scrivi o incolla testo": "Escribe o pega texto", "Email per nuova registrazione": "Email para nuevo registro", "Wallet payout pubblico": "Wallet público de payout" },
+    ru: { "Cerca Velora o inserisci una zona": "Искать в Velora или ввести зону", "nomeutente": "имя пользователя", "Password": "Пароль", "Cerca zone, Oceano, tools, guide": "Поиск зон, Oceano, инструментов и руководств", "Testo, wallet, link o contenuto": "Текст, кошелёк, ссылка или контент", "happy.meter, v.social, guida": "happy.meter, v.social, руководство", "Scrivi o incolla testo": "Введите или вставьте текст", "Email per nuova registrazione": "Email для новой регистрации", "Wallet payout pubblico": "Публичный кошелёк для payout" },
+    zh: { "Cerca Velora o inserisci una zona": "搜索 Velora 或输入区域", "nomeutente": "用户名", "Password": "密码", "Cerca zone, Oceano, tools, guide": "搜索区域、Oceano、工具、指南", "Testo, wallet, link o contenuto": "文本、钱包、链接或内容", "happy.meter, v.social, guida": "happy.meter、v.social、指南", "Scrivi o incolla testo": "输入或粘贴文本", "Email per nuova registrazione": "新注册邮箱", "Wallet payout pubblico": "公开 payout 钱包" }
+  };
+}
+
+function veloraPhraseDictionary() {
+  return {
+    en: {
+      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora brings together the web portal, unified account, internal search engine, published sites, VeloMail, Cloud, Tools, nodes and Guardian security in one ecosystem available on every device.",
+      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "Use the portal from any device. Installers are only needed for advanced local features.",
+      "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "Recommended. Works on Windows, Mac, iPhone, iPad and Android without installing unsigned files",
+      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "MSI installer for mining, local node and advanced desktop features",
+      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "Advanced non-notarized beta. Use the portal if you want to avoid macOS warnings",
+      "Beta avanzata per Mac Intel non notarizzata": "Advanced non-notarized beta for Intel Mac",
+      "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "Package for installing a support node on a NAS or always-on PC",
+      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora is currently distributed as a beta not yet notarized by Apple",
+      "macOS mostrera quindi un avviso al primo avvio": "macOS will therefore show a warning on first launch",
+      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "After manual authorization, Velora should open normally",
+      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora processes the data required for accounts, access, security, site publishing, VeloMail, Cloud, forum, nodes and beta features.",
+      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora only uses technical cookies and storage required for login, security, interface preferences, cookie consent and portal operation.",
+      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud now protects files with chained encryption, redundant checks and automatic sensitive-data lock when a serious risk is detected",
+      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "Official guide, technical specification, manifest schema and examples for preparing Velora sites and applications.",
+      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "On mobile you do not need to install anything. Save the portal to the Home screen if you want to open it like an app.",
+      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "Enter only your username. Velora automatically adds the account suffix.",
+      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "Search zones, Oceano and guides. Results open in the Velora browser.",
+      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail and forum use the same session as your account.",
+      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "The guided Publisher creates a valid manifest and reduces errors.",
+      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "Ready tools for quick checks, security, content and publishing.",
+      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "Managed through Velora API and authorized NAS Agent. DSM credentials are never shown in the portal.",
+      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "Search indexed content and open results in the Velora Browser.",
+      "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "Access from Windows, Mac, iPhone, iPad and Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodes and NAS use the same data as the desktop client."
+    },
+    fr: {
+      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora réunit portail web, compte unique, moteur de recherche interne, sites publiés, VeloMail, Cloud, Tools, nœuds et sécurité Guardian dans un écosystème accessible depuis chaque appareil.",
+      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "Utilisez le portail depuis n’importe quel appareil. Les installateurs servent uniquement aux fonctions locales avancées.",
+      "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "Recommandé. Fonctionne sur Windows, Mac, iPhone, iPad et Android sans installer de fichiers non signés",
+      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "Installateur MSI pour mining, nœud local et fonctions desktop avancées",
+      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "Bêta avancée non notarizée. Utilisez le portail pour éviter les alertes macOS",
+      "Beta avanzata per Mac Intel non notarizzata": "Bêta avancée non notarizée pour Mac Intel",
+      "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "Paquet pour installer un nœud de support sur NAS ou PC toujours allumé",
+      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora est actuellement distribuée comme bêta non encore notarizée par Apple",
+      "macOS mostrera quindi un avviso al primo avvio": "macOS affichera donc une alerte au premier lancement",
+      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "Après autorisation manuelle, Velora doit s’ouvrir normalement",
+      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora traite les données nécessaires aux comptes, accès, sécurité, publication de sites, VeloMail, Cloud, forum, nœuds et fonctions bêta.",
+      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora utilise uniquement des cookies et stockages techniques nécessaires à la connexion, sécurité, préférences d’interface, consentement cookies et fonctionnement du portail.",
+      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud protège maintenant les fichiers avec chiffrement chaîné, contrôles redondants et blocage automatique des données sensibles lorsqu’un risque sérieux est détecté",
+      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "Guide officielle, spécification technique, schéma de manifest et exemples pour préparer sites et applications Velora.",
+      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "Depuis un téléphone, aucune installation n’est nécessaire. Enregistrez le portail sur l’écran d’accueil pour l’ouvrir comme une app.",
+      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "Saisissez seulement votre nom utilisateur. Velora ajoute automatiquement le suffixe du compte.",
+      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "Recherchez zones, Oceano et guides. Les résultats s’ouvrent dans le navigateur Velora.",
+      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail et le forum utilisent la même session que votre compte.",
+      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "Le Publisher guidé crée un manifest valide et réduit les erreurs.",
+      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "Outils prêts pour contrôles rapides, sécurité, contenus et publication.",
+      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "Gestion via Velora API et NAS Agent autorisé. Aucune identité DSM n’est affichée dans le portail.",
+      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "Recherche de contenus indexés et ouverture des résultats dans le navigateur Velora.",
+      "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "Accédez depuis Windows, Mac, iPhone, iPad et Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nœuds et NAS utilisent les mêmes données que le client desktop."
+    },
+    de: {
+      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora vereint Webportal, einheitliches Konto, interne Suche, veröffentlichte Websites, VeloMail, Cloud, Tools, Knoten und Guardian-Sicherheit in einem Ökosystem für jedes Gerät.",
+      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "Nutzen Sie das Portal auf jedem Gerät. Installer sind nur für erweiterte lokale Funktionen nötig.",
+      "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "Empfohlen. Funktioniert auf Windows, Mac, iPhone, iPad und Android ohne Installation unsignierter Dateien",
+      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "MSI-Installer für Mining, lokalen Knoten und erweiterte Desktop-Funktionen",
+      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "Erweiterte, nicht notarisierten Beta. Nutzen Sie das Portal, wenn Sie macOS-Warnungen vermeiden möchten",
+      "Beta avanzata per Mac Intel non notarizzata": "Erweiterte, nicht notarisierten Beta für Intel Mac",
+      "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "Paket zur Installation eines Support-Knotens auf NAS oder dauerhaft laufendem PC",
+      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora wird derzeit als Beta verteilt und ist noch nicht von Apple notarisiert",
+      "macOS mostrera quindi un avviso al primo avvio": "macOS zeigt daher beim ersten Start eine Warnung",
+      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "Nach manueller Freigabe sollte Velora normal starten",
+      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora verarbeitet die Daten, die für Konten, Zugriff, Sicherheit, Website-Veröffentlichung, VeloMail, Cloud, Forum, Knoten und Beta-Funktionen erforderlich sind.",
+      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora verwendet nur technische Cookies und Speicher für Login, Sicherheit, Oberflächenpräferenzen, Cookie-Zustimmung und Portalbetrieb.",
+      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud schützt Dateien jetzt mit verketteter Verschlüsselung, redundanten Prüfungen und automatischer Sperre sensibler Daten bei ernstem Risiko",
+      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "Offizielle Anleitung, technische Spezifikation, Manifest-Schema und Beispiele zur Vorbereitung von Velora-Websites und Anwendungen.",
+      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "Auf dem Telefon ist keine Installation nötig. Speichern Sie das Portal auf dem Startbildschirm, um es wie eine App zu öffnen.",
+      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "Geben Sie nur Ihren Benutzernamen ein. Velora fügt den Kontosuffix automatisch hinzu.",
+      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "Suchen Sie Zonen, Oceano und Anleitungen. Ergebnisse öffnen im Velora-Browser.",
+      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail und Forum verwenden dieselbe Sitzung wie Ihr Konto.",
+      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "Der geführte Publisher erstellt ein gültiges Manifest und reduziert Fehler.",
+      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "Bereite Tools für Schnellprüfungen, Sicherheit, Inhalte und Veröffentlichung.",
+      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "Verwaltung über Velora API und autorisierten NAS Agent. DSM-Zugangsdaten werden im Portal nie angezeigt.",
+      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "Suche indexierter Inhalte und Öffnung der Ergebnisse im Velora-Browser.",
+      "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "Zugriff von Windows, Mac, iPhone, iPad und Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Knoten und NAS nutzen dieselben Daten wie der Desktop-Client."
+    },
+    es: {
+      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora une portal web, cuenta única, buscador interno, sitios publicados, VeloMail, Cloud, Tools, nodos y seguridad Guardian en un ecosistema accesible desde cualquier dispositivo.",
+      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "Usa el portal desde cualquier dispositivo. Los instaladores solo sirven para funciones locales avanzadas.",
+      "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "Recomendado. Funciona en Windows, Mac, iPhone, iPad y Android sin instalar archivos no firmados",
+      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "Instalador MSI para mining, nodo local y funciones desktop avanzadas",
+      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "Beta avanzada no notarizada. Usa el portal si quieres evitar avisos de macOS",
+      "Beta avanzata per Mac Intel non notarizzata": "Beta avanzada no notarizada para Mac Intel",
+      "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "Paquete para instalar un nodo de apoyo en NAS o PC siempre encendido",
+      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora se distribuye actualmente como beta aún no notarizada por Apple",
+      "macOS mostrera quindi un avviso al primo avvio": "macOS mostrará un aviso en el primer inicio",
+      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "Después de la autorización manual, Velora debería abrirse normalmente",
+      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora trata los datos necesarios para cuentas, acceso, seguridad, publicación de sitios, VeloMail, Cloud, foro, nodos y funciones beta.",
+      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora usa solo cookies y almacenamiento técnico necesarios para login, seguridad, preferencias de interfaz, consentimiento de cookies y funcionamiento del portal.",
+      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud protege ahora los archivos con cifrado encadenado, controles redundantes y bloqueo automático de datos sensibles cuando se detecta un riesgo serio",
+      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "Guía oficial, especificación técnica, esquema manifest y ejemplos para preparar sitios y aplicaciones Velora.",
+      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "Desde el teléfono no hace falta instalar nada. Guarda el portal en la pantalla de inicio para abrirlo como app.",
+      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "Escribe solo tu nombre de usuario. Velora añade automáticamente el sufijo de la cuenta.",
+      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "Busca zonas, Oceano y guías. Los resultados se abren en el navegador Velora.",
+      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail y el foro usan la misma sesión de tu cuenta.",
+      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "El Publisher guiado genera un manifest válido y reduce errores.",
+      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "Herramientas listas para controles rápidos, seguridad, contenido y publicación.",
+      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "Gestión mediante Velora API y NAS Agent autorizado. No se muestran credenciales DSM en el portal.",
+      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "Busca contenido indexado y abre resultados en el navegador Velora.",
+      "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "Accede desde Windows, Mac, iPhone, iPad y Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodos y NAS usan los mismos datos que el cliente desktop."
+    },
+    ru: {
+      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora объединяет веб-портал, единый аккаунт, внутренний поиск, опубликованные сайты, VeloMail, Cloud, Tools, узлы и Guardian Security в одной экосистеме для любого устройства.",
+      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "Используйте портал с любого устройства. Установщики нужны только для расширенных локальных функций.",
+      "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "Рекомендуется. Работает на Windows, Mac, iPhone, iPad и Android без установки неподписанных файлов",
+      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "MSI-установщик для mining, локального узла и расширенных desktop-функций",
+      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "Расширенная бета без notarization. Используйте портал, если хотите избежать предупреждений macOS",
+      "Beta avanzata per Mac Intel non notarizzata": "Расширенная бета для Mac Intel без notarization",
+      "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "Пакет для установки поддерживающего узла на NAS или постоянно включённый PC",
+      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora сейчас распространяется как бета, ещё не notarized Apple",
+      "macOS mostrera quindi un avviso al primo avvio": "macOS покажет предупреждение при первом запуске",
+      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "После ручного разрешения Velora должна открываться нормально",
+      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora обрабатывает данные, необходимые для аккаунтов, доступа, безопасности, публикации сайтов, VeloMail, Cloud, форума, узлов и бета-функций.",
+      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora использует только технические cookies и storage, необходимые для входа, безопасности, настроек интерфейса, согласия cookies и работы портала.",
+      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud теперь защищает файлы цепочным шифрованием, резервными проверками и автоматической блокировкой чувствительных данных при серьёзном риске",
+      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "Официальное руководство, техническая спецификация, схема manifest и примеры для подготовки сайтов и приложений Velora.",
+      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "На телефоне ничего устанавливать не нужно. Сохраните портал на главный экран, чтобы открывать его как приложение.",
+      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "Введите только имя пользователя. Velora автоматически добавит суффикс аккаунта.",
+      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "Ищите зоны, Oceano и руководства. Результаты открываются в браузере Velora.",
+      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail и форум используют ту же сессию аккаунта.",
+      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "Пошаговый Publisher создаёт корректный manifest и снижает ошибки.",
+      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "Готовые инструменты для быстрых проверок, безопасности, контента и публикации.",
+      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "Управление через Velora API и авторизованный NAS Agent. Данные DSM не отображаются в портале.",
+      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "Поиск индексированного контента и открытие результатов в браузере Velora.",
+      "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "Доступ с Windows, Mac, iPhone, iPad и Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, узлы и NAS используют те же данные, что desktop-клиент."
+    },
+    zh: {
+      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora 将网页门户、统一账户、内部搜索、已发布网站、VeloMail、Cloud、Tools、节点和 Guardian 安全整合到一个可在任何设备访问的生态中。",
+      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "可从任何设备使用门户。安装包仅用于高级本地功能。",
+      "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "推荐。可在 Windows、Mac、iPhone、iPad 和 Android 上运行，无需安装未签名文件",
+      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "用于 mining、本地节点和高级桌面功能的 MSI 安装包",
+      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "未 notarized 的高级测试版。如需避免 macOS 警告，请使用门户",
+      "Beta avanzata per Mac Intel non notarizzata": "适用于 Mac Intel 的未 notarized 高级测试版",
+      "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "用于在 NAS 或常开 PC 上安装支持节点的包",
+      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora 当前作为尚未通过 Apple notarization 的测试版发布",
+      "macOS mostrera quindi un avviso al primo avvio": "macOS 会在首次启动时显示警告",
+      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "手动授权后，Velora 应能正常打开",
+      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora 处理账户、访问、安全、网站发布、VeloMail、Cloud、论坛、节点和测试功能所需的数据。",
+      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora 仅使用登录、安全、界面偏好、cookie 同意和门户运行所需的技术 cookie 与存储。",
+      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud 现在通过链式加密、冗余检查和严重风险时的敏感数据自动锁定来保护文件",
+      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "用于准备 Velora 网站和应用的官方指南、技术规范、manifest schema 与示例。",
+      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "手机上无需安装任何内容。若想像应用一样打开，可将门户保存到主屏幕。",
+      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "只输入用户名。Velora 会自动添加账户后缀。",
+      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "搜索区域、Oceano 和指南。结果会在 Velora 浏览器中打开。",
+      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail 和论坛使用同一账户会话。",
+      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "引导式 Publisher 会生成有效 manifest 并减少错误。",
+      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "用于快速检查、安全、内容和发布的可用工具。",
+      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "通过 Velora API 和授权 NAS Agent 管理。门户不会显示 DSM 凭据。",
+      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "搜索已索引内容并在 Velora 浏览器中打开结果。",
+      "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "可从 Windows、Mac、iPhone、iPad 和 Android 访问。Account、Search、Browser、VeloMail、Cloud、Publisher、Tools、Forum、Mining Monitor、节点和 NAS 使用与桌面客户端相同的数据。"
+    }
   };
 }
 

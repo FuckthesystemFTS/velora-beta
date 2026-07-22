@@ -224,6 +224,117 @@ const veloraDesktopDictionary: Record<Exclude<VeloraLanguage, "it">, Record<stri
   }
 };
 
+const veloraDesktopPhraseDictionary: Record<Exclude<VeloraLanguage, "it">, Record<string, string>> = {
+  en: {
+    "Cerca servizi, applicazioni e zone pubblicate su Velora.": "Search services, apps and zones published on Velora.",
+    "Accedi o crea il tuo account Velora": "Sign in or create your Velora account",
+    "Preparazione di Velora": "Preparing Velora",
+    "Cerca o apri una zona dell'Upper Web.": "Search or open an Upper Web zone.",
+    "Compila il contenuto e invialo alla revisione admin.": "Fill in the content and submit it for admin review.",
+    "Seleziona una cartella del sito e avvia il controllo": "Select a site folder and start the check",
+    "Sincronizzazione VeloMail in attesa": "VeloMail sync waiting",
+    "Forum in attesa": "Forum waiting",
+    "Mining Partner non avviato": "Mining Partner not started",
+    "Controllo aggiornamenti in attesa": "Update check waiting",
+    "Nodo utente non ancora attivato": "User node not activated yet",
+    "Cloud beta pronto: 25 MB per account registrato.": "Cloud beta ready: 25 MB per registered account.",
+    "Prepara una zona, verifica i contenuti e rendila disponibile su Velora.": "Prepare a zone, verify the content and make it available on Velora.",
+    "Avvia il miner locale, guarda lo stato in tempo reale e usa il wallet pubblico per ricevere payout manuale dopo verifica admin.": "Start the local miner, view real-time status and use your public wallet for manual payout after admin verification.",
+    "Scarica XMRig dal sito ufficiale, estrailo e metti il file miner nella cartella indicata. Velora non scarica miner in automatico e non chiede seed, private key o password wallet.": "Download XMRig from the official site, extract it and place the miner file in the indicated folder. Velora does not download miners automatically and never asks for seed, private key or wallet password.",
+    "Tutti i PC attivi minano nello stesso wallet operativo Velora, con worker separati per ogni dispositivo": "All active PCs mine to the same Velora operational wallet, with separate workers for each device"
+  },
+  fr: {
+    "Cerca servizi, applicazioni e zone pubblicate su Velora.": "Recherchez services, applications et zones publiées sur Velora.",
+    "Accedi o crea il tuo account Velora": "Connectez-vous ou créez votre compte Velora",
+    "Preparazione di Velora": "Préparation de Velora",
+    "Cerca o apri una zona dell'Upper Web.": "Recherchez ou ouvrez une zone de l’Upper Web.",
+    "Compila il contenuto e invialo alla revisione admin.": "Complétez le contenu et envoyez-le en révision admin.",
+    "Seleziona una cartella del sito e avvia il controllo": "Sélectionnez un dossier de site et lancez le contrôle",
+    "Sincronizzazione VeloMail in attesa": "Synchronisation VeloMail en attente",
+    "Forum in attesa": "Forum en attente",
+    "Mining Partner non avviato": "Mining Partner non démarré",
+    "Controllo aggiornamenti in attesa": "Recherche de mises à jour en attente",
+    "Nodo utente non ancora attivato": "Nœud utilisateur pas encore activé",
+    "Cloud beta pronto: 25 MB per account registrato.": "Cloud bêta prêt : 25 MB par compte enregistré.",
+    "Prepara una zona, verifica i contenuti e rendila disponibile su Velora.": "Préparez une zone, vérifiez les contenus et rendez-la disponible sur Velora.",
+    "Avvia il miner locale, guarda lo stato in tempo reale e usa il wallet pubblico per ricevere payout manuale dopo verifica admin.": "Lancez le miner local, suivez l’état en temps réel et utilisez votre wallet public pour recevoir un payout manuel après vérification admin.",
+    "Scarica XMRig dal sito ufficiale, estrailo e metti il file miner nella cartella indicata. Velora non scarica miner in automatico e non chiede seed, private key o password wallet.": "Téléchargez XMRig depuis le site officiel, extrayez-le et placez le fichier miner dans le dossier indiqué. Velora ne télécharge pas de miner automatiquement et ne demande jamais seed, private key ou mot de passe wallet.",
+    "Tutti i PC attivi minano nello stesso wallet operativo Velora, con worker separati per ogni dispositivo": "Tous les PC actifs minent vers le même wallet opérationnel Velora, avec des workers séparés pour chaque appareil"
+  },
+  de: {
+    "Cerca servizi, applicazioni e zone pubblicate su Velora.": "Suchen Sie Dienste, Apps und veröffentlichte Velora-Zonen.",
+    "Accedi o crea il tuo account Velora": "Melden Sie sich an oder erstellen Sie Ihr Velora-Konto",
+    "Preparazione di Velora": "Velora wird vorbereitet",
+    "Cerca o apri una zona dell'Upper Web.": "Suchen oder öffnen Sie eine Upper-Web-Zone.",
+    "Compila il contenuto e invialo alla revisione admin.": "Füllen Sie den Inhalt aus und senden Sie ihn zur Admin-Prüfung.",
+    "Seleziona una cartella del sito e avvia il controllo": "Wählen Sie einen Website-Ordner und starten Sie die Prüfung",
+    "Sincronizzazione VeloMail in attesa": "VeloMail-Synchronisierung wartet",
+    "Forum in attesa": "Forum wartet",
+    "Mining Partner non avviato": "Mining Partner nicht gestartet",
+    "Controllo aggiornamenti in attesa": "Update-Prüfung wartet",
+    "Nodo utente non ancora attivato": "Benutzerknoten noch nicht aktiviert",
+    "Cloud beta pronto: 25 MB per account registrato.": "Cloud-Beta bereit: 25 MB pro registriertem Konto.",
+    "Prepara una zona, verifica i contenuti e rendila disponibile su Velora.": "Bereiten Sie eine Zone vor, prüfen Sie die Inhalte und machen Sie sie auf Velora verfügbar.",
+    "Avvia il miner locale, guarda lo stato in tempo reale e usa il wallet pubblico per ricevere payout manuale dopo verifica admin.": "Starten Sie den lokalen Miner, sehen Sie den Echtzeitstatus und nutzen Sie Ihre öffentliche Wallet für manuelle Auszahlung nach Admin-Prüfung.",
+    "Scarica XMRig dal sito ufficiale, estrailo e metti il file miner nella cartella indicata. Velora non scarica miner in automatico e non chiede seed, private key o password wallet.": "Laden Sie XMRig von der offiziellen Website, entpacken Sie es und legen Sie die Miner-Datei in den angegebenen Ordner. Velora lädt Miner nicht automatisch herunter und fragt nie nach Seed, Private Key oder Wallet-Passwort.",
+    "Tutti i PC attivi minano nello stesso wallet operativo Velora, con worker separati per ogni dispositivo": "Alle aktiven PCs minen zur selben operativen Velora-Wallet, mit getrennten Workern pro Gerät"
+  },
+  es: {
+    "Cerca servizi, applicazioni e zone pubblicate su Velora.": "Busca servicios, aplicaciones y zonas publicadas en Velora.",
+    "Accedi o crea il tuo account Velora": "Entra o crea tu cuenta Velora",
+    "Preparazione di Velora": "Preparando Velora",
+    "Cerca o apri una zona dell'Upper Web.": "Busca o abre una zona de la Upper Web.",
+    "Compila il contenuto e invialo alla revisione admin.": "Completa el contenido y envíalo a revisión admin.",
+    "Seleziona una cartella del sito e avvia il controllo": "Selecciona una carpeta del sitio e inicia el control",
+    "Sincronizzazione VeloMail in attesa": "Sincronización VeloMail en espera",
+    "Forum in attesa": "Foro en espera",
+    "Mining Partner non avviato": "Mining Partner no iniciado",
+    "Controllo aggiornamenti in attesa": "Comprobación de actualizaciones en espera",
+    "Nodo utente non ancora attivato": "Nodo de usuario aún no activado",
+    "Cloud beta pronto: 25 MB per account registrato.": "Cloud beta listo: 25 MB por cuenta registrada.",
+    "Prepara una zona, verifica i contenuti e rendila disponibile su Velora.": "Prepara una zona, verifica el contenido y publícala en Velora.",
+    "Avvia il miner locale, guarda lo stato in tempo reale e usa il wallet pubblico per ricevere payout manuale dopo verifica admin.": "Inicia el miner local, mira el estado en tiempo real y usa tu wallet público para recibir payout manual tras verificación admin.",
+    "Scarica XMRig dal sito ufficiale, estrailo e metti il file miner nella cartella indicata. Velora non scarica miner in automatico e non chiede seed, private key o password wallet.": "Descarga XMRig desde el sitio oficial, extráelo y coloca el archivo miner en la carpeta indicada. Velora no descarga miners automáticamente y nunca pide seed, private key ni contraseña wallet.",
+    "Tutti i PC attivi minano nello stesso wallet operativo Velora, con worker separati per ogni dispositivo": "Todos los PC activos minan hacia el mismo wallet operativo Velora, con workers separados por dispositivo"
+  },
+  ru: {
+    "Cerca servizi, applicazioni e zone pubblicate su Velora.": "Ищите сервисы, приложения и зоны, опубликованные в Velora.",
+    "Accedi o crea il tuo account Velora": "Войдите или создайте аккаунт Velora",
+    "Preparazione di Velora": "Подготовка Velora",
+    "Cerca o apri una zona dell'Upper Web.": "Найдите или откройте зону Upper Web.",
+    "Compila il contenuto e invialo alla revisione admin.": "Заполните контент и отправьте его на проверку admin.",
+    "Seleziona una cartella del sito e avvia il controllo": "Выберите папку сайта и запустите проверку",
+    "Sincronizzazione VeloMail in attesa": "Синхронизация VeloMail ожидает",
+    "Forum in attesa": "Форум ожидает",
+    "Mining Partner non avviato": "Mining Partner не запущен",
+    "Controllo aggiornamenti in attesa": "Проверка обновлений ожидает",
+    "Nodo utente non ancora attivato": "Узел пользователя ещё не активирован",
+    "Cloud beta pronto: 25 MB per account registrato.": "Cloud beta готов: 25 MB на зарегистрированный аккаунт.",
+    "Prepara una zona, verifica i contenuti e rendila disponibile su Velora.": "Подготовьте зону, проверьте контент и сделайте её доступной в Velora.",
+    "Avvia il miner locale, guarda lo stato in tempo reale e usa il wallet pubblico per ricevere payout manuale dopo verifica admin.": "Запустите локальный miner, смотрите статус в реальном времени и используйте публичный wallet для ручного payout после проверки admin.",
+    "Scarica XMRig dal sito ufficiale, estrailo e metti il file miner nella cartella indicata. Velora non scarica miner in automatico e non chiede seed, private key o password wallet.": "Скачайте XMRig с официального сайта, распакуйте и поместите miner в указанную папку. Velora не скачивает miners автоматически и никогда не просит seed, private key или пароль wallet.",
+    "Tutti i PC attivi minano nello stesso wallet operativo Velora, con worker separati per ogni dispositivo": "Все активные ПК майнят в один операционный wallet Velora, с отдельными workers для каждого устройства"
+  },
+  zh: {
+    "Cerca servizi, applicazioni e zone pubblicate su Velora.": "搜索 Velora 上发布的服务、应用和区域。",
+    "Accedi o crea il tuo account Velora": "登录或创建 Velora 账户",
+    "Preparazione di Velora": "正在准备 Velora",
+    "Cerca o apri una zona dell'Upper Web.": "搜索或打开 Upper Web 区域。",
+    "Compila il contenuto e invialo alla revisione admin.": "填写内容并提交 admin 审核。",
+    "Seleziona una cartella del sito e avvia il controllo": "选择网站文件夹并开始检查",
+    "Sincronizzazione VeloMail in attesa": "VeloMail 同步等待中",
+    "Forum in attesa": "论坛等待中",
+    "Mining Partner non avviato": "Mining Partner 未启动",
+    "Controllo aggiornamenti in attesa": "更新检查等待中",
+    "Nodo utente non ancora attivato": "用户节点尚未激活",
+    "Cloud beta pronto: 25 MB per account registrato.": "Cloud beta 已就绪：每个注册账户 25 MB。",
+    "Prepara una zona, verifica i contenuti e rendila disponibile su Velora.": "准备区域，验证内容，并在 Velora 上发布。",
+    "Avvia il miner locale, guarda lo stato in tempo reale e usa il wallet pubblico per ricevere payout manuale dopo verifica admin.": "启动本地 miner，查看实时状态，并使用公开 wallet 在 admin 验证后接收手动 payout。",
+    "Scarica XMRig dal sito ufficiale, estrailo e metti il file miner nella cartella indicata. Velora non scarica miner in automatico e non chiede seed, private key o password wallet.": "从官方网站下载 XMRig，解压并将 miner 文件放入指定文件夹。Velora 不会自动下载 miner，也不会索要 seed、private key 或 wallet 密码。",
+    "Tutti i PC attivi minano nello stesso wallet operativo Velora, con worker separati per ogni dispositivo": "所有活跃 PC 都挖到同一个 Velora operational wallet，每台设备使用独立 worker"
+  }
+};
+
 type MiningProgressWorker = {
   coin: string;
   worker_id: string;
@@ -410,7 +521,15 @@ function applyDesktopLanguage(language: VeloraLanguage) {
   window.localStorage.setItem("velora.language", language);
   document.documentElement.lang = language;
   const dictionary = language === "it" ? {} : veloraDesktopDictionary[language];
-  const translate = (value: string) => dictionary[value.trim()] ?? value;
+  const phrases = language === "it" ? {} : veloraDesktopPhraseDictionary[language];
+  const translate = (value: string) => {
+    const source = value.trim();
+    const exact = dictionary[source];
+    if (exact) return exact;
+    return Object.entries(phrases)
+      .sort((a, b) => b[0].length - a[0].length)
+      .reduce((translated, [from, to]) => translated.split(from).join(to), source);
+  };
   document.querySelectorAll<HTMLElement>("button,a,b,span,p,h1,h2,h3,label,small,strong,li,option").forEach((element) => {
     if (element.closest("[data-no-translate]") || element.childElementCount > 0) return;
     const source = element.dataset.vlSrc || element.textContent?.trim() || "";
