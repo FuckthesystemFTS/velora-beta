@@ -3996,12 +3996,10 @@ function veloraI18nDictionaryComplete() {
   };
   dict.fr = {
     ...(dict.fr ?? {}),
-    "Apri il tuo livello sopra Internet": "Ouvrez votre niveau au-dessus d’Internet",
     "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Un portail unique pour rechercher, communiquer, protéger les fichiers et publier des zones Velora",
     "Entra nel portale": "Entrer dans le portail",
     "Scarica beta": "Télécharger la bêta",
     "Browser integrato": "Navigateur intégré",
-    "Cerca nell'Upper Web": "Rechercher dans l’Upper Web",
     "Zone, guide, tools, contenuti Velora": "Zones, guides, outils, contenus Velora",
     "Proteggi file": "Protéger les fichiers",
     "Cloud personale con account unico": "Cloud personnel avec compte unique",
@@ -4018,12 +4016,10 @@ function veloraI18nDictionaryComplete() {
   };
   dict.de = {
     ...(dict.de ?? {}),
-    "Apri il tuo livello sopra Internet": "Öffne deine Ebene über dem Internet",
     "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Ein Portal zum Suchen, Kommunizieren, Schützen von Dateien und Veröffentlichen von Velora-Zonen",
     "Entra nel portale": "Portal öffnen",
     "Scarica beta": "Beta herunterladen",
     "Browser integrato": "Integrierter Browser",
-    "Cerca nell'Upper Web": "Im Upper Web suchen",
     "Zone, guide, tools, contenuti Velora": "Zonen, Guides, Tools, Velora-Inhalte",
     "Proteggi file": "Dateien schützen",
     "Cloud personale con account unico": "Persönliche Cloud mit einem Konto",
@@ -4040,12 +4036,10 @@ function veloraI18nDictionaryComplete() {
   };
   dict.es = {
     ...(dict.es ?? {}),
-    "Apri il tuo livello sopra Internet": "Abre tu nivel por encima de Internet",
     "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Un portal único para buscar, comunicar, proteger archivos y publicar zonas Velora",
     "Entra nel portale": "Entrar al portal",
     "Scarica beta": "Descargar beta",
     "Browser integrato": "Navegador integrado",
-    "Cerca nell'Upper Web": "Buscar en la Upper Web",
     "Zone, guide, tools, contenuti Velora": "Zonas, guías, herramientas, contenidos Velora",
     "Proteggi file": "Proteger archivos",
     "Cloud personale con account unico": "Cloud personal con cuenta única",
@@ -4062,12 +4056,10 @@ function veloraI18nDictionaryComplete() {
   };
   dict.ru = {
     ...(dict.ru ?? {}),
-    "Apri il tuo livello sopra Internet": "Откройте свой уровень над Интернетом",
     "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Единый портал для поиска, общения, защиты файлов и публикации зон Velora",
     "Entra nel portale": "Войти в портал",
     "Scarica beta": "Скачать бета",
     "Browser integrato": "Встроенный браузер",
-    "Cerca nell'Upper Web": "Поиск в Upper Web",
     "Zone, guide, tools, contenuti Velora": "Зоны, руководства, инструменты, контент Velora",
     "Proteggi file": "Защитить файлы",
     "Cloud personale con account unico": "Личное облако с единым аккаунтом",
@@ -4084,12 +4076,10 @@ function veloraI18nDictionaryComplete() {
   };
   dict.zh = {
     ...(dict.zh ?? {}),
-    "Apri il tuo livello sopra Internet": "打开互联网之上的新层级",
     "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "一个门户即可搜索、通信、保护文件并发布 Velora 区域",
     "Entra nel portale": "进入门户",
     "Scarica beta": "下载 Beta",
     "Browser integrato": "集成浏览器",
-    "Cerca nell'Upper Web": "搜索 Upper Web",
     "Zone, guide, tools, contenuti Velora": "区域、指南、工具、Velora 内容",
     "Proteggi file": "保护文件",
     "Cloud personale con account unico": "单一账号的个人 Cloud",
@@ -4169,12 +4159,10 @@ function veloraI18nDictionaryComplete() {
     "verifica": "检查"
   };
   Object.assign(dict.ru, {
-    "Apri il tuo livello sopra Internet": "Откройте свой уровень над Интернетом",
     "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Единый портал для поиска, общения, защиты файлов и публикации зон Velora",
     "Entra nel portale": "Войти в портал",
     "Scarica beta": "Скачать бета",
     "Browser integrato": "Встроенный браузер",
-    "Cerca nell'Upper Web": "Поиск в Upper Web",
     "Zone, guide, tools, contenuti Velora": "Зоны, руководства, инструменты, контент Velora",
     "Proteggi file": "Защитить файлы",
     "Cloud personale con account unico": "Личное облако с единым аккаунтом",
@@ -4190,12 +4178,10 @@ function veloraI18nDictionaryComplete() {
     "Protezione account, cloud e attività sensibili": "Защита аккаунта, cloud и чувствительных действий"
   });
   Object.assign(dict.zh, {
-    "Apri il tuo livello sopra Internet": "打开互联网之上的新层级",
     "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "一个门户即可搜索、通信、保护文件并发布 Velora 区域",
     "Entra nel portale": "进入门户",
     "Scarica beta": "下载 Beta",
     "Browser integrato": "集成浏览器",
-    "Cerca nell'Upper Web": "搜索 Upper Web",
     "Zone, guide, tools, contenuti Velora": "区域、指南、工具、Velora 内容",
     "Proteggi file": "保护文件",
     "Cloud personale con account unico": "单一账号的个人 Cloud",
