@@ -3731,7 +3731,7 @@ async function publicPage(page: string) {
       </div>
       <div class="entry-panel">
         <span>PUBLIC BETA</span>
-        <h1>Entra in Velora</h1>
+        <h1>Velora</h1>
         <p class="lead">Cerca zone, apri strumenti, usa VeloMail, salva file e pubblica contenuti da un solo account</p>
         <form class="hero-search" action="/portal/search">
           <input name="q" placeholder="Cerca o inserisci una zona" aria-label="Cerca su Velora">
@@ -3974,7 +3974,6 @@ function veloraI18nDictionaryComplete() {
   }
   dict.en = {
     ...(dict.en ?? {}),
-    "Entra in Velora": "Enter Velora",
     "Cerca zone, apri strumenti, usa VeloMail, salva file e pubblica contenuti da un solo account": "Search zones, open tools, use VeloMail, save files and publish content from one account",
     "Cerca o inserisci una zona": "Search or enter a zone",
     "Vai": "Go",
