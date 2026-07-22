@@ -3718,35 +3718,31 @@ async function publicPage(page: string) {
     </div></section>` : page === "status" ? `
     <section class="panel"><h1>Status</h1><p>API pubblica: <a href="/health">/health</a>. Download Windows e macOS Apple Silicon: operativi.</p></section>` : `
     <section class="hero home-hero">
-      <div class="hero-copy">
-        <span>VELORA PUBLIC BETA</span>
-        <h1>Apri il tuo livello sopra Internet</h1>
-        <p class="lead">Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora</p>
-        <div class="hero-actions"><a class="cta" href="/portal">Entra nel portale</a><a class="ghost" href="/download">Scarica beta</a></div>
-        <div class="trust-row"><span>Account @velora</span><span>Browser integrato</span><span>Cloud protetto</span><span>Desktop e mobile</span></div>
+      <div class="velora-orbit" aria-label="Velora Upper Web">
+        <div class="orbit-ring ring-a"></div>
+        <div class="orbit-ring ring-b"></div>
+        <div class="orbit-core"><b>V</b><span>Velora</span></div>
+        <a class="orbit-node n-search" href="/portal/search">Search</a>
+        <a class="orbit-node n-mail" href="/portal/mail">VeloMail</a>
+        <a class="orbit-node n-cloud" href="/portal/cloud">Cloud</a>
+        <a class="orbit-node n-publish" href="/portal/publisher">Publisher</a>
+        <a class="orbit-node n-tools" href="/portal/tools">Tools</a>
+        <div class="orbit-status"><span></span>rete operativa</div>
       </div>
-      <div class="action-console" aria-label="Azioni Velora">
-        <a class="action-card primary-action" href="/portal/search">
-          <small>01</small>
-          <b>Cerca nell'Upper Web</b>
-          <span>Zone, guide, tools, contenuti Velora</span>
-        </a>
-        <a class="action-card" href="/portal/cloud">
-          <small>02</small>
-          <b>Proteggi file</b>
-          <span>Cloud personale con account unico</span>
-        </a>
-        <a class="action-card" href="/portal/mail">
-          <small>03</small>
-          <b>Usa VeloMail</b>
-          <span>Messaggi tra identità Velora</span>
-        </a>
-        <a class="action-card" href="/portal/publisher">
-          <small>04</small>
-          <b>Pubblica una zona</b>
-          <span>Validazione, manifest e messa online</span>
-        </a>
-        <div class="signal-strip"><span></span><b>Rete operativa</b><em>Guardian attivo</em></div>
+      <div class="entry-panel">
+        <span>PUBLIC BETA</span>
+        <h1>Entra in Velora</h1>
+        <p class="lead">Cerca zone, apri strumenti, usa VeloMail, salva file e pubblica contenuti da un solo account</p>
+        <form class="hero-search" action="/portal/search">
+          <input name="q" placeholder="Cerca o inserisci una zona" aria-label="Cerca su Velora">
+          <button type="submit">Vai</button>
+        </form>
+        <div class="hero-actions"><a class="cta" href="/portal">Apri Velora</a><a class="ghost" href="/download">Scarica beta</a></div>
+        <div class="mini-metrics">
+          <b>Account @velora</b>
+          <b>Cloud protetto</b>
+          <b>Desktop e mobile</b>
+        </div>
       </div>
     </section>
     <section class="flow-grid">
@@ -3780,32 +3776,42 @@ async function publicPage(page: string) {
     nav a:first-child{color:#f1d68b;font-weight:900;letter-spacing:.18em}
     .lang-select{width:auto;border:1px solid rgba(216,174,85,.5);border-radius:14px;background:rgba(6,17,31,.78);color:#f7fbff;padding:10px 12px}
     .hero,.panel,.cards article,.flow-grid a{border:1px solid rgba(150,202,255,.18);background:linear-gradient(180deg,rgba(12,35,55,.82),rgba(7,20,32,.78));border-radius:28px;box-shadow:0 28px 80px rgba(0,0,0,.36)}
-    .hero{padding:clamp(28px,6vw,72px);margin-top:28px;position:relative;overflow:hidden}
-    .home-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,.82fr);gap:44px;align-items:center;min-height:610px}
-    .hero:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.08),transparent 34%),radial-gradient(circle at 88% 72%,rgba(95,205,255,.16),transparent 28%);pointer-events:none}
+    .hero{padding:clamp(26px,4.5vw,54px);margin-top:28px;position:relative;overflow:hidden}
+    .home-hero{display:grid;grid-template-columns:minmax(420px,1fr) minmax(360px,.82fr);gap:38px;align-items:center;min-height:620px}
+    .hero:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.07),transparent 34%),radial-gradient(circle at 30% 50%,rgba(95,205,255,.16),transparent 28%),radial-gradient(circle at 86% 24%,rgba(241,214,139,.13),transparent 24%);pointer-events:none}
     .hero span{color:#f1d68b;letter-spacing:.18em;font-weight:900}
-    h1{font-size:clamp(54px,8vw,108px);line-height:.84;margin:18px 0;letter-spacing:-.08em;max-width:850px}
+    h1{font-size:clamp(42px,6vw,76px);line-height:.9;margin:14px 0;letter-spacing:-.065em;max-width:850px}
+    .entry-panel{position:relative;z-index:1;border:1px solid rgba(150,202,255,.18);background:rgba(4,13,22,.66);border-radius:32px;padding:30px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+    .entry-panel h1{font-size:clamp(42px,5.5vw,76px);line-height:.9;margin:14px 0 12px}
     h2{font-size:clamp(30px,3.8vw,52px);line-height:1;margin:8px 0 0;letter-spacing:-.045em}
     p,dd{color:#c8d9ea;font-size:18px}
-    .lead{font-size:clamp(18px,2vw,22px);max-width:760px;line-height:1.45}
+    .lead{font-size:clamp(18px,2vw,22px);max-width:620px;line-height:1.38}
+    .hero-search{display:flex;gap:10px;align-items:center;margin:26px 0 0;max-width:620px;padding:8px;border:1px solid rgba(150,202,255,.24);border-radius:20px;background:rgba(3,11,19,.72)}
+    .hero-search input{flex:1;min-width:0;border:0;background:transparent;color:#f7fbff;font-size:17px;padding:13px 14px;outline:none}
+    .hero-search input::placeholder{color:#8fa8bd}
+    .hero-search button{border:0;border-radius:15px;background:#f1d68b;color:#06111f;font-weight:1000;padding:13px 18px;cursor:pointer}
     .cta,.ghost{display:inline-flex;margin:18px 12px 0 0;padding:14px 18px;border-radius:16px;text-decoration:none;border:1px solid rgba(216,174,85,.5)}
     .cta{background:linear-gradient(135deg,#f1d68b,#d8ae55);color:#06111f;font-weight:900}
     .ghost{color:#f1d68b}
     .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.hero-actions .cta,.hero-actions .ghost{margin-top:0}
-    .trust-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}.trust-row span{letter-spacing:0;color:#dcecff;border:1px solid rgba(150,202,255,.25);background:rgba(255,255,255,.06);border-radius:999px;padding:9px 12px;font-size:14px}
-    .action-console{position:relative;display:grid;gap:12px;border:1px solid rgba(150,202,255,.2);background:linear-gradient(160deg,rgba(4,12,20,.92),rgba(10,34,52,.76));border-radius:34px;padding:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 36px 90px rgba(0,0,0,.38)}
-    .action-console:before{content:"";position:absolute;inset:-1px;border-radius:34px;background:linear-gradient(120deg,rgba(241,214,139,.34),transparent 34%,rgba(103,217,255,.28));opacity:.45;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);padding:1px;mask-composite:exclude;-webkit-mask-composite:xor;pointer-events:none}
-    .action-card{position:relative;display:grid;grid-template-columns:52px minmax(0,1fr);gap:4px 16px;align-items:center;padding:20px;border-radius:22px;text-decoration:none;color:#f7fbff;background:rgba(255,255,255,.045);border:1px solid rgba(150,202,255,.16);transition:transform .18s ease,border-color .18s ease,background .18s ease}
-    .action-card:hover{transform:translateY(-3px);border-color:rgba(241,214,139,.72);background:rgba(241,214,139,.09)}
-    .action-card small{grid-row:1/3;color:#f1d68b;font-weight:1000;letter-spacing:.14em}.action-card b{font-size:24px;letter-spacing:-.035em}.action-card span{grid-column:2;color:#c8d9ea;letter-spacing:0;font-weight:500}
-    .primary-action{background:linear-gradient(135deg,rgba(241,214,139,.96),rgba(216,174,85,.9));color:#06111f}.primary-action span,.primary-action small{color:#06111f}
-    .signal-strip{display:flex;align-items:center;gap:12px;margin-top:4px;padding:16px 18px;border-radius:20px;background:rgba(87,227,155,.09);border:1px solid rgba(87,227,155,.22);color:#dfffee}.signal-strip span{width:10px;height:10px;border-radius:50%;background:#57e39b;box-shadow:0 0 22px #57e39b;letter-spacing:0}.signal-strip b{margin-right:auto}.signal-strip em{font-style:normal;color:#57e39b}
+    .mini-metrics{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}.mini-metrics b{font-size:14px;color:#dcecff;border:1px solid rgba(150,202,255,.2);border-radius:999px;padding:8px 11px;background:rgba(255,255,255,.045)}
+    .velora-orbit{position:relative;z-index:1;min-height:520px;border-radius:36px;background:radial-gradient(circle at center,rgba(103,217,255,.12),transparent 32%),linear-gradient(160deg,rgba(4,12,20,.82),rgba(10,34,52,.52));border:1px solid rgba(150,202,255,.18);overflow:hidden}
+    .velora-orbit:before{content:"";position:absolute;inset:26px;border-radius:32px;background:linear-gradient(90deg,rgba(255,255,255,.032) 1px,transparent 1px),linear-gradient(0deg,rgba(255,255,255,.026) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(circle at center,#000 0%,transparent 72%)}
+    .orbit-ring{position:absolute;left:50%;top:50%;border:1px solid rgba(241,214,139,.3);border-radius:50%;transform:translate(-50%,-50%) rotate(-12deg);animation:orbitPulse 5s ease-in-out infinite}
+    .ring-a{width:74%;height:48%}.ring-b{width:56%;height:76%;border-color:rgba(103,217,255,.26);animation-delay:1.2s}
+    .orbit-core{position:absolute;left:50%;top:50%;width:148px;height:148px;border-radius:34px;display:grid;place-items:center;transform:translate(-50%,-50%);background:linear-gradient(135deg,#f1d68b,#c69432);color:#06111f;box-shadow:0 34px 90px rgba(216,174,85,.22)}
+    .orbit-core b{font-size:72px;line-height:.8}.orbit-core span{position:absolute;bottom:18px;color:#06111f;letter-spacing:.18em;font-size:11px}
+    .orbit-node{position:absolute;text-decoration:none;color:#f7fbff;border:1px solid rgba(150,202,255,.28);background:rgba(5,16,27,.82);border-radius:999px;padding:12px 15px;font-weight:900;box-shadow:0 18px 48px rgba(0,0,0,.32);transition:transform .18s ease,border-color .18s ease,background .18s ease}
+    .orbit-node:hover{transform:translateY(-4px) scale(1.03);border-color:#f1d68b;background:rgba(241,214,139,.12)}
+    .n-search{left:8%;top:18%}.n-mail{right:9%;top:20%}.n-cloud{right:12%;bottom:22%}.n-publish{left:9%;bottom:24%}.n-tools{left:50%;bottom:8%;transform:translateX(-50%)}.n-tools:hover{transform:translateX(-50%) translateY(-4px) scale(1.03)}
+    .orbit-status{position:absolute;left:22px;bottom:22px;display:flex;align-items:center;gap:10px;color:#dfffee;border:1px solid rgba(87,227,155,.24);background:rgba(87,227,155,.08);border-radius:999px;padding:10px 13px}.orbit-status span{width:10px;height:10px;border-radius:50%;background:#57e39b;box-shadow:0 0 22px #57e39b;letter-spacing:0}
+    @keyframes orbitPulse{0%,100%{opacity:.55;transform:translate(-50%,-50%) rotate(-12deg) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) rotate(-8deg) scale(1.025)}}
     .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:22px}
     .flow-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-top:22px}.flow-grid a{display:block;min-height:170px;padding:22px;text-decoration:none;color:#f7fbff;transition:transform .18s ease,border-color .18s ease}.flow-grid a:hover{transform:translateY(-4px);border-color:rgba(241,214,139,.66)}.flow-grid span{color:#f1d68b;font-weight:1000;letter-spacing:.16em}.flow-grid b{display:block;font-size:25px;line-height:1.05;margin:22px 0 10px}.flow-grid p{font-size:16px;margin:0;color:#c8d9ea}
     .cards article,.panel{padding:24px}
     dt{color:#f1d68b;margin-top:14px}
     dd{margin-left:0;overflow-wrap:anywhere}
-    footer{color:#9fb4c8}.cookie-banner{position:fixed;left:18px;right:18px;bottom:18px;z-index:30;display:none;gap:14px;align-items:center;justify-content:space-between;max-width:980px;margin:auto;padding:16px;border:1px solid rgba(216,174,85,.45);border-radius:22px;background:rgba(6,17,31,.96);box-shadow:0 20px 70px rgba(0,0,0,.45)}.cookie-banner.show{display:flex}.cookie-banner p{margin:0;font-size:15px}.cookie-banner button{width:auto;border:0;border-radius:14px;background:#f1d68b;color:#06111f;padding:11px 16px;font-weight:900;cursor:pointer}@media(max-width:900px){.home-hero{grid-template-columns:1fr;min-height:auto}.flow-grid{grid-template-columns:1fr 1fr}}@media(max-width:720px){header,main,footer{padding:16px}.hero{border-radius:24px}h1{font-size:46px}.flow-grid{grid-template-columns:1fr}.signal-strip{align-items:flex-start;flex-direction:column}.cookie-banner{display:none;flex-direction:column;align-items:flex-start}.cookie-banner.show{display:flex}}
+    footer{color:#9fb4c8}.cookie-banner{position:fixed;left:18px;right:18px;bottom:18px;z-index:30;display:none;gap:14px;align-items:center;justify-content:space-between;max-width:980px;margin:auto;padding:16px;border:1px solid rgba(216,174,85,.45);border-radius:22px;background:rgba(6,17,31,.96);box-shadow:0 20px 70px rgba(0,0,0,.45)}.cookie-banner.show{display:flex}.cookie-banner p{margin:0;font-size:15px}.cookie-banner button{width:auto;border:0;border-radius:14px;background:#f1d68b;color:#06111f;padding:11px 16px;font-weight:900;cursor:pointer}@media(max-width:900px){.home-hero{grid-template-columns:1fr;min-height:auto}.flow-grid{grid-template-columns:1fr 1fr}.velora-orbit{min-height:440px;order:2}.entry-panel{order:1}}@media(max-width:720px){header,main,footer{padding:16px}.hero{border-radius:24px}.entry-panel h1{font-size:58px}.hero-search{flex-direction:column;align-items:stretch}.flow-grid{grid-template-columns:1fr}.velora-orbit{min-height:380px}.orbit-core{width:118px;height:118px}.orbit-core b{font-size:58px}.orbit-node{font-size:13px;padding:10px 12px}.cookie-banner{display:none;flex-direction:column;align-items:flex-start}.cookie-banner.show{display:flex}}
   </style>
 </head>
 <body>
@@ -3968,21 +3974,21 @@ function veloraI18nDictionaryComplete() {
   }
   dict.en = {
     ...(dict.en ?? {}),
-    "Apri il tuo livello sopra Internet": "Open your layer above the Internet",
-    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "One portal to search, communicate, protect files and publish Velora zones",
-    "Entra nel portale": "Enter the portal",
+    "Entra in Velora": "Enter Velora",
+    "Cerca zone, apri strumenti, usa VeloMail, salva file e pubblica contenuti da un solo account": "Search zones, open tools, use VeloMail, save files and publish content from one account",
+    "Cerca o inserisci una zona": "Search or enter a zone",
+    "Vai": "Go",
+    "Apri Velora": "Open Velora",
     "Scarica beta": "Download beta",
+    "Trova contenuti e zone": "Find content and zones",
+    "Search interno, guide e strumenti Velora": "Internal search, guides and Velora tools",
+    "Salva file personali": "Save personal files",
+    "Apri VeloMail": "Open VeloMail",
+    "Messaggi tra account Velora": "Messages between Velora accounts",
+    "Usa strumenti rapidi": "Use quick tools",
+    "Wallet, hash, link check, TTS e sicurezza": "Wallet, hash, link check, TTS and security",
+    "rete operativa": "network online",
     "Browser integrato": "Integrated browser",
-    "Cerca nell'Upper Web": "Search the Upper Web",
-    "Zone, guide, tools, contenuti Velora": "Zones, guides, tools, Velora content",
-    "Proteggi file": "Protect files",
-    "Cloud personale con account unico": "Personal cloud with one account",
-    "Usa VeloMail": "Use VeloMail",
-    "Messaggi tra identità Velora": "Messages between Velora identities",
-    "Pubblica una zona": "Publish a zone",
-    "Validazione, manifest e messa online": "Validation, manifest and online release",
-    "Rete operativa": "Network online",
-    "Guardian attivo": "Guardian active",
     "Accesso immediato da browser": "Instant browser access",
     "Strumenti pronti per uso quotidiano": "Tools ready for everyday use",
     "Controllo sito, upload e stato online": "Site check, upload and online status",
