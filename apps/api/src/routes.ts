@@ -1,4 +1,4 @@
-import { createReadStream } from "node:fs";
+﻿import { createReadStream } from "node:fs";
 import { randomBytes, randomUUID } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { basename, extname, join, normalize, relative, resolve } from "node:path";
@@ -598,12 +598,12 @@ export async function registerRoutes(app: FastifyInstance) {
 
     const messages = {
       AVAILABLE: `La zona ${address} risulta disponibile. Puoi inviare la richiesta di assegnazione.`,
-      ASSIGNED: `La zona ${address} Ã¨ giÃ  stata assegnata. Prova un nome differente.`,
-      PENDING_REVIEW: "Ãˆ giÃ  presente una richiesta per questa zona. Puoi scegliere unâ€™altra zona oppure ricevere un avviso se tornerÃ  disponibile.",
-      RESERVED_NAME: "Questo nome non puÃ² essere richiesto direttamente.",
-      TEMPORARILY_RESERVED: `La zona ${address} Ã¨ temporaneamente riservata.`,
-      BLOCKED: `La zona ${address} Ã¨ attualmente bloccata.`,
-      INVALID: "La zona inserita non Ã¨ valida."
+      ASSIGNED: `La zona ${address} ÃƒÂ¨ giÃƒÂ  stata assegnata. Prova un nome differente.`,
+      PENDING_REVIEW: "ÃƒË† giÃƒÂ  presente una richiesta per questa zona. Puoi scegliere unÃ¢â‚¬â„¢altra zona oppure ricevere un avviso se tornerÃƒÂ  disponibile.",
+      RESERVED_NAME: "Questo nome non puÃƒÂ² essere richiesto direttamente.",
+      TEMPORARILY_RESERVED: `La zona ${address} ÃƒÂ¨ temporaneamente riservata.`,
+      BLOCKED: `La zona ${address} ÃƒÂ¨ attualmente bloccata.`,
+      INVALID: "La zona inserita non ÃƒÂ¨ valida."
     } as const;
     const message = messages[status as keyof typeof messages] ?? messages.INVALID;
 
@@ -626,9 +626,9 @@ export async function registerRoutes(app: FastifyInstance) {
     return {
       ...zoneRequest,
       targetReviewMessage:
-        "La richiesta sarÃ  verificata appena possibile. In condizioni normali lâ€™assegnazione puÃ² essere eseguita subito; in presenza di piÃ¹ richieste, la verifica puÃ² richiedere fino a 24 ore.",
+        "La richiesta sarÃƒÂ  verificata appena possibile. In condizioni normali lÃ¢â‚¬â„¢assegnazione puÃƒÂ² essere eseguita subito; in presenza di piÃƒÂ¹ richieste, la verifica puÃƒÂ² richiedere fino a 24 ore.",
       disclaimer:
-        "Lâ€™invio della richiesta non garantisce lâ€™assegnazione. Velora puÃ² richiedere ulteriori informazioni, proporre un nome alternativo o rifiutare richieste non conformi alle regole della rete."
+        "LÃ¢â‚¬â„¢invio della richiesta non garantisce lÃ¢â‚¬â„¢assegnazione. Velora puÃƒÂ² richiedere ulteriori informazioni, proporre un nome alternativo o rifiutare richieste non conformi alle regole della rete."
     };
   });
 
@@ -3222,7 +3222,7 @@ function applePortalPage(section: string) {
     .mobile-tabs{display:none;position:fixed;left:10px;right:10px;bottom:10px;z-index:20;background:rgba(6,19,31,.94);border:1px solid var(--line);border-radius:24px;padding:8px;grid-template-columns:repeat(5,1fr);gap:6px;backdrop-filter:blur(18px);box-shadow:0 18px 55px rgba(0,0,0,.35)}.mobile-tabs button{border:0;border-radius:16px;padding:10px 4px;background:transparent;color:var(--ink);font-size:12px;text-align:center}.mobile-tabs button.active{background:var(--gold);color:#06131f;font-weight:900}
     :focus-visible{outline:3px solid var(--blue);outline-offset:2px}@media(prefers-reduced-motion:no-preference){.panel,.hero{animation:rise .28s ease both}@keyframes rise{from{opacity:.4;transform:translateY(8px)}to{opacity:1;transform:none}}}
     @media(max-width:980px){body{background:linear-gradient(180deg,#06131f,#081927 78%)}.app{grid-template-columns:1fr}.sidebar{display:none}.toolbar{grid-template-columns:1fr auto;gap:8px;padding:10px;top:0}.toolbar button:nth-of-type(2){display:none}.toolbar button:nth-of-type(3){display:none}.searchbox,input,textarea,select{font-size:16px;border-radius:15px}.content{padding:12px 10px 96px}.hero{padding:18px;border-radius:24px;margin-bottom:12px}.grid,.mail-layout,.split,.row,.three,.search-item{display:grid;grid-template-columns:1fr;gap:10px}.panel{margin-bottom:12px;border-radius:22px;padding:14px}.span-3,.span-4,.span-6,.span-8,.span-12{grid-column:auto}.mobile-tabs{display:grid}h1{font-size:38px}h2{font-size:21px}.cards{grid-template-columns:1fr}.item button,.panel button{width:100%;text-align:center;margin-top:6px}.result-actions{justify-items:stretch}iframe{height:68vh!important}}
-    body{background:radial-gradient(circle at 18% 0,rgba(103,217,255,.22),transparent 30%),radial-gradient(circle at 78% 8%,rgba(241,214,139,.14),transparent 28%),linear-gradient(180deg,#050b13,#03101a 80%);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.app{grid-template-columns:248px minmax(0,1fr)}.sidebar{padding:18px 14px;background:rgba(3,12,22,.72);border-right:1px solid rgba(150,202,255,.16)}.brand b{letter-spacing:.16em}.logo{box-shadow:0 0 28px rgba(232,196,105,.18)}.nav button,.bottom button,.toolbar button,.primary,.ghost{border-color:rgba(150,202,255,.18);background:rgba(255,255,255,.045);transition:transform .16s ease,border-color .16s ease,background .16s ease}.nav button:hover,.bottom button:hover,.toolbar button:hover,.ghost:hover{transform:translateY(-1px);border-color:rgba(232,196,105,.48)}.toolbar{padding:12px 18px;background:rgba(3,12,22,.72);border-bottom:1px solid rgba(150,202,255,.16)}.searchbox,input,textarea,select{border-color:rgba(150,202,255,.18);background:rgba(0,0,0,.2)}.searchbox:focus,input:focus,textarea:focus,select:focus{outline:0;border-color:rgba(232,196,105,.74);box-shadow:0 0 0 3px rgba(232,196,105,.12)}.content{padding:16px;max-width:1480px}.hero,.panel{border-color:rgba(150,202,255,.16);border-radius:24px;background:linear-gradient(150deg,rgba(13,33,51,.92),rgba(5,17,29,.9));box-shadow:0 18px 70px rgba(0,0,0,.22)}.hero{padding:22px;margin-bottom:14px;position:relative;overflow:hidden}.hero:after{content:"";position:absolute;right:28px;top:22px;width:160px;height:160px;border-radius:42px;background:radial-gradient(circle,rgba(232,196,105,.2),transparent 62%);pointer-events:none}.kicker{letter-spacing:.17em}h1{font-size:clamp(34px,4.8vw,58px);line-height:.96;margin:8px 0 10px;letter-spacing:-.045em}h2{font-size:22px}.grid{gap:12px}.panel{padding:15px}.cards{grid-template-columns:repeat(auto-fit,minmax(174px,1fr));gap:10px}.card,.item{border-color:rgba(255,255,255,.1);border-radius:17px;padding:12px}.card b{font-size:11px}.card span{font-size:21px}.list{gap:9px}@media(max-width:980px){.content{padding:12px 10px calc(106px + env(safe-area-inset-bottom))}.hero{padding:17px;border-radius:22px}.hero:after{width:92px;height:92px;right:12px;top:12px}h1{font-size:34px;max-width:78%}.panel{margin-bottom:10px;border-radius:20px;padding:13px}.mobile-tabs{bottom:calc(10px + env(safe-area-inset-bottom))}iframe{height:64vh!important}}
+    body{background:radial-gradient(circle at 18% 0,rgba(103,217,255,.22),transparent 30%),radial-gradient(circle at 78% 8%,rgba(241,214,139,.14),transparent 28%),linear-gradient(180deg,#050b13,#03101a 80%);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-x:hidden}.app{grid-template-columns:236px minmax(0,1fr)}.sidebar{padding:16px 12px;background:rgba(3,12,22,.78);border-right:1px solid rgba(150,202,255,.16)}.brand{margin-bottom:14px}.brand b{letter-spacing:.16em}.logo{width:40px;height:40px;box-shadow:0 0 28px rgba(232,196,105,.18)}.nav button{display:flex;align-items:center;gap:10px;min-height:38px;padding:9px 11px;border-radius:12px;font-size:14px}.nav button:before{content:"";width:7px;height:7px;border-radius:50%;background:rgba(150,202,255,.5);box-shadow:0 0 12px rgba(103,217,255,.25)}.nav button.active:before{background:#07131f;box-shadow:none}.bottom button,.toolbar button,.primary,.ghost{border-color:rgba(150,202,255,.18);background:rgba(255,255,255,.045);transition:transform .16s ease,border-color .16s ease,background .16s ease}.nav button:hover,.bottom button:hover,.toolbar button:hover,.ghost:hover{transform:translateY(-1px);border-color:rgba(232,196,105,.48)}.toolbar{height:66px;padding:10px 16px;background:rgba(3,12,22,.76);border-bottom:1px solid rgba(150,202,255,.16);grid-template-columns:minmax(260px,1fr) auto auto auto auto}.searchbox,input,textarea,select{border-color:rgba(150,202,255,.18);background:rgba(0,0,0,.2)}.searchbox:focus,input:focus,textarea:focus,select:focus{outline:0;border-color:rgba(232,196,105,.74);box-shadow:0 0 0 3px rgba(232,196,105,.12)}.content{padding:16px;max-width:1440px}.session-line{margin:0 0 10px;color:#9fb4c8;font-size:13px}.hero,.panel,.dashboard-hero,.activity-panel{border-color:rgba(150,202,255,.16);border-radius:22px;background:linear-gradient(150deg,rgba(13,33,51,.92),rgba(5,17,29,.9));box-shadow:0 18px 70px rgba(0,0,0,.22)}.kicker{letter-spacing:.17em}h1{font-size:clamp(32px,4vw,54px);line-height:.98;margin:8px 0 10px;letter-spacing:-.045em}h2{font-size:21px}.grid{gap:12px}.panel{padding:15px}.cards{grid-template-columns:repeat(auto-fit,minmax(174px,1fr));gap:10px}.card,.item{border-color:rgba(255,255,255,.1);border-radius:16px;padding:11px}.card b{font-size:11px}.card span{font-size:21px}.list{gap:9px}.dashboard-grid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:12px}.dashboard-hero{min-height:230px;padding:26px;display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:18px;align-items:center;overflow:hidden;position:relative}.dashboard-hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 72% 42%,rgba(85,92,255,.2),transparent 28%),radial-gradient(circle at 18% 90%,rgba(103,217,255,.12),transparent 32%);pointer-events:none}.dashboard-hero>*{position:relative}.hero-core{width:210px;height:210px;border-radius:50%;display:grid;place-items:center;margin-left:auto;background:radial-gradient(circle,rgba(241,214,139,.22),transparent 58%);border:1px solid rgba(103,217,255,.28);box-shadow:inset 0 0 38px rgba(103,217,255,.16)}.hero-core span{width:118px;height:118px;border-radius:32px;display:grid;place-items:center;background:linear-gradient(135deg,#f1d68b,#c69432);color:#06131f;font-size:64px;font-weight:1000}.activity-panel{padding:15px}.metrics-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.metrics-row .card{min-height:72px}.quick-panel{grid-column:1/2}.quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.network-panel,.auth-panel{grid-column:auto}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.network-metrics{display:grid;grid-template-columns:1fr auto;gap:8px;color:#9fb4c8}.network-metrics b{color:#f7fbff}.page-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:12px;padding:14px 16px;border:1px solid rgba(150,202,255,.14);border-radius:20px;background:rgba(255,255,255,.035)}.page-head h1{font-size:34px;margin:4px 0 2px}.search-shell,.browser-shell{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:12px}.search-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}.category-bar{flex-wrap:wrap;overflow:visible}.category-bar button{margin-bottom:0}.results-list{grid-template-columns:1fr}.preview-panel{min-height:220px}.browser-shell{grid-template-columns:300px minmax(0,1fr)}.browser-view{padding:10px;background:linear-gradient(150deg,rgba(6,18,31,.96),rgba(9,25,40,.92))}.browser-view iframe{width:100%;height:calc(100vh - 190px);min-height:430px;border:1px solid rgba(150,202,255,.16);border-radius:18px;background:#07131f}.browser-side{align-self:start}.mail-layout{grid-template-columns:190px 320px minmax(0,1fr)}@media(max-width:1180px){.dashboard-grid{grid-template-columns:1fr}.activity-panel{grid-column:1}.quick-grid,.metrics-row{grid-template-columns:repeat(2,minmax(0,1fr))}.search-shell,.browser-shell{grid-template-columns:1fr}.browser-view iframe{height:62vh}}@media(max-width:980px){.app{display:block;width:100%;max-width:none}.main{width:100%;margin:0}.sidebar{display:none}.toolbar{height:60px;width:100%;grid-template-columns:1fr auto;gap:8px;padding:8px 12px;top:0}.toolbar .lang-select,.toolbar button:nth-of-type(2),.toolbar button:nth-of-type(3){display:none}.toolbar button:last-child{display:inline-flex;justify-content:center}.searchbox,input,textarea,select{font-size:16px;border-radius:15px}.content{width:100%;max-width:none;padding:12px 12px calc(104px + env(safe-area-inset-bottom));margin:0}.session-line{font-size:12px}.dashboard-grid{display:grid;grid-template-columns:1fr;gap:10px}.dashboard-hero{min-height:auto;padding:18px;grid-template-columns:1fr}.dashboard-hero h1{font-size:36px;max-width:100%;line-height:1.02}.dashboard-hero p{font-size:15px}.hero-core{width:100%;height:120px;border-radius:24px;margin:0}.hero-core span{width:84px;height:84px;border-radius:24px;font-size:46px}.metrics-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.quick-grid{grid-template-columns:1fr}.page-head{align-items:start;display:grid;grid-template-columns:1fr;padding:13px}.page-head h1{font-size:30px;max-width:none}.search-row{grid-template-columns:1fr}.grid,.mail-layout,.split,.row,.three,.search-item{display:grid;grid-template-columns:1fr;gap:10px}.panel{margin-bottom:10px;border-radius:20px;padding:13px}.span-3,.span-4,.span-6,.span-8,.span-12{grid-column:auto}.mobile-tabs{display:grid;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));height:70px}.mobile-tabs button{min-width:0}.cards{grid-template-columns:1fr}.item button,.panel button{width:100%;text-align:center;margin-top:6px}.result-actions{justify-items:stretch}.browser-view iframe{height:58vh!important;min-height:360px;background:#07131f}}
   </style>
 </head>
 <body>
@@ -3241,12 +3241,7 @@ function applePortalPage(section: string) {
         <button onclick="showModule('settings')" id="profileButton">Profilo</button>
       </header>
       <main class="content">
-        <section class="hero">
-          <div class="kicker">Velora Next</div>
-          <h1>Portale, browser e strumenti in un solo accesso</h1>
-          <p>Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.</p>
-          <p id="sessionState">Accesso non effettuato</p>
-        </section>
+        <p id="sessionState" class="session-line">Accesso non effettuato</p>
         ${appleModulesHtml(initialSection)}
       </main>
     </section>
@@ -3330,18 +3325,25 @@ function appleModulesHtml(initialSection: string) {
   const active = (id: string) => id === initialSection ? " active" : "";
   return `
     <section id="m-home" class="module${active("home")}">
-      <div class="grid">
-        <div class="panel span-8"><h2>Accedi a Velora</h2><p>Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.</p><div id="authForm"><div class="row"><label class="username-wrap"><input id="authUser" autocomplete="username" placeholder="nomeutente"><span class="username-suffix">@velora</span></label><input id="authPass" autocomplete="current-password" type="password" placeholder="Password"></div><div class="row"><button class="primary" onclick="login()">Accedi</button><button onclick="register()">Crea account</button></div></div><div id="accountBox" class="hidden"><div class="card"><b>Account attivo</b><span id="accountName">utente Velora</span><p id="accountMail"></p></div><button onclick="logout()">Esci</button></div><p id="authMsg"></p></div>
-        <div class="panel span-4"><h2>Uso rapido</h2><p>Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.</p><button onclick="installHelp()">Come salvarlo</button></div>
-        <div class="panel span-12"><h2>Dashboard</h2><div id="homeCards" class="cards"></div></div>
-        <div class="panel span-12"><h2>Cosa posso fare ora</h2><div id="nextActions" class="cards"></div></div>
-        <div class="panel span-4"><h2>Esplora</h2><p>Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.</p><button onclick="showModule('search')">Cerca ora</button></div>
-        <div class="panel span-4"><h2>Comunica</h2><p>VeloMail e forum usano la stessa sessione del tuo account.</p><button onclick="showModule('mail')">Apri VeloMail</button></div>
-        <div class="panel span-4"><h2>Pubblica</h2><p>Il Publisher guidato genera un manifest valido e riduce gli errori.</p><button onclick="showModule('publisher')">Prepara sito</button></div>
+      <div class="dashboard-grid">
+        <div class="dashboard-hero">
+          <div>
+            <div class="kicker">Benvenuto in Velora</div>
+            <h1>Il tuo accesso all'Upper Web</h1>
+            <p>Cerca, esplora, usa strumenti, comunica e pubblica. Tutto da un unico account.</p>
+            <div class="hero-actions"><button class="primary" onclick="showModule('search')">Cerca ora</button><button onclick="showModule('browser')">Apri Browser</button></div>
+          </div>
+          <div class="hero-core" aria-hidden="true"><span>V</span></div>
+        </div>
+        <aside class="activity-panel"><h2>Feed attivita</h2><div class="list"><div class="item status-row"><b>Accesso riuscito</b><p>Sessione protetta</p></div><div class="item status-row"><b>Backup Cloud</b><p>Stato in verifica</p></div><div class="item status-row"><b>Contenuto pubblicato</b><p>Indicizzazione attiva</p></div></div></aside>
+        <div class="metrics-row" id="homeCards"></div>
+        <div class="panel quick-panel"><div class="panel-head"><h2>Strumenti rapidi</h2><button onclick="showModule('tools')">Tutti</button></div><div id="nextActions" class="quick-grid"></div></div>
+        <div class="panel network-panel"><h2>Stato rete</h2><div class="network-metrics"><span>Nodi attivi</span><b>3</b><span>Uptime</span><b>Online</b><span>Cloud</span><b>Protetto</b></div></div>
+        <div class="panel auth-panel"><h2>Account Velora</h2><p>Scrivi solo il nome utente. Il suffisso viene aggiunto automaticamente.</p><div id="authForm"><div class="row"><label class="username-wrap"><input id="authUser" autocomplete="username" placeholder="nomeutente"><span class="username-suffix">@velora</span></label><input id="authPass" autocomplete="current-password" type="password" placeholder="Password"></div><div class="row"><button class="primary" onclick="login()">Accedi</button><button onclick="register()">Crea account</button></div></div><div id="accountBox" class="hidden"><div class="card"><b>Account attivo</b><span id="accountName">utente Velora</span><p id="accountMail"></p></div><button onclick="logout()">Esci</button></div><p id="authMsg"></p></div>
       </div>
     </section>
-    <section id="m-search" class="module${active("search")}"><div class="panel"><h2>Search</h2><div class="row"><input id="searchQuery" placeholder="Cerca zone, Oceano, tools, guide"><button class="primary" onclick="loadSearch()">Cerca</button></div><div id="searchCategoryBar" class="category-bar"></div><div id="searchResults" class="list"></div></div></section>
-    <section id="m-browser" class="module${active("browser")}"><div class="panel"><h2>Browser Velora</h2><div class="row"><input id="browserAddress" placeholder="velora.guide"><button onclick="openZone(browserAddress.value)">Apri zona</button></div><iframe id="browserFrame" title="Velora Browser" style="width:100%;height:70vh;border:1px solid var(--line);border-radius:20px;background:#fff"></iframe></div></section>
+    <section id="m-search" class="module${active("search")}"><div class="page-head"><div><span class="kicker">Search</span><h1>Ricerca Velora</h1><p>Zone, contenuti, Oceano, tools e guide indicizzate.</p></div><button class="primary" onclick="loadSearch()">Aggiorna</button></div><div class="search-shell"><div class="panel search-main"><div class="search-row"><input id="searchQuery" placeholder="Cerca zone, Oceano, tools, guide"><button class="primary" onclick="loadSearch()">Cerca</button></div><div id="searchCategoryBar" class="category-bar"></div><div id="searchResults" class="list results-list"></div></div><aside class="panel preview-panel"><h2>Preview</h2><p>Apri un risultato per caricarlo nel Browser Velora.</p><button onclick="showModule('browser')">Vai al Browser</button></aside></div></section>
+    <section id="m-browser" class="module${active("browser")}"><div class="page-head"><div><span class="kicker">Browser</span><h1>Zone Browser</h1><p>Apri zone pubblicate e contenuti indicizzati senza uscire da Velora.</p></div><button class="primary" onclick="openZone(browserAddress.value)">Apri</button></div><div class="browser-shell"><aside class="panel browser-side"><h2>Indirizzo</h2><input id="browserAddress" placeholder="velora.guide"><div class="category-bar"><button onclick="openZone('velora.guide')">Guida</button><button onclick="openZone('tools.wallet')">Tools</button><button onclick="showModule('search')">Risultati</button></div></aside><section class="panel browser-view"><iframe id="browserFrame" title="Velora Browser"></iframe></section></div></section>
     <section id="m-mail" class="module${active("mail")}"><div class="mail-layout"><div class="panel"><h2>Cartelle</h2><p id="mailAccount"></p><button onclick="loadMail()">Inbox</button></div><div class="panel"><h2>Messaggi</h2><div id="mailList" class="list"></div></div><div class="panel"><h2>VeloMail</h2><div id="mailOpen"></div><h3>Componi</h3><input id="mailTo" placeholder="destinatario@velora"><input id="mailSubject" placeholder="Oggetto"><textarea id="mailBody" placeholder="Messaggio"></textarea><button class="primary" onclick="sendMail()">Invia</button><p id="mailComposerMsg"></p></div></div></section>
     <section id="m-cloud" class="module${active("cloud")}"><div class="split"><div class="panel"><h2>Velora Cloud</h2><p id="cloudQuota"></p><div class="drop"><input id="cloudInput" type="file" multiple><button class="primary" onclick="uploadCloud()">Carica</button></div></div><div class="panel"><h2>File</h2><div id="cloudFiles" class="list"></div></div></div></section>
     <section id="m-publisher" class="module${active("publisher")}"><div class="split"><div class="panel"><h2>Publisher Studio</h2><p>Prepara una zona Velora con titolo, descrizione, categoria e controllo iniziale.</p><input id="publisherAddress" placeholder="nome.zona"><input id="publisherTitle" placeholder="Titolo sito"><textarea id="publisherDescription" placeholder="Descrizione chiara del sito"></textarea><div class="row"><select id="publisherCategory"><option>shop</option><option>tool</option><option>social</option><option>video</option><option>blog</option><option>business</option><option>community</option><option>education</option><option>health</option><option>science</option><option>service</option><option>tech</option><option>cloud</option><option>portfolio</option><option>news</option></select><input id="publisherVersion" placeholder="1.0.0"></div><input id="publisherKeywords" placeholder="keyword separate da virgola"><div class="row"><button onclick="preparePublisher()">Controlla</button><button class="primary" onclick="queuePublish()">Prepara pubblicazione</button></div><div id="publisherStatus"></div></div><div class="panel"><h2>Stato pubblicazione</h2><textarea id="publisherManifest" readonly placeholder="Il riepilogo appare qui dopo il controllo"></textarea><h3>Accesso Velora</h3><p>I siti pubblicati possono usare l'account Velora senza creare account separati.</p></div></div></section>
@@ -3732,39 +3734,51 @@ async function publicPage(page: string) {
       <article><b>Publisher Pro</b><span>19,90 EUR/mese</span><p>Supporto e strumenti avanzati.</p></article>
     </div></section>` : page === "status" ? `
     <section class="panel"><h1>Status</h1><p>API pubblica: <a href="/health">/health</a>. Download Windows e macOS Apple Silicon: operativi.</p></section>` : `
-    <section class="hero home-hero">
-      <div class="velora-orbit" aria-label="Velora Upper Web">
-        <div class="orbit-ring ring-a"></div>
-        <div class="orbit-ring ring-b"></div>
-        <div class="orbit-core"><b>V</b><span>Velora</span></div>
-        <a class="orbit-node n-search" href="/portal/search">Search</a>
-        <a class="orbit-node n-mail" href="/portal/mail">VeloMail</a>
-        <a class="orbit-node n-cloud" href="/portal/cloud">Cloud</a>
-        <a class="orbit-node n-publish" href="/portal/publisher">Publisher</a>
-        <a class="orbit-node n-tools" href="/portal/tools">Tools</a>
-        <div class="orbit-status"><span></span>rete operativa</div>
-      </div>
-      <div class="entry-panel">
-        <span>PUBLIC BETA</span>
-        <h1>Velora</h1>
-        <p class="lead">Cerca zone, apri strumenti, usa VeloMail, salva file e pubblica contenuti da un solo account</p>
+    <section class="public-hero">
+      <div class="public-copy">
+        <span class="public-kicker">VELORA NEXT</span>
+        <div class="signal-line"><b>Rete online</b><b>Cloud protetto</b><b>Beta pubblica</b></div>
+        <p class="lead">Un ambiente unico per cercare, aprire zone, usare strumenti, comunicare e pubblicare contenuti con lo stesso account</p>
         <form class="hero-search" action="/portal/search">
-          <input name="q" placeholder="Cerca o inserisci una zona" aria-label="Cerca su Velora">
-          <button type="submit">Vai</button>
+          <input name="q" placeholder="Cerca zone, strumenti, contenuti" aria-label="Cerca su Velora">
+          <button type="submit">Cerca</button>
         </form>
-        <div class="hero-actions"><a class="cta" href="/portal">Apri Velora</a><a class="ghost" href="/download">Scarica beta</a></div>
-        <div class="mini-metrics">
-          <b>Account @velora</b>
-          <b>Cloud protetto</b>
-          <b>Desktop e mobile</b>
-        </div>
+        <div class="hero-actions"><a class="cta" href="/portal">Apri il portale</a><a class="ghost" href="/download">Scarica beta</a></div>
+      </div>
+      <div class="product-preview" aria-label="Anteprima Velora">
+        <aside class="preview-sidebar">
+          <strong>VELORA</strong>
+          <a class="active" href="/portal">Home</a>
+          <a href="/portal/browser">Browser</a>
+          <a href="/portal/search">Search</a>
+          <a href="/portal/tools">Tools</a>
+          <a href="/portal/mail">VeloMail</a>
+          <a href="/portal/cloud">Cloud</a>
+        </aside>
+        <section class="preview-main">
+          <div class="preview-top"><span>Cerca in Velora</span><b>online</b></div>
+          <div class="preview-dashboard">
+            <div>
+              <small>BENVENUTO IN VELORA</small>
+              <h2>Dashboard operativa</h2>
+              <p>Search, Browser, Tools, VeloMail, Cloud e Publisher restano nello stesso flusso</p>
+            </div>
+            <div class="preview-core">V</div>
+          </div>
+          <div class="preview-metrics">
+            <b>12 zone</b><b>48 contenuti</b><b>7 messaggi</b><b>2.4 GB cloud</b>
+          </div>
+          <div class="preview-tools">
+            <span>Wallet Check</span><span>Mining Monitor</span><span>Publisher Studio</span><span>Node Health</span>
+          </div>
+        </section>
       </div>
     </section>
-    <section class="flow-grid">
-      <a href="/portal"><span>START</span><b>Portale</b><p>Accesso immediato da browser</p></a>
-      <a href="/portal/tools"><span>TOOLS</span><b>Velora Tools</b><p>Strumenti pronti per uso quotidiano</p></a>
-      <a href="/portal/publisher"><span>PUBLISH</span><b>Publisher Studio</b><p>Controllo sito, upload e stato online</p></a>
-      <a href="/security"><span>GUARDIAN</span><b>Sicurezza</b><p>Protezione account, cloud e attività sensibili</p></a>
+    <section class="feature-strip">
+      <a href="/portal/search"><b>Search</b><span>Risultati filtrati per zone, tools e contenuti</span></a>
+      <a href="/portal/tools"><b>Tools</b><span>Strumenti operativi visibili solo quando sono pronti</span></a>
+      <a href="/portal/publisher"><b>Publisher</b><span>Controllo pubblicazione e stato online leggibile</span></a>
+      <a href="/security"><b>Guardian</b><span>Protezione account, cloud e operazioni sensibili</span></a>
     </section>`;
   return `<!doctype html>
 <html lang="it">
@@ -3810,6 +3824,9 @@ async function publicPage(page: string) {
     .ghost{color:#f1d68b}
     .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.hero-actions .cta,.hero-actions .ghost{margin-top:0}
     .mini-metrics{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}.mini-metrics b{font-size:14px;color:#dcecff;border:1px solid rgba(150,202,255,.2);border-radius:999px;padding:8px 11px;background:rgba(255,255,255,.045)}
+    .public-hero{display:grid;grid-template-columns:minmax(300px,.72fr) minmax(520px,1fr);gap:20px;align-items:stretch;margin-top:28px;padding:22px;border:1px solid rgba(150,202,255,.18);border-radius:34px;background:linear-gradient(135deg,rgba(8,27,44,.9),rgba(3,11,19,.86));box-shadow:0 32px 100px rgba(0,0,0,.38);overflow:hidden;position:relative}
+    .public-hero:before{content:"";position:absolute;inset:-30%;background:radial-gradient(circle at 67% 36%,rgba(68,89,255,.18),transparent 22%),radial-gradient(circle at 28% 88%,rgba(103,217,255,.12),transparent 28%);pointer-events:none}
+    .public-hero>*{position:relative}.public-copy{display:flex;flex-direction:column;justify-content:center;padding:clamp(16px,3vw,34px)}.public-kicker{color:#f1d68b;font-size:12px;font-weight:1000;letter-spacing:.22em;text-transform:uppercase}.signal-line{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px}.signal-line b{border:1px solid rgba(150,202,255,.16);border-radius:999px;background:rgba(255,255,255,.045);padding:8px 11px;color:#dcecff;font-size:13px}.product-preview{min-height:480px;display:grid;grid-template-columns:168px minmax(0,1fr);gap:14px;padding:14px;border:1px solid rgba(241,214,139,.34);border-radius:28px;background:linear-gradient(145deg,rgba(5,13,23,.96),rgba(9,25,42,.82));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 24px 80px rgba(0,0,0,.28)}.preview-sidebar{display:grid;align-content:start;gap:8px;padding:12px;border-right:1px solid rgba(150,202,255,.12)}.preview-sidebar strong{color:#f1d68b;letter-spacing:.18em;margin-bottom:12px}.preview-sidebar a{color:#c8d9ea;text-decoration:none;border:1px solid transparent;border-radius:13px;padding:10px 12px;background:rgba(255,255,255,.025)}.preview-sidebar a.active,.preview-sidebar a:hover{border-color:rgba(241,214,139,.45);background:linear-gradient(135deg,rgba(241,214,139,.18),rgba(103,217,255,.06));color:#f7fbff}.preview-main{display:grid;gap:12px;min-width:0}.preview-top{height:46px;display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid rgba(150,202,255,.16);border-radius:16px;background:rgba(0,0,0,.18);padding:0 14px;color:#9fb4c8}.preview-top b{color:#57e39b}.preview-dashboard{display:grid;grid-template-columns:minmax(0,1fr) 190px;align-items:center;gap:18px;min-height:230px;padding:24px;border:1px solid rgba(150,202,255,.14);border-radius:22px;background:radial-gradient(circle at 82% 42%,rgba(78,90,255,.2),transparent 30%),linear-gradient(150deg,rgba(14,42,66,.9),rgba(5,17,29,.85))}.preview-dashboard small{color:#f1d68b;letter-spacing:.16em;font-weight:1000}.preview-dashboard h2{font-size:clamp(30px,3.6vw,48px);margin:9px 0 10px}.preview-dashboard p{font-size:16px}.preview-core{width:150px;height:150px;border-radius:38px;display:grid;place-items:center;background:linear-gradient(135deg,#f1d68b,#c89432);color:#07131f;font-size:80px;font-weight:1000;box-shadow:0 28px 88px rgba(216,174,85,.22)}.preview-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.preview-metrics b,.preview-tools span{border:1px solid rgba(150,202,255,.14);border-radius:16px;background:rgba(255,255,255,.04);padding:14px;color:#f7fbff}.preview-tools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.preview-tools span{font-size:13px;color:#c8d9ea}.feature-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:18px}.feature-strip a{display:grid;gap:8px;min-height:126px;padding:18px;border:1px solid rgba(150,202,255,.16);border-radius:22px;background:linear-gradient(150deg,rgba(13,33,51,.82),rgba(5,17,29,.78));text-decoration:none;color:#f7fbff}.feature-strip b{font-size:20px}.feature-strip span{color:#c8d9ea;line-height:1.35}
     .velora-orbit{position:relative;z-index:1;min-height:520px;border-radius:36px;background:radial-gradient(circle at center,rgba(103,217,255,.12),transparent 32%),linear-gradient(160deg,rgba(4,12,20,.82),rgba(10,34,52,.52));border:1px solid rgba(150,202,255,.18);overflow:hidden}
     .velora-orbit:before{content:"";position:absolute;inset:26px;border-radius:32px;background:linear-gradient(90deg,rgba(255,255,255,.032) 1px,transparent 1px),linear-gradient(0deg,rgba(255,255,255,.026) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(circle at center,#000 0%,transparent 72%)}
     .orbit-ring{position:absolute;left:50%;top:50%;border:1px solid rgba(241,214,139,.3);border-radius:50%;transform:translate(-50%,-50%) rotate(-12deg);animation:orbitPulse 5s ease-in-out infinite}
@@ -3826,13 +3843,13 @@ async function publicPage(page: string) {
     .cards article,.panel{padding:24px}
     dt{color:#f1d68b;margin-top:14px}
     dd{margin-left:0;overflow-wrap:anywhere}
-    footer{color:#9fb4c8}.public-menu-toggle{display:none;margin-left:auto;border:1px solid rgba(216,174,85,.45);border-radius:14px;background:rgba(241,214,139,.1);color:#f7fbff;padding:10px 12px;font-weight:900}.cookie-banner{position:fixed;left:18px;right:18px;bottom:18px;z-index:30;display:none;gap:14px;align-items:center;justify-content:space-between;max-width:980px;margin:auto;padding:16px;border:1px solid rgba(216,174,85,.45);border-radius:22px;background:rgba(6,17,31,.96);box-shadow:0 20px 70px rgba(0,0,0,.45)}.cookie-banner.show{display:flex}.cookie-banner p{margin:0;font-size:15px}.cookie-banner button{width:auto;border:0;border-radius:14px;background:#f1d68b;color:#06111f;padding:11px 16px;font-weight:900;cursor:pointer}.panel,.cards article,.flow-grid a{transition:transform .18s ease,border-color .18s ease,background .18s ease}.panel:hover,.cards article:hover,.flow-grid a:hover{border-color:rgba(241,214,139,.42)}@media(max-width:900px){.home-hero{grid-template-columns:1fr;min-height:auto}.flow-grid{grid-template-columns:1fr 1fr}.velora-orbit{min-height:360px;order:2}.entry-panel{order:1}}@media(max-width:720px){header,main,footer{padding:14px}nav{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;position:relative}nav a:first-child{font-size:15px}.public-menu-toggle{display:inline-flex;justify-content:center;grid-column:3}nav a:not(:first-child),nav .lang-select{display:none}nav.open{grid-template-columns:1fr auto}nav.open a:first-child{grid-column:1}nav.open .public-menu-toggle{grid-column:2;grid-row:1}nav.open a:not(:first-child),nav.open .lang-select{display:flex;grid-column:1/-1;padding:12px 14px;border:1px solid rgba(150,202,255,.16);border-radius:14px;background:rgba(255,255,255,.045)}nav.open .lang-select{display:block;width:100%;max-width:none}.hero{border-radius:24px;margin-top:14px}.home-hero{gap:14px}.entry-panel{padding:20px}.entry-panel h1{font-size:44px;line-height:.94;letter-spacing:-.045em}.lead{font-size:17px}.hero-search{flex-direction:column;align-items:stretch;margin-top:18px}.hero-actions a{flex:1;justify-content:center}.mini-metrics{margin-top:16px}.mini-metrics b{flex:1;text-align:center}.flow-grid{grid-template-columns:1fr}.velora-orbit{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-height:auto;padding:14px}.velora-orbit:before,.orbit-ring{display:none}.orbit-core{position:relative;left:auto;top:auto;grid-column:1/-1;width:auto;height:104px;transform:none;border-radius:22px}.orbit-core b{font-size:50px}.orbit-core span{bottom:11px}.orbit-node{position:relative;left:auto;right:auto;top:auto;bottom:auto;transform:none;text-align:center;font-size:13px;padding:11px}.orbit-node:hover,.n-tools:hover{transform:translateY(-2px)}.n-tools{left:auto;bottom:auto;transform:none}.orbit-status{position:relative;left:auto;bottom:auto;grid-column:1/-1;justify-content:center}.cookie-banner{display:none;flex-direction:column;align-items:flex-start}.cookie-banner.show{display:flex}}@media(max-width:420px){.entry-panel h1{font-size:38px}.velora-orbit{grid-template-columns:1fr}.orbit-core,.orbit-status{grid-column:auto}}
+    footer{color:#9fb4c8}.public-menu-toggle{display:none;margin-left:auto;border:1px solid rgba(216,174,85,.45);border-radius:14px;background:rgba(241,214,139,.1);color:#f7fbff;padding:10px 12px;font-weight:900}.cookie-banner{position:fixed;left:18px;right:18px;bottom:18px;z-index:30;display:none;gap:14px;align-items:center;justify-content:space-between;max-width:980px;margin:auto;padding:16px;border:1px solid rgba(216,174,85,.45);border-radius:22px;background:rgba(6,17,31,.96);box-shadow:0 20px 70px rgba(0,0,0,.45)}.cookie-banner.show{display:flex}.cookie-banner p{margin:0;font-size:15px}.cookie-banner button{width:auto;border:0;border-radius:14px;background:#f1d68b;color:#06111f;padding:11px 16px;font-weight:900;cursor:pointer}.panel,.cards article,.feature-strip a{transition:transform .18s ease,border-color .18s ease,background .18s ease}.panel:hover,.cards article:hover,.feature-strip a:hover{border-color:rgba(241,214,139,.42)}@media(max-width:1040px){.public-hero{grid-template-columns:1fr}.product-preview{min-height:auto}.feature-strip{grid-template-columns:1fr 1fr}}@media(max-width:720px){header,main,footer{padding:14px}nav{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;position:relative}nav a:first-child{font-size:15px}.public-menu-toggle{display:inline-flex;justify-content:center;grid-column:3}nav a:not(:first-child),nav .lang-select{display:none}nav.open{grid-template-columns:1fr auto}nav.open a:first-child{grid-column:1}nav.open .public-menu-toggle{grid-column:2;grid-row:1}nav.open a:not(:first-child),nav.open .lang-select{display:flex;grid-column:1/-1;padding:12px 14px;border:1px solid rgba(150,202,255,.16);border-radius:14px;background:rgba(255,255,255,.045)}nav.open .lang-select{display:block;width:100%;max-width:none}.public-hero{gap:14px;margin-top:14px;padding:12px;border-radius:24px}.public-copy{padding:12px}.lead{font-size:17px}.hero-search{flex-direction:column;align-items:stretch;margin-top:18px}.hero-actions a{flex:1;justify-content:center}.product-preview{grid-template-columns:1fr;padding:10px;border-radius:22px}.preview-sidebar{display:none}.preview-dashboard{grid-template-columns:1fr;min-height:auto;padding:18px}.preview-dashboard h2{font-size:32px}.preview-core{width:100%;height:96px;border-radius:20px;font-size:54px}.preview-metrics,.preview-tools,.feature-strip{grid-template-columns:1fr}.cookie-banner{display:none;flex-direction:column;align-items:flex-start}.cookie-banner.show{display:flex}}@media(max-width:420px){.signal-line b{flex:1;text-align:center}.product-preview{margin-inline:-2px}.preview-top{height:auto;min-height:44px}}
   </style>
 </head>
 <body>
   <header><nav id="publicNav"><a href="/">VELORA NEXT</a><button class="public-menu-toggle" type="button" onclick="publicNav.classList.toggle('open')">Menu</button><a href="/portal">Portale</a><a href="/download">Download</a><a href="/what-is-velora">Upper Web</a><a href="/security">Sicurezza</a><a href="/publishers">Publisher</a><a href="/publishers/guide">Guida</a><a href="/developers">Developers</a><a href="/pricing">Pricing</a><a href="/status">Status</a>${languageSelectorHtml()}</nav></header>
   <main>${body}</main>
-  <footer><p>Velora Beta pubblica</p><p><a href="/legal/privacy">Privacy</a> · <a href="/legal/cookie">Cookie</a> · <a href="/legal/terms">Termini</a> · Supporto: srivarola104 gmail.com</p></footer>
+  <footer><p>Velora Beta pubblica</p><p><a href="/legal/privacy">Privacy</a> Â· <a href="/legal/cookie">Cookie</a> Â· <a href="/legal/terms">Termini</a> Â· Supporto: srivarola104 gmail.com</p></footer>
   <div class="cookie-banner" id="cookieBanner"><p>Velora usa solo cookie e storage tecnici necessari per accesso, sicurezza e preferenze essenziali.</p><div><a class="ghost" href="/legal/cookie">Leggi policy</a><button onclick="localStorage.setItem('velora.cookie.ok','1');cookieBanner.classList.remove('show')">Accetta</button></div></div>
   ${veloraI18nScript()}
   <script>if(!localStorage.getItem('velora.cookie.ok'))cookieBanner.classList.add('show')</script>
@@ -3848,11 +3865,11 @@ function languageSelectorHtml() {
   return `<select class="lang-select" data-velora-language aria-label="Language">
     <option value="it">Italiano</option>
     <option value="en">English</option>
-    <option value="fr">Français</option>
+    <option value="fr">FranÃ§ais</option>
     <option value="de">Deutsch</option>
-    <option value="es">Español</option>
-    <option value="ru">Русский</option>
-    <option value="zh">中文</option>
+    <option value="es">EspaÃ±ol</option>
+    <option value="ru">Ð ÑƒÑÑÐºÐ¸Ð¹</option>
+    <option value="zh">ä¸­æ–‡</option>
   </select>`;
 }
 
@@ -3877,7 +3894,7 @@ function veloraI18nDictionaryComplete() {
       "Publisher Studio guida manifest, validazione, login Velora e stato pubblicazione prima della messa online.": "Publisher Studio guides manifest, validation, Velora Login and publishing status before going online.",
       "Guardian controlla rischio, log e cloud": "Guardian checks risk, logs and cloud",
       "Audit, protezione dati e segnali admin rendono leggibile cosa sta succedendo all'ecosistema.": "Audit, data protection and admin signals make ecosystem status readable.",
-      "Una sessione. Più funzioni. Stato leggibile.": "One session. More functions. Clear status.",
+      "Una sessione. PiÃ¹ funzioni. Stato leggibile.": "One session. More functions. Clear status.",
       "Velora Search": "Velora Search",
       "Cerca contenuti, moduli e zone pubblicate senza perdere il contesto del portale.": "Search content, modules and published zones without losing portal context.",
       "VeloMail e Cloud": "VeloMail and Cloud",
@@ -3886,102 +3903,102 @@ function veloraI18nDictionaryComplete() {
       "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "Prepare a manifest, validate a publication and follow status before going online.",
       "Velora Guardian": "Velora Guardian",
       "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "Multi-level protection, audit and admin signals for accounts, cloud and sensitive operations.",
-      "Il portale è il punto di accesso. Il desktop aggiunge potenza locale.": "The portal is the access point. Desktop adds local power.",
+      "Il portale Ã¨ il punto di accesso. Il desktop aggiunge potenza locale.": "The portal is the access point. Desktop adds local power.",
       "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "The public beta is for testing real functions: account, search, VeloMail, Cloud, Tools, Publisher, nodes and Guardian security.",
       "verifica": "checking"
     },
     fr: {
       "VELORA PUBLIC BETA": "BETA PUBLIQUE VELORA",
-      "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora réunit navigateur, recherche, VeloMail, Cloud, Publisher, Tools, nœuds et sécurité dans un portail unique. Entrez, choisissez et commencez.",
+      "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora rÃ©unit navigateur, recherche, VeloMail, Cloud, Publisher, Tools, nÅ“uds et sÃ©curitÃ© dans un portail unique. Entrez, choisissez et commencez.",
       "Desktop e mobile": "Desktop et mobile",
-      "Cloud protetto": "Cloud protégé",
+      "Cloud protetto": "Cloud protÃ©gÃ©",
       "Velora Live Console": "Console Velora",
       "Ricerca interna": "Recherche interne",
       "Trova servizi Velora senza uscire dal portale": "Trouvez les services Velora sans quitter le portail",
-      "Search apre contenuti, strumenti e zone pubblicate dentro l'ambiente Velora, con lo stesso account e stato di sicurezza.": "Search ouvre contenus, outils et zones publiées dans Velora, avec le même compte et le même état de sécurité.",
+      "Search apre contenuti, strumenti e zone pubblicate dentro l'ambiente Velora, con lo stesso account e stato di sicurezza.": "Search ouvre contenus, outils et zones publiÃ©es dans Velora, avec le mÃªme compte et le mÃªme Ã©tat de sÃ©curitÃ©.",
       "Carica file e ritrovali nel tuo account": "Importez des fichiers et retrouvez-les dans votre compte",
-      "Velora Cloud collega spazio utente, sessione stabile e controlli Guardian per proteggere i dati personali.": "Velora Cloud relie espace utilisateur, session stable et contrôles Guardian pour protéger les données personnelles.",
+      "Velora Cloud collega spazio utente, sessione stabile e controlli Guardian per proteggere i dati personali.": "Velora Cloud relie espace utilisateur, session stable et contrÃ´les Guardian pour protÃ©ger les donnÃ©es personnelles.",
       "Comunicazione": "Communication",
-      "VeloMail usa la stessa identita Velora": "VeloMail utilise la même identité Velora",
-      "Invio, ricezione e forum condividono lo stesso account, senza profili paralleli o login separati.": "Envoi, réception et forum partagent le même compte, sans profils parallèles ni connexions séparées.",
-      "Prepara una zona prima di pubblicarla": "Préparez une zone avant publication",
-      "Publisher Studio guida manifest, validazione, login Velora e stato pubblicazione prima della messa online.": "Publisher Studio guide le manifest, la validation, le Login Velora et l’état de publication avant la mise en ligne.",
-      "Guardian controlla rischio, log e cloud": "Guardian contrôle risque, logs et cloud",
-      "Audit, protezione dati e segnali admin rendono leggibile cosa sta succedendo all'ecosistema.": "Audit, protection des données et signaux admin rendent l’état de l’écosystème lisible.",
-      "Una sessione. Più funzioni. Stato leggibile.": "Une session. Plus de fonctions. Un état lisible.",
+      "VeloMail usa la stessa identita Velora": "VeloMail utilise la mÃªme identitÃ© Velora",
+      "Invio, ricezione e forum condividono lo stesso account, senza profili paralleli o login separati.": "Envoi, rÃ©ception et forum partagent le mÃªme compte, sans profils parallÃ¨les ni connexions sÃ©parÃ©es.",
+      "Prepara una zona prima di pubblicarla": "PrÃ©parez une zone avant publication",
+      "Publisher Studio guida manifest, validazione, login Velora e stato pubblicazione prima della messa online.": "Publisher Studio guide le manifest, la validation, le Login Velora et lâ€™Ã©tat de publication avant la mise en ligne.",
+      "Guardian controlla rischio, log e cloud": "Guardian contrÃ´le risque, logs et cloud",
+      "Audit, protezione dati e segnali admin rendono leggibile cosa sta succedendo all'ecosistema.": "Audit, protection des donnÃ©es et signaux admin rendent lâ€™Ã©tat de lâ€™Ã©cosystÃ¨me lisible.",
+      "Una sessione. PiÃ¹ funzioni. Stato leggibile.": "Une session. Plus de fonctions. Un Ã©tat lisible.",
       "Velora Search": "Velora Search",
-      "Cerca contenuti, moduli e zone pubblicate senza perdere il contesto del portale.": "Recherchez contenus, modules et zones publiées sans perdre le contexte du portail.",
+      "Cerca contenuti, moduli e zone pubblicate senza perdere il contesto del portale.": "Recherchez contenus, modules et zones publiÃ©es sans perdre le contexte du portail.",
       "VeloMail e Cloud": "VeloMail et Cloud",
-      "Messaggi, file e account lavorano insieme con sessione persistente e controlli Guardian.": "Messages, fichiers et compte travaillent ensemble avec session persistante et contrôles Guardian.",
+      "Messaggi, file e account lavorano insieme con sessione persistente e controlli Guardian.": "Messages, fichiers et compte travaillent ensemble avec session persistante et contrÃ´les Guardian.",
       "Publisher Studio": "Publisher Studio",
-      "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "Préparez un manifest, validez une publication et suivez l’état avant la mise en ligne.",
+      "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "PrÃ©parez un manifest, validez une publication et suivez lâ€™Ã©tat avant la mise en ligne.",
       "Velora Guardian": "Velora Guardian",
-      "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "Protection multiliveau, audit et signaux admin pour comptes, cloud et opérations sensibles.",
-      "Il portale è il punto di accesso. Il desktop aggiunge potenza locale.": "Le portail est le point d’accès. Le desktop ajoute la puissance locale.",
-      "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "La bêta publique sert à tester des fonctions réelles : compte, recherche, VeloMail, Cloud, Tools, Publisher, nœuds et sécurité Guardian.",
-      "verifica": "vérification"
+      "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "Protection multiliveau, audit et signaux admin pour comptes, cloud et opÃ©rations sensibles.",
+      "Il portale Ã¨ il punto di accesso. Il desktop aggiunge potenza locale.": "Le portail est le point dâ€™accÃ¨s. Le desktop ajoute la puissance locale.",
+      "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "La bÃªta publique sert Ã  tester des fonctions rÃ©elles : compte, recherche, VeloMail, Cloud, Tools, Publisher, nÅ“uds et sÃ©curitÃ© Guardian.",
+      "verifica": "vÃ©rification"
     },
     de: {
       "VELORA PUBLIC BETA": "VELORA PUBLIC BETA",
-      "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora bündelt Browser, Suche, VeloMail, Cloud, Publisher, Tools, Knoten und Sicherheit in einem Portal. Einloggen, auswählen, starten.",
+      "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora bÃ¼ndelt Browser, Suche, VeloMail, Cloud, Publisher, Tools, Knoten und Sicherheit in einem Portal. Einloggen, auswÃ¤hlen, starten.",
       "Desktop e mobile": "Desktop und mobil",
-      "Cloud protetto": "Geschützte Cloud",
+      "Cloud protetto": "GeschÃ¼tzte Cloud",
       "Velora Live Console": "Velora Live Console",
       "Ricerca interna": "Interne Suche",
       "Trova servizi Velora senza uscire dal portale": "Velora-Dienste finden, ohne das Portal zu verlassen",
-      "Search apre contenuti, strumenti e zone pubblicate dentro l'ambiente Velora, con lo stesso account e stato di sicurezza.": "Search öffnet Inhalte, Tools und veröffentlichte Zonen in Velora, mit demselben Konto und Sicherheitsstatus.",
+      "Search apre contenuti, strumenti e zone pubblicate dentro l'ambiente Velora, con lo stesso account e stato di sicurezza.": "Search Ã¶ffnet Inhalte, Tools und verÃ¶ffentlichte Zonen in Velora, mit demselben Konto und Sicherheitsstatus.",
       "Carica file e ritrovali nel tuo account": "Dateien hochladen und im Konto wiederfinden",
-      "Velora Cloud collega spazio utente, sessione stabile e controlli Guardian per proteggere i dati personali.": "Velora Cloud verbindet Speicher, stabile Sitzung und Guardian-Prüfungen zum Schutz persönlicher Daten.",
+      "Velora Cloud collega spazio utente, sessione stabile e controlli Guardian per proteggere i dati personali.": "Velora Cloud verbindet Speicher, stabile Sitzung und Guardian-PrÃ¼fungen zum Schutz persÃ¶nlicher Daten.",
       "Comunicazione": "Kommunikation",
-      "VeloMail usa la stessa identita Velora": "VeloMail nutzt dieselbe Velora-Identität",
+      "VeloMail usa la stessa identita Velora": "VeloMail nutzt dieselbe Velora-IdentitÃ¤t",
       "Invio, ricezione e forum condividono lo stesso account, senza profili paralleli o login separati.": "Senden, Empfangen und Forum teilen dasselbe Konto, ohne Parallelprofile oder getrennte Logins.",
-      "Prepara una zona prima di pubblicarla": "Zone vor der Veröffentlichung vorbereiten",
-      "Publisher Studio guida manifest, validazione, login Velora e stato pubblicazione prima della messa online.": "Publisher Studio führt Manifest, Validierung, Velora Login und Veröffentlichungsstatus vor dem Onlinegang.",
-      "Guardian controlla rischio, log e cloud": "Guardian prüft Risiko, Logs und Cloud",
-      "Audit, protezione dati e segnali admin rendono leggibile cosa sta succedendo all'ecosistema.": "Audit, Datenschutz und Admin-Signale machen den Zustand des Ökosystems lesbar.",
-      "Una sessione. Più funzioni. Stato leggibile.": "Eine Sitzung. Mehr Funktionen. Klarer Status.",
+      "Prepara una zona prima di pubblicarla": "Zone vor der VerÃ¶ffentlichung vorbereiten",
+      "Publisher Studio guida manifest, validazione, login Velora e stato pubblicazione prima della messa online.": "Publisher Studio fÃ¼hrt Manifest, Validierung, Velora Login und VerÃ¶ffentlichungsstatus vor dem Onlinegang.",
+      "Guardian controlla rischio, log e cloud": "Guardian prÃ¼ft Risiko, Logs und Cloud",
+      "Audit, protezione dati e segnali admin rendono leggibile cosa sta succedendo all'ecosistema.": "Audit, Datenschutz und Admin-Signale machen den Zustand des Ã–kosystems lesbar.",
+      "Una sessione. PiÃ¹ funzioni. Stato leggibile.": "Eine Sitzung. Mehr Funktionen. Klarer Status.",
       "Velora Search": "Velora Search",
-      "Cerca contenuti, moduli e zone pubblicate senza perdere il contesto del portale.": "Inhalte, Module und veröffentlichte Zonen suchen, ohne den Portalkontext zu verlieren.",
+      "Cerca contenuti, moduli e zone pubblicate senza perdere il contesto del portale.": "Inhalte, Module und verÃ¶ffentlichte Zonen suchen, ohne den Portalkontext zu verlieren.",
       "VeloMail e Cloud": "VeloMail und Cloud",
-      "Messaggi, file e account lavorano insieme con sessione persistente e controlli Guardian.": "Nachrichten, Dateien und Konto arbeiten mit persistenter Sitzung und Guardian-Prüfungen zusammen.",
+      "Messaggi, file e account lavorano insieme con sessione persistente e controlli Guardian.": "Nachrichten, Dateien und Konto arbeiten mit persistenter Sitzung und Guardian-PrÃ¼fungen zusammen.",
       "Publisher Studio": "Publisher Studio",
-      "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "Manifest vorbereiten, Veröffentlichung validieren und Status vor dem Onlinegang verfolgen.",
+      "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "Manifest vorbereiten, VerÃ¶ffentlichung validieren und Status vor dem Onlinegang verfolgen.",
       "Velora Guardian": "Velora Guardian",
-      "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "Mehrstufiger Schutz, Audit und Admin-Signale für Konten, Cloud und sensible Vorgänge.",
-      "Il portale è il punto di accesso. Il desktop aggiunge potenza locale.": "Das Portal ist der Zugangspunkt. Desktop ergänzt lokale Leistung.",
-      "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "Die öffentliche Beta testet reale Funktionen: Konto, Suche, VeloMail, Cloud, Tools, Publisher, Knoten und Guardian-Sicherheit.",
-      "verifica": "Prüfung"
+      "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "Mehrstufiger Schutz, Audit und Admin-Signale fÃ¼r Konten, Cloud und sensible VorgÃ¤nge.",
+      "Il portale Ã¨ il punto di accesso. Il desktop aggiunge potenza locale.": "Das Portal ist der Zugangspunkt. Desktop ergÃ¤nzt lokale Leistung.",
+      "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "Die Ã¶ffentliche Beta testet reale Funktionen: Konto, Suche, VeloMail, Cloud, Tools, Publisher, Knoten und Guardian-Sicherheit.",
+      "verifica": "PrÃ¼fung"
     },
     es: {
       "VELORA PUBLIC BETA": "BETA PUBLICA VELORA",
-      "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora une navegador, búsqueda, VeloMail, Cloud, Publisher, Tools, nodos y seguridad en un único portal. Entra, elige y empieza.",
-      "Desktop e mobile": "Desktop y móvil",
+      "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora une navegador, bÃºsqueda, VeloMail, Cloud, Publisher, Tools, nodos y seguridad en un Ãºnico portal. Entra, elige y empieza.",
+      "Desktop e mobile": "Desktop y mÃ³vil",
       "Cloud protetto": "Cloud protegido",
       "Velora Live Console": "Consola Velora",
-      "Ricerca interna": "Búsqueda interna",
+      "Ricerca interna": "BÃºsqueda interna",
       "Trova servizi Velora senza uscire dal portale": "Encuentra servicios Velora sin salir del portal",
       "Search apre contenuti, strumenti e zone pubblicate dentro l'ambiente Velora, con lo stesso account e stato di sicurezza.": "Search abre contenidos, herramientas y zonas publicadas dentro de Velora, con la misma cuenta y estado de seguridad.",
-      "Carica file e ritrovali nel tuo account": "Sube archivos y encuéntralos en tu cuenta",
-      "Velora Cloud collega spazio utente, sessione stabile e controlli Guardian per proteggere i dati personali.": "Velora Cloud conecta espacio de usuario, sesión estable y controles Guardian para proteger datos personales.",
-      "Comunicazione": "Comunicación",
+      "Carica file e ritrovali nel tuo account": "Sube archivos y encuÃ©ntralos en tu cuenta",
+      "Velora Cloud collega spazio utente, sessione stabile e controlli Guardian per proteggere i dati personali.": "Velora Cloud conecta espacio de usuario, sesiÃ³n estable y controles Guardian para proteger datos personales.",
+      "Comunicazione": "ComunicaciÃ³n",
       "VeloMail usa la stessa identita Velora": "VeloMail usa la misma identidad Velora",
-      "Invio, ricezione e forum condividono lo stesso account, senza profili paralleli o login separati.": "Envío, recepción y foro comparten la misma cuenta, sin perfiles paralelos ni logins separados.",
+      "Invio, ricezione e forum condividono lo stesso account, senza profili paralleli o login separati.": "EnvÃ­o, recepciÃ³n y foro comparten la misma cuenta, sin perfiles paralelos ni logins separados.",
       "Prepara una zona prima di pubblicarla": "Prepara una zona antes de publicarla",
-      "Publisher Studio guida manifest, validazione, login Velora e stato pubblicazione prima della messa online.": "Publisher Studio guía manifest, validación, Login Velora y estado de publicación antes de ponerlo online.",
+      "Publisher Studio guida manifest, validazione, login Velora e stato pubblicazione prima della messa online.": "Publisher Studio guÃ­a manifest, validaciÃ³n, Login Velora y estado de publicaciÃ³n antes de ponerlo online.",
       "Guardian controlla rischio, log e cloud": "Guardian controla riesgo, logs y cloud",
-      "Audit, protezione dati e segnali admin rendono leggibile cosa sta succedendo all'ecosistema.": "Auditoría, protección de datos y señales admin hacen legible el estado del ecosistema.",
-      "Una sessione. Più funzioni. Stato leggibile.": "Una sesión. Más funciones. Estado claro.",
+      "Audit, protezione dati e segnali admin rendono leggibile cosa sta succedendo all'ecosistema.": "AuditorÃ­a, protecciÃ³n de datos y seÃ±ales admin hacen legible el estado del ecosistema.",
+      "Una sessione. PiÃ¹ funzioni. Stato leggibile.": "Una sesiÃ³n. MÃ¡s funciones. Estado claro.",
       "Velora Search": "Velora Search",
-      "Cerca contenuti, moduli e zone pubblicate senza perdere il contesto del portale.": "Busca contenidos, módulos y zonas publicadas sin perder el contexto del portal.",
+      "Cerca contenuti, moduli e zone pubblicate senza perdere il contesto del portale.": "Busca contenidos, mÃ³dulos y zonas publicadas sin perder el contexto del portal.",
       "VeloMail e Cloud": "VeloMail y Cloud",
-      "Messaggi, file e account lavorano insieme con sessione persistente e controlli Guardian.": "Mensajes, archivos y cuenta trabajan juntos con sesión persistente y controles Guardian.",
+      "Messaggi, file e account lavorano insieme con sessione persistente e controlli Guardian.": "Mensajes, archivos y cuenta trabajan juntos con sesiÃ³n persistente y controles Guardian.",
       "Publisher Studio": "Publisher Studio",
-      "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "Prepara manifest, valida una publicación y sigue el estado antes de ponerla online.",
+      "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "Prepara manifest, valida una publicaciÃ³n y sigue el estado antes de ponerla online.",
       "Velora Guardian": "Velora Guardian",
-      "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "Protección multinivel, auditoría y señales admin para cuentas, cloud y operaciones sensibles.",
-      "Il portale è il punto di accesso. Il desktop aggiunge potenza locale.": "El portal es el punto de acceso. Desktop añade potencia local.",
-      "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "La beta pública prueba funciones reales: cuenta, búsqueda, VeloMail, Cloud, Tools, Publisher, nodos y seguridad Guardian.",
-      "verifica": "verificación"
+      "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "ProtecciÃ³n multinivel, auditorÃ­a y seÃ±ales admin para cuentas, cloud y operaciones sensibles.",
+      "Il portale Ã¨ il punto di accesso. Il desktop aggiunge potenza locale.": "El portal es el punto de acceso. Desktop aÃ±ade potencia local.",
+      "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "La beta pÃºblica prueba funciones reales: cuenta, bÃºsqueda, VeloMail, Cloud, Tools, Publisher, nodos y seguridad Guardian.",
+      "verifica": "verificaciÃ³n"
     }
   };
   for (const [language, values] of Object.entries(additions)) {
@@ -4006,209 +4023,209 @@ function veloraI18nDictionaryComplete() {
     "Accesso immediato da browser": "Instant browser access",
     "Strumenti pronti per uso quotidiano": "Tools ready for everyday use",
     "Controllo sito, upload e stato online": "Site check, upload and online status",
-    "Protezione account, cloud e attività sensibili": "Account, cloud and sensitive activity protection"
+    "Protezione account, cloud e attivitÃ  sensibili": "Account, cloud and sensitive activity protection"
   };
   dict.fr = {
     ...(dict.fr ?? {}),
-    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Un portail unique pour rechercher, communiquer, protéger les fichiers et publier des zones Velora",
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Un portail unique pour rechercher, communiquer, protÃ©ger les fichiers et publier des zones Velora",
     "Entra nel portale": "Entrer dans le portail",
-    "Scarica beta": "Télécharger la bêta",
-    "Browser integrato": "Navigateur intégré",
+    "Scarica beta": "TÃ©lÃ©charger la bÃªta",
+    "Browser integrato": "Navigateur intÃ©grÃ©",
     "Zone, guide, tools, contenuti Velora": "Zones, guides, outils, contenus Velora",
-    "Proteggi file": "Protéger les fichiers",
+    "Proteggi file": "ProtÃ©ger les fichiers",
     "Cloud personale con account unico": "Cloud personnel avec compte unique",
     "Usa VeloMail": "Utiliser VeloMail",
-    "Messaggi tra identità Velora": "Messages entre identités Velora",
+    "Messaggi tra identitÃ  Velora": "Messages entre identitÃ©s Velora",
     "Pubblica una zona": "Publier une zone",
     "Validazione, manifest e messa online": "Validation, manifest et mise en ligne",
-    "Rete operativa": "Réseau opérationnel",
+    "Rete operativa": "RÃ©seau opÃ©rationnel",
     "Guardian attivo": "Guardian actif",
-    "Accesso immediato da browser": "Accès immédiat depuis le navigateur",
-    "Strumenti pronti per uso quotidiano": "Outils prêts pour l’usage quotidien",
-    "Controllo sito, upload e stato online": "Contrôle du site, upload et état en ligne",
-    "Protezione account, cloud e attività sensibili": "Protection du compte, du cloud et des activités sensibles"
+    "Accesso immediato da browser": "AccÃ¨s immÃ©diat depuis le navigateur",
+    "Strumenti pronti per uso quotidiano": "Outils prÃªts pour lâ€™usage quotidien",
+    "Controllo sito, upload e stato online": "ContrÃ´le du site, upload et Ã©tat en ligne",
+    "Protezione account, cloud e attivitÃ  sensibili": "Protection du compte, du cloud et des activitÃ©s sensibles"
   };
   dict.de = {
     ...(dict.de ?? {}),
-    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Ein Portal zum Suchen, Kommunizieren, Schützen von Dateien und Veröffentlichen von Velora-Zonen",
-    "Entra nel portale": "Portal öffnen",
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Ein Portal zum Suchen, Kommunizieren, SchÃ¼tzen von Dateien und VerÃ¶ffentlichen von Velora-Zonen",
+    "Entra nel portale": "Portal Ã¶ffnen",
     "Scarica beta": "Beta herunterladen",
     "Browser integrato": "Integrierter Browser",
     "Zone, guide, tools, contenuti Velora": "Zonen, Guides, Tools, Velora-Inhalte",
-    "Proteggi file": "Dateien schützen",
-    "Cloud personale con account unico": "Persönliche Cloud mit einem Konto",
+    "Proteggi file": "Dateien schÃ¼tzen",
+    "Cloud personale con account unico": "PersÃ¶nliche Cloud mit einem Konto",
     "Usa VeloMail": "VeloMail nutzen",
-    "Messaggi tra identità Velora": "Nachrichten zwischen Velora-Identitäten",
-    "Pubblica una zona": "Zone veröffentlichen",
-    "Validazione, manifest e messa online": "Validierung, Manifest und Veröffentlichung",
+    "Messaggi tra identitÃ  Velora": "Nachrichten zwischen Velora-IdentitÃ¤ten",
+    "Pubblica una zona": "Zone verÃ¶ffentlichen",
+    "Validazione, manifest e messa online": "Validierung, Manifest und VerÃ¶ffentlichung",
     "Rete operativa": "Netzwerk online",
     "Guardian attivo": "Guardian aktiv",
     "Accesso immediato da browser": "Sofortzugang im Browser",
-    "Strumenti pronti per uso quotidiano": "Tools für den Alltag",
-    "Controllo sito, upload e stato online": "Site-Prüfung, Upload und Online-Status",
-    "Protezione account, cloud e attività sensibili": "Schutz für Konto, Cloud und sensible Aktivitäten"
+    "Strumenti pronti per uso quotidiano": "Tools fÃ¼r den Alltag",
+    "Controllo sito, upload e stato online": "Site-PrÃ¼fung, Upload und Online-Status",
+    "Protezione account, cloud e attivitÃ  sensibili": "Schutz fÃ¼r Konto, Cloud und sensible AktivitÃ¤ten"
   };
   dict.es = {
     ...(dict.es ?? {}),
-    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Un portal único para buscar, comunicar, proteger archivos y publicar zonas Velora",
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Un portal Ãºnico para buscar, comunicar, proteger archivos y publicar zonas Velora",
     "Entra nel portale": "Entrar al portal",
     "Scarica beta": "Descargar beta",
     "Browser integrato": "Navegador integrado",
-    "Zone, guide, tools, contenuti Velora": "Zonas, guías, herramientas, contenidos Velora",
+    "Zone, guide, tools, contenuti Velora": "Zonas, guÃ­as, herramientas, contenidos Velora",
     "Proteggi file": "Proteger archivos",
-    "Cloud personale con account unico": "Cloud personal con cuenta única",
+    "Cloud personale con account unico": "Cloud personal con cuenta Ãºnica",
     "Usa VeloMail": "Usar VeloMail",
-    "Messaggi tra identità Velora": "Mensajes entre identidades Velora",
+    "Messaggi tra identitÃ  Velora": "Mensajes entre identidades Velora",
     "Pubblica una zona": "Publicar una zona",
-    "Validazione, manifest e messa online": "Validación, manifest y puesta online",
+    "Validazione, manifest e messa online": "ValidaciÃ³n, manifest y puesta online",
     "Rete operativa": "Red operativa",
     "Guardian attivo": "Guardian activo",
     "Accesso immediato da browser": "Acceso inmediato desde navegador",
     "Strumenti pronti per uso quotidiano": "Herramientas listas para uso diario",
     "Controllo sito, upload e stato online": "Control del sitio, upload y estado online",
-    "Protezione account, cloud e attività sensibili": "Protección de cuenta, cloud y actividades sensibles"
+    "Protezione account, cloud e attivitÃ  sensibili": "ProtecciÃ³n de cuenta, cloud y actividades sensibles"
   };
   dict.ru = {
     ...(dict.ru ?? {}),
-    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Единый портал для поиска, общения, защиты файлов и публикации зон Velora",
-    "Entra nel portale": "Войти в портал",
-    "Scarica beta": "Скачать бета",
-    "Browser integrato": "Встроенный браузер",
-    "Zone, guide, tools, contenuti Velora": "Зоны, руководства, инструменты, контент Velora",
-    "Proteggi file": "Защитить файлы",
-    "Cloud personale con account unico": "Личное облако с единым аккаунтом",
-    "Usa VeloMail": "Открыть VeloMail",
-    "Messaggi tra identità Velora": "Сообщения между идентичностями Velora",
-    "Pubblica una zona": "Опубликовать зону",
-    "Validazione, manifest e messa online": "Проверка, manifest и публикация онлайн",
-    "Rete operativa": "Сеть работает",
-    "Guardian attivo": "Guardian активен",
-    "Accesso immediato da browser": "Быстрый доступ из браузера",
-    "Strumenti pronti per uso quotidiano": "Инструменты для ежедневного использования",
-    "Controllo sito, upload e stato online": "Проверка сайта, загрузка и онлайн-статус",
-    "Protezione account, cloud e attività sensibili": "Защита аккаунта, cloud и чувствительных действий"
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Ð•Ð´Ð¸Ð½Ñ‹Ð¹ Ð¿Ð¾Ñ€Ñ‚Ð°Ð» Ð´Ð»Ñ Ð¿Ð¾Ð¸ÑÐºÐ°, Ð¾Ð±Ñ‰ÐµÐ½Ð¸Ñ, Ð·Ð°Ñ‰Ð¸Ñ‚Ñ‹ Ñ„Ð°Ð¹Ð»Ð¾Ð² Ð¸ Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ°Ñ†Ð¸Ð¸ Ð·Ð¾Ð½ Velora",
+    "Entra nel portale": "Ð’Ð¾Ð¹Ñ‚Ð¸ Ð² Ð¿Ð¾Ñ€Ñ‚Ð°Ð»",
+    "Scarica beta": "Ð¡ÐºÐ°Ñ‡Ð°Ñ‚ÑŒ Ð±ÐµÑ‚Ð°",
+    "Browser integrato": "Ð’ÑÑ‚Ñ€Ð¾ÐµÐ½Ð½Ñ‹Ð¹ Ð±Ñ€Ð°ÑƒÐ·ÐµÑ€",
+    "Zone, guide, tools, contenuti Velora": "Ð—Ð¾Ð½Ñ‹, Ñ€ÑƒÐºÐ¾Ð²Ð¾Ð´ÑÑ‚Ð²Ð°, Ð¸Ð½ÑÑ‚Ñ€ÑƒÐ¼ÐµÐ½Ñ‚Ñ‹, ÐºÐ¾Ð½Ñ‚ÐµÐ½Ñ‚ Velora",
+    "Proteggi file": "Ð—Ð°Ñ‰Ð¸Ñ‚Ð¸Ñ‚ÑŒ Ñ„Ð°Ð¹Ð»Ñ‹",
+    "Cloud personale con account unico": "Ð›Ð¸Ñ‡Ð½Ð¾Ðµ Ð¾Ð±Ð»Ð°ÐºÐ¾ Ñ ÐµÐ´Ð¸Ð½Ñ‹Ð¼ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚Ð¾Ð¼",
+    "Usa VeloMail": "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ VeloMail",
+    "Messaggi tra identitÃ  Velora": "Ð¡Ð¾Ð¾Ð±Ñ‰ÐµÐ½Ð¸Ñ Ð¼ÐµÐ¶Ð´Ñƒ Ð¸Ð´ÐµÐ½Ñ‚Ð¸Ñ‡Ð½Ð¾ÑÑ‚ÑÐ¼Ð¸ Velora",
+    "Pubblica una zona": "ÐžÐ¿ÑƒÐ±Ð»Ð¸ÐºÐ¾Ð²Ð°Ñ‚ÑŒ Ð·Ð¾Ð½Ñƒ",
+    "Validazione, manifest e messa online": "ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ°, manifest Ð¸ Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ°Ñ†Ð¸Ñ Ð¾Ð½Ð»Ð°Ð¹Ð½",
+    "Rete operativa": "Ð¡ÐµÑ‚ÑŒ Ñ€Ð°Ð±Ð¾Ñ‚Ð°ÐµÑ‚",
+    "Guardian attivo": "Guardian Ð°ÐºÑ‚Ð¸Ð²ÐµÐ½",
+    "Accesso immediato da browser": "Ð‘Ñ‹ÑÑ‚Ñ€Ñ‹Ð¹ Ð´Ð¾ÑÑ‚ÑƒÐ¿ Ð¸Ð· Ð±Ñ€Ð°ÑƒÐ·ÐµÑ€Ð°",
+    "Strumenti pronti per uso quotidiano": "Ð˜Ð½ÑÑ‚Ñ€ÑƒÐ¼ÐµÐ½Ñ‚Ñ‹ Ð´Ð»Ñ ÐµÐ¶ÐµÐ´Ð½ÐµÐ²Ð½Ð¾Ð³Ð¾ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ð½Ð¸Ñ",
+    "Controllo sito, upload e stato online": "ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ° ÑÐ°Ð¹Ñ‚Ð°, Ð·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð¸ Ð¾Ð½Ð»Ð°Ð¹Ð½-ÑÑ‚Ð°Ñ‚ÑƒÑ",
+    "Protezione account, cloud e attivitÃ  sensibili": "Ð—Ð°Ñ‰Ð¸Ñ‚Ð° Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚Ð°, cloud Ð¸ Ñ‡ÑƒÐ²ÑÑ‚Ð²Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ñ‹Ñ… Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ð¹"
   };
   dict.zh = {
     ...(dict.zh ?? {}),
-    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "一个门户即可搜索、通信、保护文件并发布 Velora 区域",
-    "Entra nel portale": "进入门户",
-    "Scarica beta": "下载 Beta",
-    "Browser integrato": "集成浏览器",
-    "Zone, guide, tools, contenuti Velora": "区域、指南、工具、Velora 内容",
-    "Proteggi file": "保护文件",
-    "Cloud personale con account unico": "单一账号的个人 Cloud",
-    "Usa VeloMail": "使用 VeloMail",
-    "Messaggi tra identità Velora": "Velora 身份之间的消息",
-    "Pubblica una zona": "发布区域",
-    "Validazione, manifest e messa online": "验证、manifest 与上线",
-    "Rete operativa": "网络运行中",
-    "Guardian attivo": "Guardian 已启用",
-    "Accesso immediato da browser": "浏览器即时访问",
-    "Strumenti pronti per uso quotidiano": "日常可用工具",
-    "Controllo sito, upload e stato online": "站点检查、上传和在线状态",
-    "Protezione account, cloud e attività sensibili": "账号、cloud 和敏感操作保护"
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "ä¸€ä¸ªé—¨æˆ·å³å¯æœç´¢ã€é€šä¿¡ã€ä¿æŠ¤æ–‡ä»¶å¹¶å‘å¸ƒ Velora åŒºåŸŸ",
+    "Entra nel portale": "è¿›å…¥é—¨æˆ·",
+    "Scarica beta": "ä¸‹è½½ Beta",
+    "Browser integrato": "é›†æˆæµè§ˆå™¨",
+    "Zone, guide, tools, contenuti Velora": "åŒºåŸŸã€æŒ‡å—ã€å·¥å…·ã€Velora å†…å®¹",
+    "Proteggi file": "ä¿æŠ¤æ–‡ä»¶",
+    "Cloud personale con account unico": "å•ä¸€è´¦å·çš„ä¸ªäºº Cloud",
+    "Usa VeloMail": "ä½¿ç”¨ VeloMail",
+    "Messaggi tra identitÃ  Velora": "Velora èº«ä»½ä¹‹é—´çš„æ¶ˆæ¯",
+    "Pubblica una zona": "å‘å¸ƒåŒºåŸŸ",
+    "Validazione, manifest e messa online": "éªŒè¯ã€manifest ä¸Žä¸Šçº¿",
+    "Rete operativa": "ç½‘ç»œè¿è¡Œä¸­",
+    "Guardian attivo": "Guardian å·²å¯ç”¨",
+    "Accesso immediato da browser": "æµè§ˆå™¨å³æ—¶è®¿é—®",
+    "Strumenti pronti per uso quotidiano": "æ—¥å¸¸å¯ç”¨å·¥å…·",
+    "Controllo sito, upload e stato online": "ç«™ç‚¹æ£€æŸ¥ã€ä¸Šä¼ å’Œåœ¨çº¿çŠ¶æ€",
+    "Protezione account, cloud e attivitÃ  sensibili": "è´¦å·ã€cloud å’Œæ•æ„Ÿæ“ä½œä¿æŠ¤"
   };
   dict.ru = {
     ...(dict.ru ?? {}),
-    "VELORA PUBLIC BETA": "ПУБЛИЧНАЯ БЕТА VELORA",
-    "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora объединяет браузер, поиск, VeloMail, Cloud, Publisher, Tools, узлы и безопасность в одном портале. Войдите, выберите действие и начните сразу.",
-    "Desktop e mobile": "ПК и мобильные устройства",
-    "Cloud protetto": "Защищенный Cloud",
-    "Velora Live Console": "Живая консоль Velora",
-    "Ricerca interna": "Внутренний поиск",
-    "Trova servizi Velora senza uscire dal portale": "Находите сервисы Velora, не выходя из портала",
-    "Search apre contenuti, strumenti e zone pubblicate dentro l'ambiente Velora, con lo stesso account e stato di sicurezza.": "Search открывает контент, инструменты и опубликованные зоны внутри Velora с тем же аккаунтом и статусом безопасности.",
-    "Carica file e ritrovali nel tuo account": "Загружайте файлы и находите их в своем аккаунте",
-    "Velora Cloud collega spazio utente, sessione stabile e controlli Guardian per proteggere i dati personali.": "Velora Cloud соединяет пользовательское хранилище, стабильную сессию и проверки Guardian для защиты личных данных.",
-    "Comunicazione": "Связь",
-    "VeloMail usa la stessa identita Velora": "VeloMail использует ту же идентичность Velora",
-    "Invio, ricezione e forum condividono lo stesso account, senza profili paralleli o login separati.": "Отправка, получение и форум используют один аккаунт, без параллельных профилей и отдельных входов.",
-    "Prepara una zona prima di pubblicarla": "Подготовьте зону перед публикацией",
-    "Publisher Studio guida manifest, validazione, login Velora e stato pubblicazione prima della messa online.": "Publisher Studio ведет через manifest, проверку, Velora Login и статус публикации перед выходом онлайн.",
-    "Guardian controlla rischio, log e cloud": "Guardian проверяет риски, журналы и cloud",
-    "Audit, protezione dati e segnali admin rendono leggibile cosa sta succedendo all'ecosistema.": "Аудит, защита данных и сигналы администратора делают состояние экосистемы понятным.",
-    "Una sessione. Più funzioni. Stato leggibile.": "Одна сессия. Больше функций. Понятный статус.",
+    "VELORA PUBLIC BETA": "ÐŸÐ£Ð‘Ð›Ð˜Ð§ÐÐÐ¯ Ð‘Ð•Ð¢Ð VELORA",
+    "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora Ð¾Ð±ÑŠÐµÐ´Ð¸Ð½ÑÐµÑ‚ Ð±Ñ€Ð°ÑƒÐ·ÐµÑ€, Ð¿Ð¾Ð¸ÑÐº, VeloMail, Cloud, Publisher, Tools, ÑƒÐ·Ð»Ñ‹ Ð¸ Ð±ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ð¾ÑÑ‚ÑŒ Ð² Ð¾Ð´Ð½Ð¾Ð¼ Ð¿Ð¾Ñ€Ñ‚Ð°Ð»Ðµ. Ð’Ð¾Ð¹Ð´Ð¸Ñ‚Ðµ, Ð²Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ðµ Ð¸ Ð½Ð°Ñ‡Ð½Ð¸Ñ‚Ðµ ÑÑ€Ð°Ð·Ñƒ.",
+    "Desktop e mobile": "ÐŸÐš Ð¸ Ð¼Ð¾Ð±Ð¸Ð»ÑŒÐ½Ñ‹Ðµ ÑƒÑÑ‚Ñ€Ð¾Ð¹ÑÑ‚Ð²Ð°",
+    "Cloud protetto": "Ð—Ð°Ñ‰Ð¸Ñ‰ÐµÐ½Ð½Ñ‹Ð¹ Cloud",
+    "Velora Live Console": "Ð–Ð¸Ð²Ð°Ñ ÐºÐ¾Ð½ÑÐ¾Ð»ÑŒ Velora",
+    "Ricerca interna": "Ð’Ð½ÑƒÑ‚Ñ€ÐµÐ½Ð½Ð¸Ð¹ Ð¿Ð¾Ð¸ÑÐº",
+    "Trova servizi Velora senza uscire dal portale": "ÐÐ°Ñ…Ð¾Ð´Ð¸Ñ‚Ðµ ÑÐµÑ€Ð²Ð¸ÑÑ‹ Velora, Ð½Ðµ Ð²Ñ‹Ñ…Ð¾Ð´Ñ Ð¸Ð· Ð¿Ð¾Ñ€Ñ‚Ð°Ð»Ð°",
+    "Search apre contenuti, strumenti e zone pubblicate dentro l'ambiente Velora, con lo stesso account e stato di sicurezza.": "Search Ð¾Ñ‚ÐºÑ€Ñ‹Ð²Ð°ÐµÑ‚ ÐºÐ¾Ð½Ñ‚ÐµÐ½Ñ‚, Ð¸Ð½ÑÑ‚Ñ€ÑƒÐ¼ÐµÐ½Ñ‚Ñ‹ Ð¸ Ð¾Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ¾Ð²Ð°Ð½Ð½Ñ‹Ðµ Ð·Ð¾Ð½Ñ‹ Ð²Ð½ÑƒÑ‚Ñ€Ð¸ Velora Ñ Ñ‚ÐµÐ¼ Ð¶Ðµ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚Ð¾Ð¼ Ð¸ ÑÑ‚Ð°Ñ‚ÑƒÑÐ¾Ð¼ Ð±ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ð¾ÑÑ‚Ð¸.",
+    "Carica file e ritrovali nel tuo account": "Ð—Ð°Ð³Ñ€ÑƒÐ¶Ð°Ð¹Ñ‚Ðµ Ñ„Ð°Ð¹Ð»Ñ‹ Ð¸ Ð½Ð°Ñ…Ð¾Ð´Ð¸Ñ‚Ðµ Ð¸Ñ… Ð² ÑÐ²Ð¾ÐµÐ¼ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚Ðµ",
+    "Velora Cloud collega spazio utente, sessione stabile e controlli Guardian per proteggere i dati personali.": "Velora Cloud ÑÐ¾ÐµÐ´Ð¸Ð½ÑÐµÑ‚ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒÑÐºÐ¾Ðµ Ñ…Ñ€Ð°Ð½Ð¸Ð»Ð¸Ñ‰Ðµ, ÑÑ‚Ð°Ð±Ð¸Ð»ÑŒÐ½ÑƒÑŽ ÑÐµÑÑÐ¸ÑŽ Ð¸ Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐºÐ¸ Guardian Ð´Ð»Ñ Ð·Ð°Ñ‰Ð¸Ñ‚Ñ‹ Ð»Ð¸Ñ‡Ð½Ñ‹Ñ… Ð´Ð°Ð½Ð½Ñ‹Ñ….",
+    "Comunicazione": "Ð¡Ð²ÑÐ·ÑŒ",
+    "VeloMail usa la stessa identita Velora": "VeloMail Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐµÑ‚ Ñ‚Ñƒ Ð¶Ðµ Ð¸Ð´ÐµÐ½Ñ‚Ð¸Ñ‡Ð½Ð¾ÑÑ‚ÑŒ Velora",
+    "Invio, ricezione e forum condividono lo stesso account, senza profili paralleli o login separati.": "ÐžÑ‚Ð¿Ñ€Ð°Ð²ÐºÐ°, Ð¿Ð¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ðµ Ð¸ Ñ„Ð¾Ñ€ÑƒÐ¼ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÑŽÑ‚ Ð¾Ð´Ð¸Ð½ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚, Ð±ÐµÐ· Ð¿Ð°Ñ€Ð°Ð»Ð»ÐµÐ»ÑŒÐ½Ñ‹Ñ… Ð¿Ñ€Ð¾Ñ„Ð¸Ð»ÐµÐ¹ Ð¸ Ð¾Ñ‚Ð´ÐµÐ»ÑŒÐ½Ñ‹Ñ… Ð²Ñ…Ð¾Ð´Ð¾Ð².",
+    "Prepara una zona prima di pubblicarla": "ÐŸÐ¾Ð´Ð³Ð¾Ñ‚Ð¾Ð²ÑŒÑ‚Ðµ Ð·Ð¾Ð½Ñƒ Ð¿ÐµÑ€ÐµÐ´ Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ°Ñ†Ð¸ÐµÐ¹",
+    "Publisher Studio guida manifest, validazione, login Velora e stato pubblicazione prima della messa online.": "Publisher Studio Ð²ÐµÐ´ÐµÑ‚ Ñ‡ÐµÑ€ÐµÐ· manifest, Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐºÑƒ, Velora Login Ð¸ ÑÑ‚Ð°Ñ‚ÑƒÑ Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ°Ñ†Ð¸Ð¸ Ð¿ÐµÑ€ÐµÐ´ Ð²Ñ‹Ñ…Ð¾Ð´Ð¾Ð¼ Ð¾Ð½Ð»Ð°Ð¹Ð½.",
+    "Guardian controlla rischio, log e cloud": "Guardian Ð¿Ñ€Ð¾Ð²ÐµÑ€ÑÐµÑ‚ Ñ€Ð¸ÑÐºÐ¸, Ð¶ÑƒÑ€Ð½Ð°Ð»Ñ‹ Ð¸ cloud",
+    "Audit, protezione dati e segnali admin rendono leggibile cosa sta succedendo all'ecosistema.": "ÐÑƒÐ´Ð¸Ñ‚, Ð·Ð°Ñ‰Ð¸Ñ‚Ð° Ð´Ð°Ð½Ð½Ñ‹Ñ… Ð¸ ÑÐ¸Ð³Ð½Ð°Ð»Ñ‹ Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑ‚Ñ€Ð°Ñ‚Ð¾Ñ€Ð° Ð´ÐµÐ»Ð°ÑŽÑ‚ ÑÐ¾ÑÑ‚Ð¾ÑÐ½Ð¸Ðµ ÑÐºÐ¾ÑÐ¸ÑÑ‚ÐµÐ¼Ñ‹ Ð¿Ð¾Ð½ÑÑ‚Ð½Ñ‹Ð¼.",
+    "Una sessione. PiÃ¹ funzioni. Stato leggibile.": "ÐžÐ´Ð½Ð° ÑÐµÑÑÐ¸Ñ. Ð‘Ð¾Ð»ÑŒÑˆÐµ Ñ„ÑƒÐ½ÐºÑ†Ð¸Ð¹. ÐŸÐ¾Ð½ÑÑ‚Ð½Ñ‹Ð¹ ÑÑ‚Ð°Ñ‚ÑƒÑ.",
     "Velora Search": "Velora Search",
-    "Cerca contenuti, moduli e zone pubblicate senza perdere il contesto del portale.": "Ищите контент, модули и опубликованные зоны, не теряя контекст портала.",
-    "VeloMail e Cloud": "VeloMail и Cloud",
-    "Messaggi, file e account lavorano insieme con sessione persistente e controlli Guardian.": "Сообщения, файлы и аккаунт работают вместе со стабильной сессией и проверками Guardian.",
+    "Cerca contenuti, moduli e zone pubblicate senza perdere il contesto del portale.": "Ð˜Ñ‰Ð¸Ñ‚Ðµ ÐºÐ¾Ð½Ñ‚ÐµÐ½Ñ‚, Ð¼Ð¾Ð´ÑƒÐ»Ð¸ Ð¸ Ð¾Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ¾Ð²Ð°Ð½Ð½Ñ‹Ðµ Ð·Ð¾Ð½Ñ‹, Ð½Ðµ Ñ‚ÐµÑ€ÑÑ ÐºÐ¾Ð½Ñ‚ÐµÐºÑÑ‚ Ð¿Ð¾Ñ€Ñ‚Ð°Ð»Ð°.",
+    "VeloMail e Cloud": "VeloMail Ð¸ Cloud",
+    "Messaggi, file e account lavorano insieme con sessione persistente e controlli Guardian.": "Ð¡Ð¾Ð¾Ð±Ñ‰ÐµÐ½Ð¸Ñ, Ñ„Ð°Ð¹Ð»Ñ‹ Ð¸ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚ Ñ€Ð°Ð±Ð¾Ñ‚Ð°ÑŽÑ‚ Ð²Ð¼ÐµÑÑ‚Ðµ ÑÐ¾ ÑÑ‚Ð°Ð±Ð¸Ð»ÑŒÐ½Ð¾Ð¹ ÑÐµÑÑÐ¸ÐµÐ¹ Ð¸ Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐºÐ°Ð¼Ð¸ Guardian.",
     "Publisher Studio": "Publisher Studio",
-    "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "Подготовьте manifest, проверьте публикацию и отслеживайте статус перед выходом онлайн.",
+    "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "ÐŸÐ¾Ð´Ð³Ð¾Ñ‚Ð¾Ð²ÑŒÑ‚Ðµ manifest, Ð¿Ñ€Ð¾Ð²ÐµÑ€ÑŒÑ‚Ðµ Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ°Ñ†Ð¸ÑŽ Ð¸ Ð¾Ñ‚ÑÐ»ÐµÐ¶Ð¸Ð²Ð°Ð¹Ñ‚Ðµ ÑÑ‚Ð°Ñ‚ÑƒÑ Ð¿ÐµÑ€ÐµÐ´ Ð²Ñ‹Ñ…Ð¾Ð´Ð¾Ð¼ Ð¾Ð½Ð»Ð°Ð¹Ð½.",
     "Velora Guardian": "Velora Guardian",
-    "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "Многоуровневая защита, аудит и сигналы администратора для аккаунтов, cloud и чувствительных операций.",
-    "Il portale è il punto di accesso. Il desktop aggiunge potenza locale.": "Портал является точкой доступа. Desktop добавляет локальную мощность.",
-    "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "Публичная бета нужна для теста реальных функций: аккаунт, поиск, VeloMail, Cloud, Tools, Publisher, узлы и Guardian.",
-    "verifica": "проверка"
+    "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "ÐœÐ½Ð¾Ð³Ð¾ÑƒÑ€Ð¾Ð²Ð½ÐµÐ²Ð°Ñ Ð·Ð°Ñ‰Ð¸Ñ‚Ð°, Ð°ÑƒÐ´Ð¸Ñ‚ Ð¸ ÑÐ¸Ð³Ð½Ð°Ð»Ñ‹ Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑ‚Ñ€Ð°Ñ‚Ð¾Ñ€Ð° Ð´Ð»Ñ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚Ð¾Ð², cloud Ð¸ Ñ‡ÑƒÐ²ÑÑ‚Ð²Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ñ‹Ñ… Ð¾Ð¿ÐµÑ€Ð°Ñ†Ð¸Ð¹.",
+    "Il portale Ã¨ il punto di accesso. Il desktop aggiunge potenza locale.": "ÐŸÐ¾Ñ€Ñ‚Ð°Ð» ÑÐ²Ð»ÑÐµÑ‚ÑÑ Ñ‚Ð¾Ñ‡ÐºÐ¾Ð¹ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð°. Desktop Ð´Ð¾Ð±Ð°Ð²Ð»ÑÐµÑ‚ Ð»Ð¾ÐºÐ°Ð»ÑŒÐ½ÑƒÑŽ Ð¼Ð¾Ñ‰Ð½Ð¾ÑÑ‚ÑŒ.",
+    "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "ÐŸÑƒÐ±Ð»Ð¸Ñ‡Ð½Ð°Ñ Ð±ÐµÑ‚Ð° Ð½ÑƒÐ¶Ð½Ð° Ð´Ð»Ñ Ñ‚ÐµÑÑ‚Ð° Ñ€ÐµÐ°Ð»ÑŒÐ½Ñ‹Ñ… Ñ„ÑƒÐ½ÐºÑ†Ð¸Ð¹: Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚, Ð¿Ð¾Ð¸ÑÐº, VeloMail, Cloud, Tools, Publisher, ÑƒÐ·Ð»Ñ‹ Ð¸ Guardian.",
+    "verifica": "Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐºÐ°"
   };
   dict.zh = {
     ...(dict.zh ?? {}),
-    "VELORA PUBLIC BETA": "VELORA 公测版",
-    "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora 将浏览器、搜索、VeloMail、Cloud、Publisher、Tools、节点和安全能力集中在一个门户中。登录后选择操作，立即开始。",
-    "Desktop e mobile": "桌面与移动端",
-    "Cloud protetto": "受保护的 Cloud",
-    "Velora Live Console": "Velora 实时控制台",
-    "Ricerca interna": "内部搜索",
-    "Trova servizi Velora senza uscire dal portale": "无需离开门户即可找到 Velora 服务",
-    "Search apre contenuti, strumenti e zone pubblicate dentro l'ambiente Velora, con lo stesso account e stato di sicurezza.": "Search 在 Velora 环境中打开内容、工具和已发布区域，并保持同一账号与安全状态。",
-    "Carica file e ritrovali nel tuo account": "上传文件，并在账号中随时找到",
-    "Velora Cloud collega spazio utente, sessione stabile e controlli Guardian per proteggere i dati personali.": "Velora Cloud 将用户空间、稳定会话和 Guardian 检查连接起来，以保护个人数据。",
-    "Comunicazione": "通信",
-    "VeloMail usa la stessa identita Velora": "VeloMail 使用同一个 Velora 身份",
-    "Invio, ricezione e forum condividono lo stesso account, senza profili paralleli o login separati.": "发送、接收和论坛共用同一账号，不需要并行资料或单独登录。",
-    "Prepara una zona prima di pubblicarla": "发布前先准备区域",
-    "Publisher Studio guida manifest, validazione, login Velora e stato pubblicazione prima della messa online.": "Publisher Studio 会在上线前引导完成 manifest、验证、Velora Login 和发布状态检查。",
-    "Guardian controlla rischio, log e cloud": "Guardian 检查风险、日志和 cloud",
-    "Audit, protezione dati e segnali admin rendono leggibile cosa sta succedendo all'ecosistema.": "审计、数据保护和管理员信号让生态状态清晰可读。",
-    "Una sessione. Più funzioni. Stato leggibile.": "一个会话。更多功能。状态清晰。",
+    "VELORA PUBLIC BETA": "VELORA å…¬æµ‹ç‰ˆ",
+    "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora å°†æµè§ˆå™¨ã€æœç´¢ã€VeloMailã€Cloudã€Publisherã€Toolsã€èŠ‚ç‚¹å’Œå®‰å…¨èƒ½åŠ›é›†ä¸­åœ¨ä¸€ä¸ªé—¨æˆ·ä¸­ã€‚ç™»å½•åŽé€‰æ‹©æ“ä½œï¼Œç«‹å³å¼€å§‹ã€‚",
+    "Desktop e mobile": "æ¡Œé¢ä¸Žç§»åŠ¨ç«¯",
+    "Cloud protetto": "å—ä¿æŠ¤çš„ Cloud",
+    "Velora Live Console": "Velora å®žæ—¶æŽ§åˆ¶å°",
+    "Ricerca interna": "å†…éƒ¨æœç´¢",
+    "Trova servizi Velora senza uscire dal portale": "æ— éœ€ç¦»å¼€é—¨æˆ·å³å¯æ‰¾åˆ° Velora æœåŠ¡",
+    "Search apre contenuti, strumenti e zone pubblicate dentro l'ambiente Velora, con lo stesso account e stato di sicurezza.": "Search åœ¨ Velora çŽ¯å¢ƒä¸­æ‰“å¼€å†…å®¹ã€å·¥å…·å’Œå·²å‘å¸ƒåŒºåŸŸï¼Œå¹¶ä¿æŒåŒä¸€è´¦å·ä¸Žå®‰å…¨çŠ¶æ€ã€‚",
+    "Carica file e ritrovali nel tuo account": "ä¸Šä¼ æ–‡ä»¶ï¼Œå¹¶åœ¨è´¦å·ä¸­éšæ—¶æ‰¾åˆ°",
+    "Velora Cloud collega spazio utente, sessione stabile e controlli Guardian per proteggere i dati personali.": "Velora Cloud å°†ç”¨æˆ·ç©ºé—´ã€ç¨³å®šä¼šè¯å’Œ Guardian æ£€æŸ¥è¿žæŽ¥èµ·æ¥ï¼Œä»¥ä¿æŠ¤ä¸ªäººæ•°æ®ã€‚",
+    "Comunicazione": "é€šä¿¡",
+    "VeloMail usa la stessa identita Velora": "VeloMail ä½¿ç”¨åŒä¸€ä¸ª Velora èº«ä»½",
+    "Invio, ricezione e forum condividono lo stesso account, senza profili paralleli o login separati.": "å‘é€ã€æŽ¥æ”¶å’Œè®ºå›å…±ç”¨åŒä¸€è´¦å·ï¼Œä¸éœ€è¦å¹¶è¡Œèµ„æ–™æˆ–å•ç‹¬ç™»å½•ã€‚",
+    "Prepara una zona prima di pubblicarla": "å‘å¸ƒå‰å…ˆå‡†å¤‡åŒºåŸŸ",
+    "Publisher Studio guida manifest, validazione, login Velora e stato pubblicazione prima della messa online.": "Publisher Studio ä¼šåœ¨ä¸Šçº¿å‰å¼•å¯¼å®Œæˆ manifestã€éªŒè¯ã€Velora Login å’Œå‘å¸ƒçŠ¶æ€æ£€æŸ¥ã€‚",
+    "Guardian controlla rischio, log e cloud": "Guardian æ£€æŸ¥é£Žé™©ã€æ—¥å¿—å’Œ cloud",
+    "Audit, protezione dati e segnali admin rendono leggibile cosa sta succedendo all'ecosistema.": "å®¡è®¡ã€æ•°æ®ä¿æŠ¤å’Œç®¡ç†å‘˜ä¿¡å·è®©ç”Ÿæ€çŠ¶æ€æ¸…æ™°å¯è¯»ã€‚",
+    "Una sessione. PiÃ¹ funzioni. Stato leggibile.": "ä¸€ä¸ªä¼šè¯ã€‚æ›´å¤šåŠŸèƒ½ã€‚çŠ¶æ€æ¸…æ™°ã€‚",
     "Velora Search": "Velora Search",
-    "Cerca contenuti, moduli e zone pubblicate senza perdere il contesto del portale.": "在不离开门户上下文的情况下搜索内容、模块和已发布区域。",
-    "VeloMail e Cloud": "VeloMail 与 Cloud",
-    "Messaggi, file e account lavorano insieme con sessione persistente e controlli Guardian.": "消息、文件和账号通过持久会话与 Guardian 检查协同工作。",
+    "Cerca contenuti, moduli e zone pubblicate senza perdere il contesto del portale.": "åœ¨ä¸ç¦»å¼€é—¨æˆ·ä¸Šä¸‹æ–‡çš„æƒ…å†µä¸‹æœç´¢å†…å®¹ã€æ¨¡å—å’Œå·²å‘å¸ƒåŒºåŸŸã€‚",
+    "VeloMail e Cloud": "VeloMail ä¸Ž Cloud",
+    "Messaggi, file e account lavorano insieme con sessione persistente e controlli Guardian.": "æ¶ˆæ¯ã€æ–‡ä»¶å’Œè´¦å·é€šè¿‡æŒä¹…ä¼šè¯ä¸Ž Guardian æ£€æŸ¥ååŒå·¥ä½œã€‚",
     "Publisher Studio": "Publisher Studio",
-    "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "准备 manifest、验证发布，并在上线前跟踪状态。",
+    "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "å‡†å¤‡ manifestã€éªŒè¯å‘å¸ƒï¼Œå¹¶åœ¨ä¸Šçº¿å‰è·Ÿè¸ªçŠ¶æ€ã€‚",
     "Velora Guardian": "Velora Guardian",
-    "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "为账号、cloud 和敏感操作提供多层保护、审计和管理员信号。",
-    "Il portale è il punto di accesso. Il desktop aggiunge potenza locale.": "门户是入口，桌面端提供本地能力。",
-    "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "公测版用于测试真实功能：账号、搜索、VeloMail、Cloud、Tools、Publisher、节点和 Guardian 安全。",
-    "verifica": "检查"
+    "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "ä¸ºè´¦å·ã€cloud å’Œæ•æ„Ÿæ“ä½œæä¾›å¤šå±‚ä¿æŠ¤ã€å®¡è®¡å’Œç®¡ç†å‘˜ä¿¡å·ã€‚",
+    "Il portale Ã¨ il punto di accesso. Il desktop aggiunge potenza locale.": "é—¨æˆ·æ˜¯å…¥å£ï¼Œæ¡Œé¢ç«¯æä¾›æœ¬åœ°èƒ½åŠ›ã€‚",
+    "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "å…¬æµ‹ç‰ˆç”¨äºŽæµ‹è¯•çœŸå®žåŠŸèƒ½ï¼šè´¦å·ã€æœç´¢ã€VeloMailã€Cloudã€Toolsã€Publisherã€èŠ‚ç‚¹å’Œ Guardian å®‰å…¨ã€‚",
+    "verifica": "æ£€æŸ¥"
   };
   Object.assign(dict.ru, {
-    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Единый портал для поиска, общения, защиты файлов и публикации зон Velora",
-    "Entra nel portale": "Войти в портал",
-    "Scarica beta": "Скачать бета",
-    "Browser integrato": "Встроенный браузер",
-    "Zone, guide, tools, contenuti Velora": "Зоны, руководства, инструменты, контент Velora",
-    "Proteggi file": "Защитить файлы",
-    "Cloud personale con account unico": "Личное облако с единым аккаунтом",
-    "Usa VeloMail": "Открыть VeloMail",
-    "Messaggi tra identità Velora": "Сообщения между идентичностями Velora",
-    "Pubblica una zona": "Опубликовать зону",
-    "Validazione, manifest e messa online": "Проверка, manifest и публикация онлайн",
-    "Rete operativa": "Сеть работает",
-    "Guardian attivo": "Guardian активен",
-    "Accesso immediato da browser": "Быстрый доступ из браузера",
-    "Strumenti pronti per uso quotidiano": "Инструменты для ежедневного использования",
-    "Controllo sito, upload e stato online": "Проверка сайта, загрузка и онлайн-статус",
-    "Protezione account, cloud e attività sensibili": "Защита аккаунта, cloud и чувствительных действий"
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Ð•Ð´Ð¸Ð½Ñ‹Ð¹ Ð¿Ð¾Ñ€Ñ‚Ð°Ð» Ð´Ð»Ñ Ð¿Ð¾Ð¸ÑÐºÐ°, Ð¾Ð±Ñ‰ÐµÐ½Ð¸Ñ, Ð·Ð°Ñ‰Ð¸Ñ‚Ñ‹ Ñ„Ð°Ð¹Ð»Ð¾Ð² Ð¸ Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ°Ñ†Ð¸Ð¸ Ð·Ð¾Ð½ Velora",
+    "Entra nel portale": "Ð’Ð¾Ð¹Ñ‚Ð¸ Ð² Ð¿Ð¾Ñ€Ñ‚Ð°Ð»",
+    "Scarica beta": "Ð¡ÐºÐ°Ñ‡Ð°Ñ‚ÑŒ Ð±ÐµÑ‚Ð°",
+    "Browser integrato": "Ð’ÑÑ‚Ñ€Ð¾ÐµÐ½Ð½Ñ‹Ð¹ Ð±Ñ€Ð°ÑƒÐ·ÐµÑ€",
+    "Zone, guide, tools, contenuti Velora": "Ð—Ð¾Ð½Ñ‹, Ñ€ÑƒÐºÐ¾Ð²Ð¾Ð´ÑÑ‚Ð²Ð°, Ð¸Ð½ÑÑ‚Ñ€ÑƒÐ¼ÐµÐ½Ñ‚Ñ‹, ÐºÐ¾Ð½Ñ‚ÐµÐ½Ñ‚ Velora",
+    "Proteggi file": "Ð—Ð°Ñ‰Ð¸Ñ‚Ð¸Ñ‚ÑŒ Ñ„Ð°Ð¹Ð»Ñ‹",
+    "Cloud personale con account unico": "Ð›Ð¸Ñ‡Ð½Ð¾Ðµ Ð¾Ð±Ð»Ð°ÐºÐ¾ Ñ ÐµÐ´Ð¸Ð½Ñ‹Ð¼ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚Ð¾Ð¼",
+    "Usa VeloMail": "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ VeloMail",
+    "Messaggi tra identitÃ  Velora": "Ð¡Ð¾Ð¾Ð±Ñ‰ÐµÐ½Ð¸Ñ Ð¼ÐµÐ¶Ð´Ñƒ Ð¸Ð´ÐµÐ½Ñ‚Ð¸Ñ‡Ð½Ð¾ÑÑ‚ÑÐ¼Ð¸ Velora",
+    "Pubblica una zona": "ÐžÐ¿ÑƒÐ±Ð»Ð¸ÐºÐ¾Ð²Ð°Ñ‚ÑŒ Ð·Ð¾Ð½Ñƒ",
+    "Validazione, manifest e messa online": "ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ°, manifest Ð¸ Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ°Ñ†Ð¸Ñ Ð¾Ð½Ð»Ð°Ð¹Ð½",
+    "Rete operativa": "Ð¡ÐµÑ‚ÑŒ Ñ€Ð°Ð±Ð¾Ñ‚Ð°ÐµÑ‚",
+    "Guardian attivo": "Guardian Ð°ÐºÑ‚Ð¸Ð²ÐµÐ½",
+    "Accesso immediato da browser": "Ð‘Ñ‹ÑÑ‚Ñ€Ñ‹Ð¹ Ð´Ð¾ÑÑ‚ÑƒÐ¿ Ð¸Ð· Ð±Ñ€Ð°ÑƒÐ·ÐµÑ€Ð°",
+    "Strumenti pronti per uso quotidiano": "Ð˜Ð½ÑÑ‚Ñ€ÑƒÐ¼ÐµÐ½Ñ‚Ñ‹ Ð´Ð»Ñ ÐµÐ¶ÐµÐ´Ð½ÐµÐ²Ð½Ð¾Ð³Ð¾ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ð½Ð¸Ñ",
+    "Controllo sito, upload e stato online": "ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ° ÑÐ°Ð¹Ñ‚Ð°, Ð·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð¸ Ð¾Ð½Ð»Ð°Ð¹Ð½-ÑÑ‚Ð°Ñ‚ÑƒÑ",
+    "Protezione account, cloud e attivitÃ  sensibili": "Ð—Ð°Ñ‰Ð¸Ñ‚Ð° Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚Ð°, cloud Ð¸ Ñ‡ÑƒÐ²ÑÑ‚Ð²Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ñ‹Ñ… Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ð¹"
   });
   Object.assign(dict.zh, {
-    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "一个门户即可搜索、通信、保护文件并发布 Velora 区域",
-    "Entra nel portale": "进入门户",
-    "Scarica beta": "下载 Beta",
-    "Browser integrato": "集成浏览器",
-    "Zone, guide, tools, contenuti Velora": "区域、指南、工具、Velora 内容",
-    "Proteggi file": "保护文件",
-    "Cloud personale con account unico": "单一账号的个人 Cloud",
-    "Usa VeloMail": "使用 VeloMail",
-    "Messaggi tra identità Velora": "Velora 身份之间的消息",
-    "Pubblica una zona": "发布区域",
-    "Validazione, manifest e messa online": "验证、manifest 与上线",
-    "Rete operativa": "网络运行中",
-    "Guardian attivo": "Guardian 已启用",
-    "Accesso immediato da browser": "浏览器即时访问",
-    "Strumenti pronti per uso quotidiano": "日常可用工具",
-    "Controllo sito, upload e stato online": "站点检查、上传和在线状态",
-    "Protezione account, cloud e attività sensibili": "账号、cloud 和敏感操作保护"
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "ä¸€ä¸ªé—¨æˆ·å³å¯æœç´¢ã€é€šä¿¡ã€ä¿æŠ¤æ–‡ä»¶å¹¶å‘å¸ƒ Velora åŒºåŸŸ",
+    "Entra nel portale": "è¿›å…¥é—¨æˆ·",
+    "Scarica beta": "ä¸‹è½½ Beta",
+    "Browser integrato": "é›†æˆæµè§ˆå™¨",
+    "Zone, guide, tools, contenuti Velora": "åŒºåŸŸã€æŒ‡å—ã€å·¥å…·ã€Velora å†…å®¹",
+    "Proteggi file": "ä¿æŠ¤æ–‡ä»¶",
+    "Cloud personale con account unico": "å•ä¸€è´¦å·çš„ä¸ªäºº Cloud",
+    "Usa VeloMail": "ä½¿ç”¨ VeloMail",
+    "Messaggi tra identitÃ  Velora": "Velora èº«ä»½ä¹‹é—´çš„æ¶ˆæ¯",
+    "Pubblica una zona": "å‘å¸ƒåŒºåŸŸ",
+    "Validazione, manifest e messa online": "éªŒè¯ã€manifest ä¸Žä¸Šçº¿",
+    "Rete operativa": "ç½‘ç»œè¿è¡Œä¸­",
+    "Guardian attivo": "Guardian å·²å¯ç”¨",
+    "Accesso immediato da browser": "æµè§ˆå™¨å³æ—¶è®¿é—®",
+    "Strumenti pronti per uso quotidiano": "æ—¥å¸¸å¯ç”¨å·¥å…·",
+    "Controllo sito, upload e stato online": "ç«™ç‚¹æ£€æŸ¥ã€ä¸Šä¼ å’Œåœ¨çº¿çŠ¶æ€",
+    "Protezione account, cloud e attivitÃ  sensibili": "è´¦å·ã€cloud å’Œæ•æ„Ÿæ“ä½œä¿æŠ¤"
   });
   return dict;
 }
@@ -4218,7 +4235,7 @@ function veloraI18nScript() {
 (() => {
   const key = "velora.language";
   const supported = ["it","en","fr","de","es","ru","zh"];
-  const names = { it:"Italiano", en:"English", fr:"Français", de:"Deutsch", es:"Español", ru:"Русский", zh:"中文" };
+  const names = { it:"Italiano", en:"English", fr:"FranÃ§ais", de:"Deutsch", es:"EspaÃ±ol", ru:"Ð ÑƒÑÑÐºÐ¸Ð¹", zh:"ä¸­æ–‡" };
   const pick = () => {
     const saved = localStorage.getItem(key);
     if (supported.includes(saved)) return saved;
@@ -4232,8 +4249,8 @@ function veloraI18nScript() {
   Object.assign(placeholders.fr ||= {}, { "Cerca o inserisci una zona": "Rechercher ou saisir une zone" });
   Object.assign(placeholders.de ||= {}, { "Cerca o inserisci una zona": "Suchen oder Zone eingeben" });
   Object.assign(placeholders.es ||= {}, { "Cerca o inserisci una zona": "Buscar o introducir una zona" });
-  Object.assign(placeholders.ru ||= {}, { "Cerca o inserisci una zona": "Искать или ввести зону" });
-  Object.assign(placeholders.zh ||= {}, { "Cerca o inserisci una zona": "搜索或输入区域" });
+  Object.assign(placeholders.ru ||= {}, { "Cerca o inserisci una zona": "Ð˜ÑÐºÐ°Ñ‚ÑŒ Ð¸Ð»Ð¸ Ð²Ð²ÐµÑÑ‚Ð¸ Ð·Ð¾Ð½Ñƒ" });
+  Object.assign(placeholders.zh ||= {}, { "Cerca o inserisci una zona": "æœç´¢æˆ–è¾“å…¥åŒºåŸŸ" });
   function tr(text, lang = pick()) {
     const source = String(text || "").trim();
     if (!source || lang === "it") return source;
@@ -4291,9 +4308,9 @@ function zoneTranslationRuntime(address: string) {
     const box=document.querySelector("[data-velora-zone-translate]");
     if(!box || lang==="it") return;
     box.style.display="inline-flex";
-    const label={en:"Translate page",fr:"Traduire la page",de:"Seite übersetzen",es:"Traducir página",ru:"Перевести страницу",zh:"翻译页面"}[lang]||"Translate page";
+    const label={en:"Translate page",fr:"Traduire la page",de:"Seite Ã¼bersetzen",es:"Traducir pÃ¡gina",ru:"ÐŸÐµÑ€ÐµÐ²ÐµÑÑ‚Ð¸ ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ñƒ",zh:"ç¿»è¯‘é¡µé¢"}[lang]||"Translate page";
     box.textContent=label;
-    box.onclick=()=>{window.veloraApplyLanguage&&window.veloraApplyLanguage(document);document.body.dataset.veloraTranslated=lang;box.textContent={en:"Translated",fr:"Traduit",de:"Übersetzt",es:"Traducida",ru:"Переведено",zh:"已翻译"}[lang]||"Translated";};
+    box.onclick=()=>{window.veloraApplyLanguage&&window.veloraApplyLanguage(document);document.body.dataset.veloraTranslated=lang;box.textContent={en:"Translated",fr:"Traduit",de:"Ãœbersetzt",es:"Traducida",ru:"ÐŸÐµÑ€ÐµÐ²ÐµÐ´ÐµÐ½Ð¾",zh:"å·²ç¿»è¯‘"}[lang]||"Translated";};
   }
   window.addEventListener("DOMContentLoaded",ready);
   window.addEventListener("velora:language",ready);
@@ -4306,7 +4323,7 @@ function veloraI18nDictionary() {
     en: {
       "VELORA BETA PUBBLICA": "VELORA PUBLIC BETA", "Naviga zone. Pubblica siti. Proteggi dati.": "Browse zones. Publish sites. Protect data.", "Un portale operativo sopra il web tradizionale: account unico, ricerca interna, siti pubblicati, VeloMail, Cloud, Tools e nodi nello stesso ambiente.": "An operational portal above the traditional web: unified account, internal search, published sites, VeloMail, Cloud, Tools and nodes in one environment.",
       "Portale online": "Portal online", "Account @velora": "@velora account", "Windows e Mac": "Windows and Mac", "Mobile ready": "Mobile ready", "Apri": "Open", "Zona": "Zone", "online": "online", "attivo": "active", "protetto": "protected", "pronti": "ready", "Search, VeloMail, Cloud e Publisher condividono la stessa sessione": "Search, VeloMail, Cloud and Publisher share the same session",
-      "Entra senza attrito": "Enter without friction", "Apri zone reali": "Open real zones", "Pubblica con controllo": "Publish with control", "Gestisci sicurezza": "Manage security", "Da browser o desktop. Un solo account per portale, mail, cloud, forum e pubblicazione.": "From browser or desktop. One account for portal, mail, cloud, forum and publishing.", "Il motore interno porta a siti pubblicati, contenuti Oceano e strumenti Velora.": "The internal engine opens published sites, Oceano content and Velora tools.", "Manifest, validazione, login Velora e stato pubblicazione leggibile prima di andare online.": "Manifest, validation, Velora Login and readable publishing status before going online.", "Guardian, audit, privacy, cookie tecnici e protezione Cloud sono parte dell’esperienza.": "Guardian, audit, privacy, technical cookies and Cloud protection are part of the experience.", "PER CHI LO PROVA OGGI": "FOR PEOPLE TRYING IT TODAY", "Velora è già usabile dal portale. Il desktop aggiunge potenza locale.": "Velora is already usable from the portal. Desktop adds local power.", "La beta serve a testare accesso, ricerca, zone pubblicate, VeloMail, Cloud, Tools e Publisher con persone reali, non con schermate simulate.": "The beta tests access, search, published zones, VeloMail, Cloud, Tools and Publisher with real people, not simulated screens.",
+      "Entra senza attrito": "Enter without friction", "Apri zone reali": "Open real zones", "Pubblica con controllo": "Publish with control", "Gestisci sicurezza": "Manage security", "Da browser o desktop. Un solo account per portale, mail, cloud, forum e pubblicazione.": "From browser or desktop. One account for portal, mail, cloud, forum and publishing.", "Il motore interno porta a siti pubblicati, contenuti Oceano e strumenti Velora.": "The internal engine opens published sites, Oceano content and Velora tools.", "Manifest, validazione, login Velora e stato pubblicazione leggibile prima di andare online.": "Manifest, validation, Velora Login and readable publishing status before going online.", "Guardian, audit, privacy, cookie tecnici e protezione Cloud sono parte dellâ€™esperienza.": "Guardian, audit, privacy, technical cookies and Cloud protection are part of the experience.", "PER CHI LO PROVA OGGI": "FOR PEOPLE TRYING IT TODAY", "Velora Ã¨ giÃ  usabile dal portale. Il desktop aggiunge potenza locale.": "Velora is already usable from the portal. Desktop adds local power.", "La beta serve a testare accesso, ricerca, zone pubblicate, VeloMail, Cloud, Tools e Publisher con persone reali, non con schermate simulate.": "The beta tests access, search, published zones, VeloMail, Cloud, Tools and Publisher with real people, not simulated screens.",
       "VELORA - L'UPPER WEB": "VELORA - THE UPPER WEB", "Un nuovo livello per navigare, pubblicare e proteggere contenuti": "A new level for browsing, publishing and protecting content", "HTTPS attivo": "HTTPS active", "Account unico": "Unified account", "Beta pubblica": "Public beta", "Entra dal portale": "Enter from the portal", "Cerca zone e contenuti": "Search zones and content", "Pubblica siti Velora": "Publish Velora sites", "Proteggi account e cloud": "Protect account and cloud", "VISIONE": "VISION", "Velora non sostituisce Internet. Lo eleva.": "Velora does not replace the Internet. It elevates it.",
       "Usa Velora subito da browser, iPhone, Android, Windows e Mac senza installazione obbligatoria.": "Use Velora immediately from browser, iPhone, Android, Windows and Mac with no mandatory installation.", "Apri siti pubblicati, contenuti Oceano e strumenti Velora da un motore interno dedicato.": "Open published sites, Oceano content and Velora tools from a dedicated internal engine.", "Prepara manifest, login Velora e validazione per rendere online progetti e applicazioni.": "Prepare manifests, Velora Login and validation to bring projects and applications online.", "Guardian, audit, policy cookie, privacy e controlli sicurezza sono integrati nel sistema.": "Guardian, audit, cookie policy, privacy and security checks are built into the system.", "Un ambiente sopra il web tradizionale dove identita, pubblicazione, ricerca, comunicazione e protezione lavorano insieme invece di restare separati.": "An environment above the traditional web where identity, publishing, search, communication and protection work together instead of staying separate.",
       "Portale": "Portal", "Sicurezza": "Security", "Guida": "Guide", "Termini": "Terms", "Accetta": "Accept", "Leggi policy": "Read policy",
@@ -4320,59 +4337,59 @@ function veloraI18nDictionary() {
       "Traduci": "Translate", "Riassumi": "Summarize", "Wallet check": "Wallet check", "Privacy check": "Privacy check", "Risultato pronto qui": "Result appears here"
     },
     fr: {
-      "Portale": "Portail", "Sicurezza": "Sécurité", "Guida": "Guide", "Termini": "Conditions", "Accetta": "Accepter", "Leggi policy": "Lire la politique",
-      "Velora Beta pubblica": "Bêta publique Velora", "Apri Velora": "Ouvrir Velora", "Scarica app beta": "Télécharger la bêta", "Scarica Velora": "Télécharger Velora",
-      "Portale Velora": "Portail Velora", "Scarica per Windows": "Télécharger pour Windows", "Scarica per Mac Apple Silicon": "Télécharger pour Mac Apple Silicon", "Scarica per Mac Intel": "Télécharger pour Mac Intel", "Scarica nodo NAS": "Télécharger le nœud NAS", "Verifica SHA-256": "Vérifier SHA-256",
-      "Versione": "Version", "Data build": "Date de build", "Stato Mac": "État Mac", "Installazione su Mac": "Installation sur Mac", "Wallet Mining Partner": "Wallet Mining Partner",
-      "Home": "Accueil", "Browser": "Navigateur", "Search": "Recherche", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Outils", "Forum": "Forum", "Mining": "Mining", "Nodi": "Nœuds", "Oceano": "Oceano", "Impostazioni": "Réglages", "Account": "Compte",
-      "Cerca": "Rechercher", "Tema": "Thème", "Profilo": "Profil", "Installa": "Installer", "Esci": "Déconnexion", "Accedi a Velora": "Connexion à Velora", "Crea account": "Créer un compte", "Accedi": "Connexion", "Account attivo": "Compte actif", "Accesso non effettuato": "Non connecté", "Accesso effettuato": "Connexion réussie", "Account creato": "Compte créé",
-      "Portale universale": "Portail universel", "Velora senza installazione": "Velora sans installation", "Dashboard": "Tableau de bord", "Cosa posso fare ora": "Que puis-je faire maintenant", "Uso rapido": "Démarrage rapide", "Come salvarlo": "Comment l’enregistrer",
-      "Cerca ora": "Rechercher maintenant", "Apri VeloMail": "Ouvrir VeloMail", "Prepara sito": "Préparer le site", "Apri zona": "Ouvrir la zone", "Carica": "Téléverser", "File": "Fichiers", "Tools disponibili": "Outils disponibles", "Invia": "Envoyer", "Aggiorna": "Actualiser", "Controlla NAS": "Vérifier le NAS",
-      "Traduci": "Traduire", "Riassumi": "Résumer", "Wallet check": "Vérifier wallet", "Privacy check": "Contrôle confidentialité", "Risultato pronto qui": "Le résultat s’affiche ici"
+      "Portale": "Portail", "Sicurezza": "SÃ©curitÃ©", "Guida": "Guide", "Termini": "Conditions", "Accetta": "Accepter", "Leggi policy": "Lire la politique",
+      "Velora Beta pubblica": "BÃªta publique Velora", "Apri Velora": "Ouvrir Velora", "Scarica app beta": "TÃ©lÃ©charger la bÃªta", "Scarica Velora": "TÃ©lÃ©charger Velora",
+      "Portale Velora": "Portail Velora", "Scarica per Windows": "TÃ©lÃ©charger pour Windows", "Scarica per Mac Apple Silicon": "TÃ©lÃ©charger pour Mac Apple Silicon", "Scarica per Mac Intel": "TÃ©lÃ©charger pour Mac Intel", "Scarica nodo NAS": "TÃ©lÃ©charger le nÅ“ud NAS", "Verifica SHA-256": "VÃ©rifier SHA-256",
+      "Versione": "Version", "Data build": "Date de build", "Stato Mac": "Ã‰tat Mac", "Installazione su Mac": "Installation sur Mac", "Wallet Mining Partner": "Wallet Mining Partner",
+      "Home": "Accueil", "Browser": "Navigateur", "Search": "Recherche", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Outils", "Forum": "Forum", "Mining": "Mining", "Nodi": "NÅ“uds", "Oceano": "Oceano", "Impostazioni": "RÃ©glages", "Account": "Compte",
+      "Cerca": "Rechercher", "Tema": "ThÃ¨me", "Profilo": "Profil", "Installa": "Installer", "Esci": "DÃ©connexion", "Accedi a Velora": "Connexion Ã  Velora", "Crea account": "CrÃ©er un compte", "Accedi": "Connexion", "Account attivo": "Compte actif", "Accesso non effettuato": "Non connectÃ©", "Accesso effettuato": "Connexion rÃ©ussie", "Account creato": "Compte crÃ©Ã©",
+      "Portale universale": "Portail universel", "Velora senza installazione": "Velora sans installation", "Dashboard": "Tableau de bord", "Cosa posso fare ora": "Que puis-je faire maintenant", "Uso rapido": "DÃ©marrage rapide", "Come salvarlo": "Comment lâ€™enregistrer",
+      "Cerca ora": "Rechercher maintenant", "Apri VeloMail": "Ouvrir VeloMail", "Prepara sito": "PrÃ©parer le site", "Apri zona": "Ouvrir la zone", "Carica": "TÃ©lÃ©verser", "File": "Fichiers", "Tools disponibili": "Outils disponibles", "Invia": "Envoyer", "Aggiorna": "Actualiser", "Controlla NAS": "VÃ©rifier le NAS",
+      "Traduci": "Traduire", "Riassumi": "RÃ©sumer", "Wallet check": "VÃ©rifier wallet", "Privacy check": "ContrÃ´le confidentialitÃ©", "Risultato pronto qui": "Le rÃ©sultat sâ€™affiche ici"
     },
     de: {
       "Portale": "Portal", "Sicurezza": "Sicherheit", "Guida": "Anleitung", "Termini": "Bedingungen", "Accetta": "Akzeptieren", "Leggi policy": "Richtlinie lesen",
-      "Velora Beta pubblica": "Öffentliche Velora Beta", "Apri Velora": "Velora öffnen", "Scarica app beta": "Beta-App laden", "Scarica Velora": "Velora herunterladen",
-      "Portale Velora": "Velora Portal", "Scarica per Windows": "Für Windows herunterladen", "Scarica per Mac Apple Silicon": "Für Mac Apple Silicon herunterladen", "Scarica per Mac Intel": "Für Mac Intel herunterladen", "Scarica nodo NAS": "NAS-Knoten laden", "Verifica SHA-256": "SHA-256 prüfen",
+      "Velora Beta pubblica": "Ã–ffentliche Velora Beta", "Apri Velora": "Velora Ã¶ffnen", "Scarica app beta": "Beta-App laden", "Scarica Velora": "Velora herunterladen",
+      "Portale Velora": "Velora Portal", "Scarica per Windows": "FÃ¼r Windows herunterladen", "Scarica per Mac Apple Silicon": "FÃ¼r Mac Apple Silicon herunterladen", "Scarica per Mac Intel": "FÃ¼r Mac Intel herunterladen", "Scarica nodo NAS": "NAS-Knoten laden", "Verifica SHA-256": "SHA-256 prÃ¼fen",
       "Versione": "Version", "Data build": "Build-Datum", "Stato Mac": "Mac-Status", "Installazione su Mac": "Installation auf Mac", "Wallet Mining Partner": "Mining-Partner-Wallet",
       "Home": "Start", "Browser": "Browser", "Search": "Suche", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Tools", "Forum": "Forum", "Mining": "Mining", "Nodi": "Knoten", "Oceano": "Oceano", "Impostazioni": "Einstellungen", "Account": "Konto",
       "Cerca": "Suchen", "Tema": "Design", "Profilo": "Profil", "Installa": "Installieren", "Esci": "Abmelden", "Accedi a Velora": "Bei Velora anmelden", "Crea account": "Konto erstellen", "Accedi": "Anmelden", "Account attivo": "Aktives Konto", "Accesso non effettuato": "Nicht angemeldet", "Accesso effettuato": "Angemeldet", "Account creato": "Konto erstellt",
       "Portale universale": "Universelles Portal", "Velora senza installazione": "Velora ohne Installation", "Dashboard": "Dashboard", "Cosa posso fare ora": "Was kann ich jetzt tun", "Uso rapido": "Schnellstart", "Come salvarlo": "So speichern",
-      "Cerca ora": "Jetzt suchen", "Apri VeloMail": "VeloMail öffnen", "Prepara sito": "Website vorbereiten", "Apri zona": "Zone öffnen", "Carica": "Hochladen", "File": "Dateien", "Tools disponibili": "Verfügbare Tools", "Invia": "Senden", "Aggiorna": "Aktualisieren", "Controlla NAS": "NAS prüfen",
-      "Traduci": "Übersetzen", "Riassumi": "Zusammenfassen", "Wallet check": "Wallet prüfen", "Privacy check": "Datenschutz prüfen", "Risultato pronto qui": "Ergebnis erscheint hier"
+      "Cerca ora": "Jetzt suchen", "Apri VeloMail": "VeloMail Ã¶ffnen", "Prepara sito": "Website vorbereiten", "Apri zona": "Zone Ã¶ffnen", "Carica": "Hochladen", "File": "Dateien", "Tools disponibili": "VerfÃ¼gbare Tools", "Invia": "Senden", "Aggiorna": "Aktualisieren", "Controlla NAS": "NAS prÃ¼fen",
+      "Traduci": "Ãœbersetzen", "Riassumi": "Zusammenfassen", "Wallet check": "Wallet prÃ¼fen", "Privacy check": "Datenschutz prÃ¼fen", "Risultato pronto qui": "Ergebnis erscheint hier"
     },
     es: {
-      "Portale": "Portal", "Sicurezza": "Seguridad", "Guida": "Guía", "Termini": "Términos", "Accetta": "Aceptar", "Leggi policy": "Leer política",
-      "Velora Beta pubblica": "Beta pública de Velora", "Apri Velora": "Abrir Velora", "Scarica app beta": "Descargar beta", "Scarica Velora": "Descargar Velora",
+      "Portale": "Portal", "Sicurezza": "Seguridad", "Guida": "GuÃ­a", "Termini": "TÃ©rminos", "Accetta": "Aceptar", "Leggi policy": "Leer polÃ­tica",
+      "Velora Beta pubblica": "Beta pÃºblica de Velora", "Apri Velora": "Abrir Velora", "Scarica app beta": "Descargar beta", "Scarica Velora": "Descargar Velora",
       "Portale Velora": "Portal Velora", "Scarica per Windows": "Descargar para Windows", "Scarica per Mac Apple Silicon": "Descargar para Mac Apple Silicon", "Scarica per Mac Intel": "Descargar para Mac Intel", "Scarica nodo NAS": "Descargar nodo NAS", "Verifica SHA-256": "Verificar SHA-256",
-      "Versione": "Versión", "Data build": "Fecha de build", "Stato Mac": "Estado Mac", "Installazione su Mac": "Instalación en Mac", "Wallet Mining Partner": "Wallet Mining Partner",
+      "Versione": "VersiÃ³n", "Data build": "Fecha de build", "Stato Mac": "Estado Mac", "Installazione su Mac": "InstalaciÃ³n en Mac", "Wallet Mining Partner": "Wallet Mining Partner",
       "Home": "Inicio", "Browser": "Navegador", "Search": "Buscar", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Herramientas", "Forum": "Foro", "Mining": "Mining", "Nodi": "Nodos", "Oceano": "Oceano", "Impostazioni": "Ajustes", "Account": "Cuenta",
-      "Cerca": "Buscar", "Tema": "Tema", "Profilo": "Perfil", "Installa": "Instalar", "Esci": "Salir", "Accedi a Velora": "Acceder a Velora", "Crea account": "Crear cuenta", "Accedi": "Entrar", "Account attivo": "Cuenta activa", "Accesso non effettuato": "Sin sesión", "Accesso effettuato": "Sesión iniciada", "Account creato": "Cuenta creada",
-      "Portale universale": "Portal universal", "Velora senza installazione": "Velora sin instalación", "Dashboard": "Panel", "Cosa posso fare ora": "Qué puedo hacer ahora", "Uso rapido": "Inicio rápido", "Come salvarlo": "Cómo guardarlo",
+      "Cerca": "Buscar", "Tema": "Tema", "Profilo": "Perfil", "Installa": "Instalar", "Esci": "Salir", "Accedi a Velora": "Acceder a Velora", "Crea account": "Crear cuenta", "Accedi": "Entrar", "Account attivo": "Cuenta activa", "Accesso non effettuato": "Sin sesiÃ³n", "Accesso effettuato": "SesiÃ³n iniciada", "Account creato": "Cuenta creada",
+      "Portale universale": "Portal universal", "Velora senza installazione": "Velora sin instalaciÃ³n", "Dashboard": "Panel", "Cosa posso fare ora": "QuÃ© puedo hacer ahora", "Uso rapido": "Inicio rÃ¡pido", "Come salvarlo": "CÃ³mo guardarlo",
       "Cerca ora": "Buscar ahora", "Apri VeloMail": "Abrir VeloMail", "Prepara sito": "Preparar sitio", "Apri zona": "Abrir zona", "Carica": "Subir", "File": "Archivos", "Tools disponibili": "Herramientas disponibles", "Invia": "Enviar", "Aggiorna": "Actualizar", "Controlla NAS": "Comprobar NAS",
-      "Traduci": "Traducir", "Riassumi": "Resumir", "Wallet check": "Comprobar wallet", "Privacy check": "Comprobar privacidad", "Risultato pronto qui": "El resultado aparece aquí"
+      "Traduci": "Traducir", "Riassumi": "Resumir", "Wallet check": "Comprobar wallet", "Privacy check": "Comprobar privacidad", "Risultato pronto qui": "El resultado aparece aquÃ­"
     },
     ru: {
-      "Portale": "Портал", "Sicurezza": "Безопасность", "Guida": "Руководство", "Termini": "Условия", "Accetta": "Принять", "Leggi policy": "Открыть правила",
-      "Velora Beta pubblica": "Публичная бета Velora", "Apri Velora": "Открыть Velora", "Scarica app beta": "Скачать бета-приложение", "Scarica Velora": "Скачать Velora",
-      "Portale Velora": "Портал Velora", "Scarica per Windows": "Скачать для Windows", "Scarica per Mac Apple Silicon": "Скачать для Mac Apple Silicon", "Scarica per Mac Intel": "Скачать для Mac Intel", "Scarica nodo NAS": "Скачать NAS-узел", "Verifica SHA-256": "Проверить SHA-256",
-      "Versione": "Версия", "Data build": "Дата сборки", "Stato Mac": "Статус Mac", "Installazione su Mac": "Установка на Mac", "Wallet Mining Partner": "Кошелёк Mining Partner",
-      "Home": "Главная", "Browser": "Браузер", "Search": "Поиск", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Инструменты", "Forum": "Форум", "Mining": "Mining", "Nodi": "Узлы", "Oceano": "Oceano", "Impostazioni": "Настройки", "Account": "Аккаунт",
-      "Cerca": "Поиск", "Tema": "Тема", "Profilo": "Профиль", "Installa": "Установить", "Esci": "Выйти", "Accedi a Velora": "Войти в Velora", "Crea account": "Создать аккаунт", "Accedi": "Войти", "Account attivo": "Активный аккаунт", "Accesso non effettuato": "Вход не выполнен", "Accesso effettuato": "Вход выполнен", "Account creato": "Аккаунт создан",
-      "Portale universale": "Универсальный портал", "Velora senza installazione": "Velora без установки", "Dashboard": "Панель", "Cosa posso fare ora": "Что можно сделать сейчас", "Uso rapido": "Быстрый старт", "Come salvarlo": "Как сохранить",
-      "Cerca ora": "Искать сейчас", "Apri VeloMail": "Открыть VeloMail", "Prepara sito": "Подготовить сайт", "Apri zona": "Открыть зону", "Carica": "Загрузить", "File": "Файлы", "Tools disponibili": "Доступные инструменты", "Invia": "Отправить", "Aggiorna": "Обновить", "Controlla NAS": "Проверить NAS",
-      "Traduci": "Перевести", "Riassumi": "Кратко изложить", "Wallet check": "Проверка кошелька", "Privacy check": "Проверка приватности", "Risultato pronto qui": "Результат появится здесь"
+      "Portale": "ÐŸÐ¾Ñ€Ñ‚Ð°Ð»", "Sicurezza": "Ð‘ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ð¾ÑÑ‚ÑŒ", "Guida": "Ð ÑƒÐºÐ¾Ð²Ð¾Ð´ÑÑ‚Ð²Ð¾", "Termini": "Ð£ÑÐ»Ð¾Ð²Ð¸Ñ", "Accetta": "ÐŸÑ€Ð¸Ð½ÑÑ‚ÑŒ", "Leggi policy": "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ð¿Ñ€Ð°Ð²Ð¸Ð»Ð°",
+      "Velora Beta pubblica": "ÐŸÑƒÐ±Ð»Ð¸Ñ‡Ð½Ð°Ñ Ð±ÐµÑ‚Ð° Velora", "Apri Velora": "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Velora", "Scarica app beta": "Ð¡ÐºÐ°Ñ‡Ð°Ñ‚ÑŒ Ð±ÐµÑ‚Ð°-Ð¿Ñ€Ð¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ðµ", "Scarica Velora": "Ð¡ÐºÐ°Ñ‡Ð°Ñ‚ÑŒ Velora",
+      "Portale Velora": "ÐŸÐ¾Ñ€Ñ‚Ð°Ð» Velora", "Scarica per Windows": "Ð¡ÐºÐ°Ñ‡Ð°Ñ‚ÑŒ Ð´Ð»Ñ Windows", "Scarica per Mac Apple Silicon": "Ð¡ÐºÐ°Ñ‡Ð°Ñ‚ÑŒ Ð´Ð»Ñ Mac Apple Silicon", "Scarica per Mac Intel": "Ð¡ÐºÐ°Ñ‡Ð°Ñ‚ÑŒ Ð´Ð»Ñ Mac Intel", "Scarica nodo NAS": "Ð¡ÐºÐ°Ñ‡Ð°Ñ‚ÑŒ NAS-ÑƒÐ·ÐµÐ»", "Verifica SHA-256": "ÐŸÑ€Ð¾Ð²ÐµÑ€Ð¸Ñ‚ÑŒ SHA-256",
+      "Versione": "Ð’ÐµÑ€ÑÐ¸Ñ", "Data build": "Ð”Ð°Ñ‚Ð° ÑÐ±Ð¾Ñ€ÐºÐ¸", "Stato Mac": "Ð¡Ñ‚Ð°Ñ‚ÑƒÑ Mac", "Installazione su Mac": "Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° Ð½Ð° Mac", "Wallet Mining Partner": "ÐšÐ¾ÑˆÐµÐ»Ñ‘Ðº Mining Partner",
+      "Home": "Ð“Ð»Ð°Ð²Ð½Ð°Ñ", "Browser": "Ð‘Ñ€Ð°ÑƒÐ·ÐµÑ€", "Search": "ÐŸÐ¾Ð¸ÑÐº", "Cloud": "Cloud", "Publisher": "Publisher", "Tools": "Ð˜Ð½ÑÑ‚Ñ€ÑƒÐ¼ÐµÐ½Ñ‚Ñ‹", "Forum": "Ð¤Ð¾Ñ€ÑƒÐ¼", "Mining": "Mining", "Nodi": "Ð£Ð·Ð»Ñ‹", "Oceano": "Oceano", "Impostazioni": "ÐÐ°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ¸", "Account": "ÐÐºÐºÐ°ÑƒÐ½Ñ‚",
+      "Cerca": "ÐŸÐ¾Ð¸ÑÐº", "Tema": "Ð¢ÐµÐ¼Ð°", "Profilo": "ÐŸÑ€Ð¾Ñ„Ð¸Ð»ÑŒ", "Installa": "Ð£ÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ", "Esci": "Ð’Ñ‹Ð¹Ñ‚Ð¸", "Accedi a Velora": "Ð’Ð¾Ð¹Ñ‚Ð¸ Ð² Velora", "Crea account": "Ð¡Ð¾Ð·Ð´Ð°Ñ‚ÑŒ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚", "Accedi": "Ð’Ð¾Ð¹Ñ‚Ð¸", "Account attivo": "ÐÐºÑ‚Ð¸Ð²Ð½Ñ‹Ð¹ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚", "Accesso non effettuato": "Ð’Ñ…Ð¾Ð´ Ð½Ðµ Ð²Ñ‹Ð¿Ð¾Ð»Ð½ÐµÐ½", "Accesso effettuato": "Ð’Ñ…Ð¾Ð´ Ð²Ñ‹Ð¿Ð¾Ð»Ð½ÐµÐ½", "Account creato": "ÐÐºÐºÐ°ÑƒÐ½Ñ‚ ÑÐ¾Ð·Ð´Ð°Ð½",
+      "Portale universale": "Ð£Ð½Ð¸Ð²ÐµÑ€ÑÐ°Ð»ÑŒÐ½Ñ‹Ð¹ Ð¿Ð¾Ñ€Ñ‚Ð°Ð»", "Velora senza installazione": "Velora Ð±ÐµÐ· ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸", "Dashboard": "ÐŸÐ°Ð½ÐµÐ»ÑŒ", "Cosa posso fare ora": "Ð§Ñ‚Ð¾ Ð¼Ð¾Ð¶Ð½Ð¾ ÑÐ´ÐµÐ»Ð°Ñ‚ÑŒ ÑÐµÐ¹Ñ‡Ð°Ñ", "Uso rapido": "Ð‘Ñ‹ÑÑ‚Ñ€Ñ‹Ð¹ ÑÑ‚Ð°Ñ€Ñ‚", "Come salvarlo": "ÐšÐ°Ðº ÑÐ¾Ñ…Ñ€Ð°Ð½Ð¸Ñ‚ÑŒ",
+      "Cerca ora": "Ð˜ÑÐºÐ°Ñ‚ÑŒ ÑÐµÐ¹Ñ‡Ð°Ñ", "Apri VeloMail": "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ VeloMail", "Prepara sito": "ÐŸÐ¾Ð´Ð³Ð¾Ñ‚Ð¾Ð²Ð¸Ñ‚ÑŒ ÑÐ°Ð¹Ñ‚", "Apri zona": "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ð·Ð¾Ð½Ñƒ", "Carica": "Ð—Ð°Ð³Ñ€ÑƒÐ·Ð¸Ñ‚ÑŒ", "File": "Ð¤Ð°Ð¹Ð»Ñ‹", "Tools disponibili": "Ð”Ð¾ÑÑ‚ÑƒÐ¿Ð½Ñ‹Ðµ Ð¸Ð½ÑÑ‚Ñ€ÑƒÐ¼ÐµÐ½Ñ‚Ñ‹", "Invia": "ÐžÑ‚Ð¿Ñ€Ð°Ð²Ð¸Ñ‚ÑŒ", "Aggiorna": "ÐžÐ±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ", "Controlla NAS": "ÐŸÑ€Ð¾Ð²ÐµÑ€Ð¸Ñ‚ÑŒ NAS",
+      "Traduci": "ÐŸÐµÑ€ÐµÐ²ÐµÑÑ‚Ð¸", "Riassumi": "ÐšÑ€Ð°Ñ‚ÐºÐ¾ Ð¸Ð·Ð»Ð¾Ð¶Ð¸Ñ‚ÑŒ", "Wallet check": "ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ° ÐºÐ¾ÑˆÐµÐ»ÑŒÐºÐ°", "Privacy check": "ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ° Ð¿Ñ€Ð¸Ð²Ð°Ñ‚Ð½Ð¾ÑÑ‚Ð¸", "Risultato pronto qui": "Ð ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚ Ð¿Ð¾ÑÐ²Ð¸Ñ‚ÑÑ Ð·Ð´ÐµÑÑŒ"
     },
     zh: {
-      "Portale": "门户", "Sicurezza": "安全", "Guida": "指南", "Termini": "条款", "Accetta": "接受", "Leggi policy": "阅读政策",
-      "Velora Beta pubblica": "Velora 公开测试版", "Apri Velora": "打开 Velora", "Scarica app beta": "下载测试版应用", "Scarica Velora": "下载 Velora",
-      "Portale Velora": "Velora 门户", "Scarica per Windows": "下载 Windows 版", "Scarica per Mac Apple Silicon": "下载 Mac Apple Silicon 版", "Scarica per Mac Intel": "下载 Mac Intel 版", "Scarica nodo NAS": "下载 NAS 节点", "Verifica SHA-256": "验证 SHA-256",
-      "Versione": "版本", "Data build": "构建日期", "Stato Mac": "Mac 状态", "Installazione su Mac": "在 Mac 上安装", "Wallet Mining Partner": "Mining Partner 钱包",
-      "Home": "首页", "Browser": "浏览器", "Search": "搜索", "Cloud": "云", "Publisher": "发布", "Tools": "工具", "Forum": "论坛", "Mining": "挖矿", "Nodi": "节点", "Oceano": "Oceano", "Impostazioni": "设置", "Account": "账户",
-      "Cerca": "搜索", "Tema": "主题", "Profilo": "资料", "Installa": "安装", "Esci": "退出", "Accedi a Velora": "登录 Velora", "Crea account": "创建账户", "Accedi": "登录", "Account attivo": "当前账户", "Accesso non effettuato": "未登录", "Accesso effettuato": "已登录", "Account creato": "账户已创建",
-      "Portale universale": "通用门户", "Velora senza installazione": "无需安装即可使用 Velora", "Dashboard": "仪表板", "Cosa posso fare ora": "现在可以做什么", "Uso rapido": "快速开始", "Come salvarlo": "如何保存",
-      "Cerca ora": "立即搜索", "Apri VeloMail": "打开 VeloMail", "Prepara sito": "准备网站", "Apri zona": "打开区域", "Carica": "上传", "File": "文件", "Tools disponibili": "可用工具", "Invia": "发送", "Aggiorna": "刷新", "Controlla NAS": "检查 NAS",
-      "Traduci": "翻译", "Riassumi": "摘要", "Wallet check": "钱包检查", "Privacy check": "隐私检查", "Risultato pronto qui": "结果显示在这里"
+      "Portale": "é—¨æˆ·", "Sicurezza": "å®‰å…¨", "Guida": "æŒ‡å—", "Termini": "æ¡æ¬¾", "Accetta": "æŽ¥å—", "Leggi policy": "é˜…è¯»æ”¿ç­–",
+      "Velora Beta pubblica": "Velora å…¬å¼€æµ‹è¯•ç‰ˆ", "Apri Velora": "æ‰“å¼€ Velora", "Scarica app beta": "ä¸‹è½½æµ‹è¯•ç‰ˆåº”ç”¨", "Scarica Velora": "ä¸‹è½½ Velora",
+      "Portale Velora": "Velora é—¨æˆ·", "Scarica per Windows": "ä¸‹è½½ Windows ç‰ˆ", "Scarica per Mac Apple Silicon": "ä¸‹è½½ Mac Apple Silicon ç‰ˆ", "Scarica per Mac Intel": "ä¸‹è½½ Mac Intel ç‰ˆ", "Scarica nodo NAS": "ä¸‹è½½ NAS èŠ‚ç‚¹", "Verifica SHA-256": "éªŒè¯ SHA-256",
+      "Versione": "ç‰ˆæœ¬", "Data build": "æž„å»ºæ—¥æœŸ", "Stato Mac": "Mac çŠ¶æ€", "Installazione su Mac": "åœ¨ Mac ä¸Šå®‰è£…", "Wallet Mining Partner": "Mining Partner é’±åŒ…",
+      "Home": "é¦–é¡µ", "Browser": "æµè§ˆå™¨", "Search": "æœç´¢", "Cloud": "äº‘", "Publisher": "å‘å¸ƒ", "Tools": "å·¥å…·", "Forum": "è®ºå›", "Mining": "æŒ–çŸ¿", "Nodi": "èŠ‚ç‚¹", "Oceano": "Oceano", "Impostazioni": "è®¾ç½®", "Account": "è´¦æˆ·",
+      "Cerca": "æœç´¢", "Tema": "ä¸»é¢˜", "Profilo": "èµ„æ–™", "Installa": "å®‰è£…", "Esci": "é€€å‡º", "Accedi a Velora": "ç™»å½• Velora", "Crea account": "åˆ›å»ºè´¦æˆ·", "Accedi": "ç™»å½•", "Account attivo": "å½“å‰è´¦æˆ·", "Accesso non effettuato": "æœªç™»å½•", "Accesso effettuato": "å·²ç™»å½•", "Account creato": "è´¦æˆ·å·²åˆ›å»º",
+      "Portale universale": "é€šç”¨é—¨æˆ·", "Velora senza installazione": "æ— éœ€å®‰è£…å³å¯ä½¿ç”¨ Velora", "Dashboard": "ä»ªè¡¨æ¿", "Cosa posso fare ora": "çŽ°åœ¨å¯ä»¥åšä»€ä¹ˆ", "Uso rapido": "å¿«é€Ÿå¼€å§‹", "Come salvarlo": "å¦‚ä½•ä¿å­˜",
+      "Cerca ora": "ç«‹å³æœç´¢", "Apri VeloMail": "æ‰“å¼€ VeloMail", "Prepara sito": "å‡†å¤‡ç½‘ç«™", "Apri zona": "æ‰“å¼€åŒºåŸŸ", "Carica": "ä¸Šä¼ ", "File": "æ–‡ä»¶", "Tools disponibili": "å¯ç”¨å·¥å…·", "Invia": "å‘é€", "Aggiorna": "åˆ·æ–°", "Controlla NAS": "æ£€æŸ¥ NAS",
+      "Traduci": "ç¿»è¯‘", "Riassumi": "æ‘˜è¦", "Wallet check": "é’±åŒ…æ£€æŸ¥", "Privacy check": "éšç§æ£€æŸ¥", "Risultato pronto qui": "ç»“æžœæ˜¾ç¤ºåœ¨è¿™é‡Œ"
     }
   };
 }
@@ -4380,11 +4397,11 @@ function veloraI18nDictionary() {
 function veloraPlaceholderDictionary() {
   return {
     en: { "Cerca Velora o inserisci una zona": "Search Velora or enter a zone", "nomeutente": "username", "Password": "Password", "Cerca zone, Oceano, tools, guide": "Search zones, Oceano, tools, guides", "Testo, wallet, link o contenuto": "Text, wallet, link or content", "velora.guide, velora.tools, guida": "velora.guide, velora.tools, guide", "velora.guide": "velora.guide", "Scrivi o incolla testo": "Write or paste text", "Email per nuova registrazione": "Email for new registration", "Wallet payout pubblico": "Public payout wallet" },
-    fr: { "Cerca Velora o inserisci una zona": "Rechercher dans Velora ou saisir une zone", "nomeutente": "nom utilisateur", "Password": "Mot de passe", "Cerca zone, Oceano, tools, guide": "Rechercher zones, Oceano, outils, guides", "Testo, wallet, link o contenuto": "Texte, wallet, lien ou contenu", "velora.guide, velora.tools, guida": "velora.guide, velora.tools, guide", "velora.guide": "velora.guide", "Scrivi o incolla testo": "Écrire ou coller du texte", "Email per nuova registrazione": "Email pour nouvelle inscription", "Wallet payout pubblico": "Wallet public de payout" },
-    de: { "Cerca Velora o inserisci una zona": "Velora durchsuchen oder Zone eingeben", "nomeutente": "Benutzername", "Password": "Passwort", "Cerca zone, Oceano, tools, guide": "Zonen, Oceano, Tools, Anleitungen suchen", "Testo, wallet, link o contenuto": "Text, Wallet, Link oder Inhalt", "velora.guide, velora.tools, guida": "velora.guide, velora.tools, Anleitung", "velora.guide": "velora.guide", "Scrivi o incolla testo": "Text schreiben oder einfügen", "Email per nuova registrazione": "E-Mail für neue Registrierung", "Wallet payout pubblico": "Öffentliche Payout-Wallet" },
-    es: { "Cerca Velora o inserisci una zona": "Buscar en Velora o introducir una zona", "nomeutente": "usuario", "Password": "Contraseña", "Cerca zone, Oceano, tools, guide": "Buscar zonas, Oceano, herramientas, guías", "Testo, wallet, link o contenuto": "Texto, wallet, enlace o contenido", "velora.guide, velora.tools, guida": "velora.guide, velora.tools, guía", "velora.guide": "velora.guide", "Scrivi o incolla testo": "Escribe o pega texto", "Email per nuova registrazione": "Email para nuevo registro", "Wallet payout pubblico": "Wallet público de payout" },
-    ru: { "Cerca Velora o inserisci una zona": "Искать в Velora или ввести зону", "nomeutente": "имя пользователя", "Password": "Пароль", "Cerca zone, Oceano, tools, guide": "Поиск зон, Oceano, инструментов и руководств", "Testo, wallet, link o contenuto": "Текст, кошелёк, ссылка или контент", "velora.guide, velora.tools, guida": "velora.guide, velora.tools, руководство", "velora.guide": "velora.guide", "Scrivi o incolla testo": "Введите или вставьте текст", "Email per nuova registrazione": "Email для новой регистрации", "Wallet payout pubblico": "Публичный кошелёк для payout" },
-    zh: { "Cerca Velora o inserisci una zona": "搜索 Velora 或输入区域", "nomeutente": "用户名", "Password": "密码", "Cerca zone, Oceano, tools, guide": "搜索区域、Oceano、工具、指南", "Testo, wallet, link o contenuto": "文本、钱包、链接或内容", "velora.guide, velora.tools, guida": "velora.guide、velora.tools、指南", "velora.guide": "velora.guide", "Scrivi o incolla testo": "输入或粘贴文本", "Email per nuova registrazione": "新注册邮箱", "Wallet payout pubblico": "公开 payout 钱包" }
+    fr: { "Cerca Velora o inserisci una zona": "Rechercher dans Velora ou saisir une zone", "nomeutente": "nom utilisateur", "Password": "Mot de passe", "Cerca zone, Oceano, tools, guide": "Rechercher zones, Oceano, outils, guides", "Testo, wallet, link o contenuto": "Texte, wallet, lien ou contenu", "velora.guide, velora.tools, guida": "velora.guide, velora.tools, guide", "velora.guide": "velora.guide", "Scrivi o incolla testo": "Ã‰crire ou coller du texte", "Email per nuova registrazione": "Email pour nouvelle inscription", "Wallet payout pubblico": "Wallet public de payout" },
+    de: { "Cerca Velora o inserisci una zona": "Velora durchsuchen oder Zone eingeben", "nomeutente": "Benutzername", "Password": "Passwort", "Cerca zone, Oceano, tools, guide": "Zonen, Oceano, Tools, Anleitungen suchen", "Testo, wallet, link o contenuto": "Text, Wallet, Link oder Inhalt", "velora.guide, velora.tools, guida": "velora.guide, velora.tools, Anleitung", "velora.guide": "velora.guide", "Scrivi o incolla testo": "Text schreiben oder einfÃ¼gen", "Email per nuova registrazione": "E-Mail fÃ¼r neue Registrierung", "Wallet payout pubblico": "Ã–ffentliche Payout-Wallet" },
+    es: { "Cerca Velora o inserisci una zona": "Buscar en Velora o introducir una zona", "nomeutente": "usuario", "Password": "ContraseÃ±a", "Cerca zone, Oceano, tools, guide": "Buscar zonas, Oceano, herramientas, guÃ­as", "Testo, wallet, link o contenuto": "Texto, wallet, enlace o contenido", "velora.guide, velora.tools, guida": "velora.guide, velora.tools, guÃ­a", "velora.guide": "velora.guide", "Scrivi o incolla testo": "Escribe o pega texto", "Email per nuova registrazione": "Email para nuevo registro", "Wallet payout pubblico": "Wallet pÃºblico de payout" },
+    ru: { "Cerca Velora o inserisci una zona": "Ð˜ÑÐºÐ°Ñ‚ÑŒ Ð² Velora Ð¸Ð»Ð¸ Ð²Ð²ÐµÑÑ‚Ð¸ Ð·Ð¾Ð½Ñƒ", "nomeutente": "Ð¸Ð¼Ñ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»Ñ", "Password": "ÐŸÐ°Ñ€Ð¾Ð»ÑŒ", "Cerca zone, Oceano, tools, guide": "ÐŸÐ¾Ð¸ÑÐº Ð·Ð¾Ð½, Oceano, Ð¸Ð½ÑÑ‚Ñ€ÑƒÐ¼ÐµÐ½Ñ‚Ð¾Ð² Ð¸ Ñ€ÑƒÐºÐ¾Ð²Ð¾Ð´ÑÑ‚Ð²", "Testo, wallet, link o contenuto": "Ð¢ÐµÐºÑÑ‚, ÐºÐ¾ÑˆÐµÐ»Ñ‘Ðº, ÑÑÑ‹Ð»ÐºÐ° Ð¸Ð»Ð¸ ÐºÐ¾Ð½Ñ‚ÐµÐ½Ñ‚", "velora.guide, velora.tools, guida": "velora.guide, velora.tools, Ñ€ÑƒÐºÐ¾Ð²Ð¾Ð´ÑÑ‚Ð²Ð¾", "velora.guide": "velora.guide", "Scrivi o incolla testo": "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ð¸Ð»Ð¸ Ð²ÑÑ‚Ð°Ð²ÑŒÑ‚Ðµ Ñ‚ÐµÐºÑÑ‚", "Email per nuova registrazione": "Email Ð´Ð»Ñ Ð½Ð¾Ð²Ð¾Ð¹ Ñ€ÐµÐ³Ð¸ÑÑ‚Ñ€Ð°Ñ†Ð¸Ð¸", "Wallet payout pubblico": "ÐŸÑƒÐ±Ð»Ð¸Ñ‡Ð½Ñ‹Ð¹ ÐºÐ¾ÑˆÐµÐ»Ñ‘Ðº Ð´Ð»Ñ payout" },
+    zh: { "Cerca Velora o inserisci una zona": "æœç´¢ Velora æˆ–è¾“å…¥åŒºåŸŸ", "nomeutente": "ç”¨æˆ·å", "Password": "å¯†ç ", "Cerca zone, Oceano, tools, guide": "æœç´¢åŒºåŸŸã€Oceanoã€å·¥å…·ã€æŒ‡å—", "Testo, wallet, link o contenuto": "æ–‡æœ¬ã€é’±åŒ…ã€é“¾æŽ¥æˆ–å†…å®¹", "velora.guide, velora.tools, guida": "velora.guideã€velora.toolsã€æŒ‡å—", "velora.guide": "velora.guide", "Scrivi o incolla testo": "è¾“å…¥æˆ–ç²˜è´´æ–‡æœ¬", "Email per nuova registrazione": "æ–°æ³¨å†Œé‚®ç®±", "Wallet payout pubblico": "å…¬å¼€ payout é’±åŒ…" }
   };
 }
 
@@ -4416,129 +4433,129 @@ function veloraPhraseDictionary() {
       "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "Access from Windows, Mac, iPhone, iPad and Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodes and NAS use the same data as the desktop client."
     },
     fr: {
-      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora réunit portail web, compte unique, moteur de recherche interne, sites publiés, VeloMail, Cloud, Tools, nœuds et sécurité Guardian dans un écosystème accessible depuis chaque appareil.",
-      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "Utilisez le portail depuis n’importe quel appareil. Les installateurs servent uniquement aux fonctions locales avancées.",
-      "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "Recommandé. Fonctionne sur Windows, Mac, iPhone, iPad et Android sans installer de fichiers non signés",
-      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "Installateur MSI pour mining, nœud local et fonctions desktop avancées",
-      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "Bêta avancée non notarizée. Utilisez le portail pour éviter les alertes macOS",
-      "Beta avanzata per Mac Intel non notarizzata": "Bêta avancée non notarizée pour Mac Intel",
-      "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "Paquet pour installer un nœud de support sur NAS ou PC toujours allumé",
-      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora est actuellement distribuée comme bêta non encore notarizée par Apple",
+      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora rÃ©unit portail web, compte unique, moteur de recherche interne, sites publiÃ©s, VeloMail, Cloud, Tools, nÅ“uds et sÃ©curitÃ© Guardian dans un Ã©cosystÃ¨me accessible depuis chaque appareil.",
+      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "Utilisez le portail depuis nâ€™importe quel appareil. Les installateurs servent uniquement aux fonctions locales avancÃ©es.",
+      "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "RecommandÃ©. Fonctionne sur Windows, Mac, iPhone, iPad et Android sans installer de fichiers non signÃ©s",
+      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "Installateur MSI pour mining, nÅ“ud local et fonctions desktop avancÃ©es",
+      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "BÃªta avancÃ©e non notarizÃ©e. Utilisez le portail pour Ã©viter les alertes macOS",
+      "Beta avanzata per Mac Intel non notarizzata": "BÃªta avancÃ©e non notarizÃ©e pour Mac Intel",
+      "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "Paquet pour installer un nÅ“ud de support sur NAS ou PC toujours allumÃ©",
+      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora est actuellement distribuÃ©e comme bÃªta non encore notarizÃ©e par Apple",
       "macOS mostrera quindi un avviso al primo avvio": "macOS affichera donc une alerte au premier lancement",
-      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "Après autorisation manuelle, Velora doit s’ouvrir normalement",
-      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora traite les données nécessaires aux comptes, accès, sécurité, publication de sites, VeloMail, Cloud, forum, nœuds et fonctions bêta.",
-      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora utilise uniquement des cookies et stockages techniques nécessaires à la connexion, sécurité, préférences d’interface, consentement cookies et fonctionnement du portail.",
-      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud protège maintenant les fichiers avec chiffrement chaîné, contrôles redondants et blocage automatique des données sensibles lorsqu’un risque sérieux est détecté",
-      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "Guide officielle, spécification technique, schéma de manifest et exemples pour préparer sites et applications Velora.",
-      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "Depuis un téléphone, aucune installation n’est nécessaire. Enregistrez le portail sur l’écran d’accueil pour l’ouvrir comme une app.",
+      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "AprÃ¨s autorisation manuelle, Velora doit sâ€™ouvrir normalement",
+      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora traite les donnÃ©es nÃ©cessaires aux comptes, accÃ¨s, sÃ©curitÃ©, publication de sites, VeloMail, Cloud, forum, nÅ“uds et fonctions bÃªta.",
+      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora utilise uniquement des cookies et stockages techniques nÃ©cessaires Ã  la connexion, sÃ©curitÃ©, prÃ©fÃ©rences dâ€™interface, consentement cookies et fonctionnement du portail.",
+      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud protÃ¨ge maintenant les fichiers avec chiffrement chaÃ®nÃ©, contrÃ´les redondants et blocage automatique des donnÃ©es sensibles lorsquâ€™un risque sÃ©rieux est dÃ©tectÃ©",
+      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "Guide officielle, spÃ©cification technique, schÃ©ma de manifest et exemples pour prÃ©parer sites et applications Velora.",
+      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "Depuis un tÃ©lÃ©phone, aucune installation nâ€™est nÃ©cessaire. Enregistrez le portail sur lâ€™Ã©cran dâ€™accueil pour lâ€™ouvrir comme une app.",
       "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "Saisissez seulement votre nom utilisateur. Velora ajoute automatiquement le suffixe du compte.",
-      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "Recherchez zones, Oceano et guides. Les résultats s’ouvrent dans le navigateur Velora.",
-      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail et le forum utilisent la même session que votre compte.",
-      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "Le Publisher guidé crée un manifest valide et réduit les erreurs.",
-      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "Outils prêts pour contrôles rapides, sécurité, contenus et publication.",
-      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "Gestion via Velora API et NAS Agent autorisé. Aucune identité DSM n’est affichée dans le portail.",
-      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "Recherche de contenus indexés et ouverture des résultats dans le navigateur Velora.",
-      "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "Accédez depuis Windows, Mac, iPhone, iPad et Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nœuds et NAS utilisent les mêmes données que le client desktop."
+      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "Recherchez zones, Oceano et guides. Les rÃ©sultats sâ€™ouvrent dans le navigateur Velora.",
+      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail et le forum utilisent la mÃªme session que votre compte.",
+      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "Le Publisher guidÃ© crÃ©e un manifest valide et rÃ©duit les erreurs.",
+      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "Outils prÃªts pour contrÃ´les rapides, sÃ©curitÃ©, contenus et publication.",
+      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "Gestion via Velora API et NAS Agent autorisÃ©. Aucune identitÃ© DSM nâ€™est affichÃ©e dans le portail.",
+      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "Recherche de contenus indexÃ©s et ouverture des rÃ©sultats dans le navigateur Velora.",
+      "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "AccÃ©dez depuis Windows, Mac, iPhone, iPad et Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, NÅ“uds et NAS utilisent les mÃªmes donnÃ©es que le client desktop."
     },
     de: {
-      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora vereint Webportal, einheitliches Konto, interne Suche, veröffentlichte Websites, VeloMail, Cloud, Tools, Knoten und Guardian-Sicherheit in einem Ökosystem für jedes Gerät.",
-      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "Nutzen Sie das Portal auf jedem Gerät. Installer sind nur für erweiterte lokale Funktionen nötig.",
+      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora vereint Webportal, einheitliches Konto, interne Suche, verÃ¶ffentlichte Websites, VeloMail, Cloud, Tools, Knoten und Guardian-Sicherheit in einem Ã–kosystem fÃ¼r jedes GerÃ¤t.",
+      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "Nutzen Sie das Portal auf jedem GerÃ¤t. Installer sind nur fÃ¼r erweiterte lokale Funktionen nÃ¶tig.",
       "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "Empfohlen. Funktioniert auf Windows, Mac, iPhone, iPad und Android ohne Installation unsignierter Dateien",
-      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "MSI-Installer für Mining, lokalen Knoten und erweiterte Desktop-Funktionen",
-      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "Erweiterte, nicht notarisierten Beta. Nutzen Sie das Portal, wenn Sie macOS-Warnungen vermeiden möchten",
-      "Beta avanzata per Mac Intel non notarizzata": "Erweiterte, nicht notarisierten Beta für Intel Mac",
+      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "MSI-Installer fÃ¼r Mining, lokalen Knoten und erweiterte Desktop-Funktionen",
+      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "Erweiterte, nicht notarisierten Beta. Nutzen Sie das Portal, wenn Sie macOS-Warnungen vermeiden mÃ¶chten",
+      "Beta avanzata per Mac Intel non notarizzata": "Erweiterte, nicht notarisierten Beta fÃ¼r Intel Mac",
       "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "Paket zur Installation eines Support-Knotens auf NAS oder dauerhaft laufendem PC",
       "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora wird derzeit als Beta verteilt und ist noch nicht von Apple notarisiert",
       "macOS mostrera quindi un avviso al primo avvio": "macOS zeigt daher beim ersten Start eine Warnung",
       "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "Nach manueller Freigabe sollte Velora normal starten",
-      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora verarbeitet die Daten, die für Konten, Zugriff, Sicherheit, Website-Veröffentlichung, VeloMail, Cloud, Forum, Knoten und Beta-Funktionen erforderlich sind.",
-      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora verwendet nur technische Cookies und Speicher für Login, Sicherheit, Oberflächenpräferenzen, Cookie-Zustimmung und Portalbetrieb.",
-      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud schützt Dateien jetzt mit verketteter Verschlüsselung, redundanten Prüfungen und automatischer Sperre sensibler Daten bei ernstem Risiko",
+      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora verarbeitet die Daten, die fÃ¼r Konten, Zugriff, Sicherheit, Website-VerÃ¶ffentlichung, VeloMail, Cloud, Forum, Knoten und Beta-Funktionen erforderlich sind.",
+      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora verwendet nur technische Cookies und Speicher fÃ¼r Login, Sicherheit, OberflÃ¤chenprÃ¤ferenzen, Cookie-Zustimmung und Portalbetrieb.",
+      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud schÃ¼tzt Dateien jetzt mit verketteter VerschlÃ¼sselung, redundanten PrÃ¼fungen und automatischer Sperre sensibler Daten bei ernstem Risiko",
       "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "Offizielle Anleitung, technische Spezifikation, Manifest-Schema und Beispiele zur Vorbereitung von Velora-Websites und Anwendungen.",
-      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "Auf dem Telefon ist keine Installation nötig. Speichern Sie das Portal auf dem Startbildschirm, um es wie eine App zu öffnen.",
-      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "Geben Sie nur Ihren Benutzernamen ein. Velora fügt den Kontosuffix automatisch hinzu.",
-      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "Suchen Sie Zonen, Oceano und Anleitungen. Ergebnisse öffnen im Velora-Browser.",
+      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "Auf dem Telefon ist keine Installation nÃ¶tig. Speichern Sie das Portal auf dem Startbildschirm, um es wie eine App zu Ã¶ffnen.",
+      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "Geben Sie nur Ihren Benutzernamen ein. Velora fÃ¼gt den Kontosuffix automatisch hinzu.",
+      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "Suchen Sie Zonen, Oceano und Anleitungen. Ergebnisse Ã¶ffnen im Velora-Browser.",
       "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail und Forum verwenden dieselbe Sitzung wie Ihr Konto.",
-      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "Der geführte Publisher erstellt ein gültiges Manifest und reduziert Fehler.",
-      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "Bereite Tools für Schnellprüfungen, Sicherheit, Inhalte und Veröffentlichung.",
-      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "Verwaltung über Velora API und autorisierten NAS Agent. DSM-Zugangsdaten werden im Portal nie angezeigt.",
-      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "Suche indexierter Inhalte und Öffnung der Ergebnisse im Velora-Browser.",
+      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "Der gefÃ¼hrte Publisher erstellt ein gÃ¼ltiges Manifest und reduziert Fehler.",
+      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "Bereite Tools fÃ¼r SchnellprÃ¼fungen, Sicherheit, Inhalte und VerÃ¶ffentlichung.",
+      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "Verwaltung Ã¼ber Velora API und autorisierten NAS Agent. DSM-Zugangsdaten werden im Portal nie angezeigt.",
+      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "Suche indexierter Inhalte und Ã–ffnung der Ergebnisse im Velora-Browser.",
       "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "Zugriff von Windows, Mac, iPhone, iPad und Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Knoten und NAS nutzen dieselben Daten wie der Desktop-Client."
     },
     es: {
-      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora une portal web, cuenta única, buscador interno, sitios publicados, VeloMail, Cloud, Tools, nodos y seguridad Guardian en un ecosistema accesible desde cualquier dispositivo.",
+      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora une portal web, cuenta Ãºnica, buscador interno, sitios publicados, VeloMail, Cloud, Tools, nodos y seguridad Guardian en un ecosistema accesible desde cualquier dispositivo.",
       "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "Usa el portal desde cualquier dispositivo. Los instaladores solo sirven para funciones locales avanzadas.",
       "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "Recomendado. Funciona en Windows, Mac, iPhone, iPad y Android sin instalar archivos no firmados",
       "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "Instalador MSI para mining, nodo local y funciones desktop avanzadas",
       "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "Beta avanzada no notarizada. Usa el portal si quieres evitar avisos de macOS",
       "Beta avanzata per Mac Intel non notarizzata": "Beta avanzada no notarizada para Mac Intel",
       "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "Paquete para instalar un nodo de apoyo en NAS o PC siempre encendido",
-      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora se distribuye actualmente como beta aún no notarizada por Apple",
-      "macOS mostrera quindi un avviso al primo avvio": "macOS mostrará un aviso en el primer inicio",
-      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "Después de la autorización manual, Velora debería abrirse normalmente",
-      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora trata los datos necesarios para cuentas, acceso, seguridad, publicación de sitios, VeloMail, Cloud, foro, nodos y funciones beta.",
-      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora usa solo cookies y almacenamiento técnico necesarios para login, seguridad, preferencias de interfaz, consentimiento de cookies y funcionamiento del portal.",
-      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud protege ahora los archivos con cifrado encadenado, controles redundantes y bloqueo automático de datos sensibles cuando se detecta un riesgo serio",
-      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "Guía oficial, especificación técnica, esquema manifest y ejemplos para preparar sitios y aplicaciones Velora.",
-      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "Desde el teléfono no hace falta instalar nada. Guarda el portal en la pantalla de inicio para abrirlo como app.",
-      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "Escribe solo tu nombre de usuario. Velora añade automáticamente el sufijo de la cuenta.",
-      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "Busca zonas, Oceano y guías. Los resultados se abren en el navegador Velora.",
-      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail y el foro usan la misma sesión de tu cuenta.",
-      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "El Publisher guiado genera un manifest válido y reduce errores.",
-      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "Herramientas listas para controles rápidos, seguridad, contenido y publicación.",
-      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "Gestión mediante Velora API y NAS Agent autorizado. No se muestran credenciales DSM en el portal.",
+      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora se distribuye actualmente como beta aÃºn no notarizada por Apple",
+      "macOS mostrera quindi un avviso al primo avvio": "macOS mostrarÃ¡ un aviso en el primer inicio",
+      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "DespuÃ©s de la autorizaciÃ³n manual, Velora deberÃ­a abrirse normalmente",
+      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora trata los datos necesarios para cuentas, acceso, seguridad, publicaciÃ³n de sitios, VeloMail, Cloud, foro, nodos y funciones beta.",
+      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora usa solo cookies y almacenamiento tÃ©cnico necesarios para login, seguridad, preferencias de interfaz, consentimiento de cookies y funcionamiento del portal.",
+      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud protege ahora los archivos con cifrado encadenado, controles redundantes y bloqueo automÃ¡tico de datos sensibles cuando se detecta un riesgo serio",
+      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "GuÃ­a oficial, especificaciÃ³n tÃ©cnica, esquema manifest y ejemplos para preparar sitios y aplicaciones Velora.",
+      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "Desde el telÃ©fono no hace falta instalar nada. Guarda el portal en la pantalla de inicio para abrirlo como app.",
+      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "Escribe solo tu nombre de usuario. Velora aÃ±ade automÃ¡ticamente el sufijo de la cuenta.",
+      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "Busca zonas, Oceano y guÃ­as. Los resultados se abren en el navegador Velora.",
+      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail y el foro usan la misma sesiÃ³n de tu cuenta.",
+      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "El Publisher guiado genera un manifest vÃ¡lido y reduce errores.",
+      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "Herramientas listas para controles rÃ¡pidos, seguridad, contenido y publicaciÃ³n.",
+      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "GestiÃ³n mediante Velora API y NAS Agent autorizado. No se muestran credenciales DSM en el portal.",
       "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "Busca contenido indexado y abre resultados en el navegador Velora.",
       "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "Accede desde Windows, Mac, iPhone, iPad y Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodos y NAS usan los mismos datos que el cliente desktop."
     },
     ru: {
-      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora объединяет веб-портал, единый аккаунт, внутренний поиск, опубликованные сайты, VeloMail, Cloud, Tools, узлы и Guardian Security в одной экосистеме для любого устройства.",
-      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "Используйте портал с любого устройства. Установщики нужны только для расширенных локальных функций.",
-      "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "Рекомендуется. Работает на Windows, Mac, iPhone, iPad и Android без установки неподписанных файлов",
-      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "MSI-установщик для mining, локального узла и расширенных desktop-функций",
-      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "Расширенная бета без notarization. Используйте портал, если хотите избежать предупреждений macOS",
-      "Beta avanzata per Mac Intel non notarizzata": "Расширенная бета для Mac Intel без notarization",
-      "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "Пакет для установки поддерживающего узла на NAS или постоянно включённый PC",
-      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora сейчас распространяется как бета, ещё не notarized Apple",
-      "macOS mostrera quindi un avviso al primo avvio": "macOS покажет предупреждение при первом запуске",
-      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "После ручного разрешения Velora должна открываться нормально",
-      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora обрабатывает данные, необходимые для аккаунтов, доступа, безопасности, публикации сайтов, VeloMail, Cloud, форума, узлов и бета-функций.",
-      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora использует только технические cookies и storage, необходимые для входа, безопасности, настроек интерфейса, согласия cookies и работы портала.",
-      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud теперь защищает файлы цепочным шифрованием, резервными проверками и автоматической блокировкой чувствительных данных при серьёзном риске",
-      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "Официальное руководство, техническая спецификация, схема manifest и примеры для подготовки сайтов и приложений Velora.",
-      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "На телефоне ничего устанавливать не нужно. Сохраните портал на главный экран, чтобы открывать его как приложение.",
-      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "Введите только имя пользователя. Velora автоматически добавит суффикс аккаунта.",
-      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "Ищите зоны, Oceano и руководства. Результаты открываются в браузере Velora.",
-      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail и форум используют ту же сессию аккаунта.",
-      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "Пошаговый Publisher создаёт корректный manifest и снижает ошибки.",
-      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "Готовые инструменты для быстрых проверок, безопасности, контента и публикации.",
-      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "Управление через Velora API и авторизованный NAS Agent. Данные DSM не отображаются в портале.",
-      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "Поиск индексированного контента и открытие результатов в браузере Velora.",
-      "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "Доступ с Windows, Mac, iPhone, iPad и Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, узлы и NAS используют те же данные, что desktop-клиент."
+      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora Ð¾Ð±ÑŠÐµÐ´Ð¸Ð½ÑÐµÑ‚ Ð²ÐµÐ±-Ð¿Ð¾Ñ€Ñ‚Ð°Ð», ÐµÐ´Ð¸Ð½Ñ‹Ð¹ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚, Ð²Ð½ÑƒÑ‚Ñ€ÐµÐ½Ð½Ð¸Ð¹ Ð¿Ð¾Ð¸ÑÐº, Ð¾Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ¾Ð²Ð°Ð½Ð½Ñ‹Ðµ ÑÐ°Ð¹Ñ‚Ñ‹, VeloMail, Cloud, Tools, ÑƒÐ·Ð»Ñ‹ Ð¸ Guardian Security Ð² Ð¾Ð´Ð½Ð¾Ð¹ ÑÐºÐ¾ÑÐ¸ÑÑ‚ÐµÐ¼Ðµ Ð´Ð»Ñ Ð»ÑŽÐ±Ð¾Ð³Ð¾ ÑƒÑÑ‚Ñ€Ð¾Ð¹ÑÑ‚Ð²Ð°.",
+      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ Ð¿Ð¾Ñ€Ñ‚Ð°Ð» Ñ Ð»ÑŽÐ±Ð¾Ð³Ð¾ ÑƒÑÑ‚Ñ€Ð¾Ð¹ÑÑ‚Ð²Ð°. Ð£ÑÑ‚Ð°Ð½Ð¾Ð²Ñ‰Ð¸ÐºÐ¸ Ð½ÑƒÐ¶Ð½Ñ‹ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð´Ð»Ñ Ñ€Ð°ÑÑˆÐ¸Ñ€ÐµÐ½Ð½Ñ‹Ñ… Ð»Ð¾ÐºÐ°Ð»ÑŒÐ½Ñ‹Ñ… Ñ„ÑƒÐ½ÐºÑ†Ð¸Ð¹.",
+      "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "Ð ÐµÐºÐ¾Ð¼ÐµÐ½Ð´ÑƒÐµÑ‚ÑÑ. Ð Ð°Ð±Ð¾Ñ‚Ð°ÐµÑ‚ Ð½Ð° Windows, Mac, iPhone, iPad Ð¸ Android Ð±ÐµÐ· ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ Ð½ÐµÐ¿Ð¾Ð´Ð¿Ð¸ÑÐ°Ð½Ð½Ñ‹Ñ… Ñ„Ð°Ð¹Ð»Ð¾Ð²",
+      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "MSI-ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ñ‰Ð¸Ðº Ð´Ð»Ñ mining, Ð»Ð¾ÐºÐ°Ð»ÑŒÐ½Ð¾Ð³Ð¾ ÑƒÐ·Ð»Ð° Ð¸ Ñ€Ð°ÑÑˆÐ¸Ñ€ÐµÐ½Ð½Ñ‹Ñ… desktop-Ñ„ÑƒÐ½ÐºÑ†Ð¸Ð¹",
+      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "Ð Ð°ÑÑˆÐ¸Ñ€ÐµÐ½Ð½Ð°Ñ Ð±ÐµÑ‚Ð° Ð±ÐµÐ· notarization. Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐ¹Ñ‚Ðµ Ð¿Ð¾Ñ€Ñ‚Ð°Ð», ÐµÑÐ»Ð¸ Ñ…Ð¾Ñ‚Ð¸Ñ‚Ðµ Ð¸Ð·Ð±ÐµÐ¶Ð°Ñ‚ÑŒ Ð¿Ñ€ÐµÐ´ÑƒÐ¿Ñ€ÐµÐ¶Ð´ÐµÐ½Ð¸Ð¹ macOS",
+      "Beta avanzata per Mac Intel non notarizzata": "Ð Ð°ÑÑˆÐ¸Ñ€ÐµÐ½Ð½Ð°Ñ Ð±ÐµÑ‚Ð° Ð´Ð»Ñ Mac Intel Ð±ÐµÐ· notarization",
+      "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "ÐŸÐ°ÐºÐµÑ‚ Ð´Ð»Ñ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ Ð¿Ð¾Ð´Ð´ÐµÑ€Ð¶Ð¸Ð²Ð°ÑŽÑ‰ÐµÐ³Ð¾ ÑƒÐ·Ð»Ð° Ð½Ð° NAS Ð¸Ð»Ð¸ Ð¿Ð¾ÑÑ‚Ð¾ÑÐ½Ð½Ð¾ Ð²ÐºÐ»ÑŽÑ‡Ñ‘Ð½Ð½Ñ‹Ð¹ PC",
+      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora ÑÐµÐ¹Ñ‡Ð°Ñ Ñ€Ð°ÑÐ¿Ñ€Ð¾ÑÑ‚Ñ€Ð°Ð½ÑÐµÑ‚ÑÑ ÐºÐ°Ðº Ð±ÐµÑ‚Ð°, ÐµÑ‰Ñ‘ Ð½Ðµ notarized Apple",
+      "macOS mostrera quindi un avviso al primo avvio": "macOS Ð¿Ð¾ÐºÐ°Ð¶ÐµÑ‚ Ð¿Ñ€ÐµÐ´ÑƒÐ¿Ñ€ÐµÐ¶Ð´ÐµÐ½Ð¸Ðµ Ð¿Ñ€Ð¸ Ð¿ÐµÑ€Ð²Ð¾Ð¼ Ð·Ð°Ð¿ÑƒÑÐºÐµ",
+      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "ÐŸÐ¾ÑÐ»Ðµ Ñ€ÑƒÑ‡Ð½Ð¾Ð³Ð¾ Ñ€Ð°Ð·Ñ€ÐµÑˆÐµÐ½Ð¸Ñ Velora Ð´Ð¾Ð»Ð¶Ð½Ð° Ð¾Ñ‚ÐºÑ€Ñ‹Ð²Ð°Ñ‚ÑŒÑÑ Ð½Ð¾Ñ€Ð¼Ð°Ð»ÑŒÐ½Ð¾",
+      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora Ð¾Ð±Ñ€Ð°Ð±Ð°Ñ‚Ñ‹Ð²Ð°ÐµÑ‚ Ð´Ð°Ð½Ð½Ñ‹Ðµ, Ð½ÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼Ñ‹Ðµ Ð´Ð»Ñ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚Ð¾Ð², Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð°, Ð±ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ð¾ÑÑ‚Ð¸, Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ°Ñ†Ð¸Ð¸ ÑÐ°Ð¹Ñ‚Ð¾Ð², VeloMail, Cloud, Ñ„Ð¾Ñ€ÑƒÐ¼Ð°, ÑƒÐ·Ð»Ð¾Ð² Ð¸ Ð±ÐµÑ‚Ð°-Ñ„ÑƒÐ½ÐºÑ†Ð¸Ð¹.",
+      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐµÑ‚ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ñ‚ÐµÑ…Ð½Ð¸Ñ‡ÐµÑÐºÐ¸Ðµ cookies Ð¸ storage, Ð½ÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼Ñ‹Ðµ Ð´Ð»Ñ Ð²Ñ…Ð¾Ð´Ð°, Ð±ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ð¾ÑÑ‚Ð¸, Ð½Ð°ÑÑ‚Ñ€Ð¾ÐµÐº Ð¸Ð½Ñ‚ÐµÑ€Ñ„ÐµÐ¹ÑÐ°, ÑÐ¾Ð³Ð»Ð°ÑÐ¸Ñ cookies Ð¸ Ñ€Ð°Ð±Ð¾Ñ‚Ñ‹ Ð¿Ð¾Ñ€Ñ‚Ð°Ð»Ð°.",
+      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud Ñ‚ÐµÐ¿ÐµÑ€ÑŒ Ð·Ð°Ñ‰Ð¸Ñ‰Ð°ÐµÑ‚ Ñ„Ð°Ð¹Ð»Ñ‹ Ñ†ÐµÐ¿Ð¾Ñ‡Ð½Ñ‹Ð¼ ÑˆÐ¸Ñ„Ñ€Ð¾Ð²Ð°Ð½Ð¸ÐµÐ¼, Ñ€ÐµÐ·ÐµÑ€Ð²Ð½Ñ‹Ð¼Ð¸ Ð¿Ñ€Ð¾Ð²ÐµÑ€ÐºÐ°Ð¼Ð¸ Ð¸ Ð°Ð²Ñ‚Ð¾Ð¼Ð°Ñ‚Ð¸Ñ‡ÐµÑÐºÐ¾Ð¹ Ð±Ð»Ð¾ÐºÐ¸Ñ€Ð¾Ð²ÐºÐ¾Ð¹ Ñ‡ÑƒÐ²ÑÑ‚Ð²Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ñ‹Ñ… Ð´Ð°Ð½Ð½Ñ‹Ñ… Ð¿Ñ€Ð¸ ÑÐµÑ€ÑŒÑ‘Ð·Ð½Ð¾Ð¼ Ñ€Ð¸ÑÐºÐµ",
+      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "ÐžÑ„Ð¸Ñ†Ð¸Ð°Ð»ÑŒÐ½Ð¾Ðµ Ñ€ÑƒÐºÐ¾Ð²Ð¾Ð´ÑÑ‚Ð²Ð¾, Ñ‚ÐµÑ…Ð½Ð¸Ñ‡ÐµÑÐºÐ°Ñ ÑÐ¿ÐµÑ†Ð¸Ñ„Ð¸ÐºÐ°Ñ†Ð¸Ñ, ÑÑ…ÐµÐ¼Ð° manifest Ð¸ Ð¿Ñ€Ð¸Ð¼ÐµÑ€Ñ‹ Ð´Ð»Ñ Ð¿Ð¾Ð´Ð³Ð¾Ñ‚Ð¾Ð²ÐºÐ¸ ÑÐ°Ð¹Ñ‚Ð¾Ð² Ð¸ Ð¿Ñ€Ð¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ð¹ Velora.",
+      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "ÐÐ° Ñ‚ÐµÐ»ÐµÑ„Ð¾Ð½Ðµ Ð½Ð¸Ñ‡ÐµÐ³Ð¾ ÑƒÑÑ‚Ð°Ð½Ð°Ð²Ð»Ð¸Ð²Ð°Ñ‚ÑŒ Ð½Ðµ Ð½ÑƒÐ¶Ð½Ð¾. Ð¡Ð¾Ñ…Ñ€Ð°Ð½Ð¸Ñ‚Ðµ Ð¿Ð¾Ñ€Ñ‚Ð°Ð» Ð½Ð° Ð³Ð»Ð°Ð²Ð½Ñ‹Ð¹ ÑÐºÑ€Ð°Ð½, Ñ‡Ñ‚Ð¾Ð±Ñ‹ Ð¾Ñ‚ÐºÑ€Ñ‹Ð²Ð°Ñ‚ÑŒ ÐµÐ³Ð¾ ÐºÐ°Ðº Ð¿Ñ€Ð¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ðµ.",
+      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð¸Ð¼Ñ Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»Ñ. Velora Ð°Ð²Ñ‚Ð¾Ð¼Ð°Ñ‚Ð¸Ñ‡ÐµÑÐºÐ¸ Ð´Ð¾Ð±Ð°Ð²Ð¸Ñ‚ ÑÑƒÑ„Ñ„Ð¸ÐºÑ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚Ð°.",
+      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "Ð˜Ñ‰Ð¸Ñ‚Ðµ Ð·Ð¾Ð½Ñ‹, Oceano Ð¸ Ñ€ÑƒÐºÐ¾Ð²Ð¾Ð´ÑÑ‚Ð²Ð°. Ð ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ñ‹ Ð¾Ñ‚ÐºÑ€Ñ‹Ð²Ð°ÑŽÑ‚ÑÑ Ð² Ð±Ñ€Ð°ÑƒÐ·ÐµÑ€Ðµ Velora.",
+      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail Ð¸ Ñ„Ð¾Ñ€ÑƒÐ¼ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÑŽÑ‚ Ñ‚Ñƒ Ð¶Ðµ ÑÐµÑÑÐ¸ÑŽ Ð°ÐºÐºÐ°ÑƒÐ½Ñ‚Ð°.",
+      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "ÐŸÐ¾ÑˆÐ°Ð³Ð¾Ð²Ñ‹Ð¹ Publisher ÑÐ¾Ð·Ð´Ð°Ñ‘Ñ‚ ÐºÐ¾Ñ€Ñ€ÐµÐºÑ‚Ð½Ñ‹Ð¹ manifest Ð¸ ÑÐ½Ð¸Ð¶Ð°ÐµÑ‚ Ð¾ÑˆÐ¸Ð±ÐºÐ¸.",
+      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "Ð“Ð¾Ñ‚Ð¾Ð²Ñ‹Ðµ Ð¸Ð½ÑÑ‚Ñ€ÑƒÐ¼ÐµÐ½Ñ‚Ñ‹ Ð´Ð»Ñ Ð±Ñ‹ÑÑ‚Ñ€Ñ‹Ñ… Ð¿Ñ€Ð¾Ð²ÐµÑ€Ð¾Ðº, Ð±ÐµÐ·Ð¾Ð¿Ð°ÑÐ½Ð¾ÑÑ‚Ð¸, ÐºÐ¾Ð½Ñ‚ÐµÐ½Ñ‚Ð° Ð¸ Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ°Ñ†Ð¸Ð¸.",
+      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "Ð£Ð¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ñ‡ÐµÑ€ÐµÐ· Velora API Ð¸ Ð°Ð²Ñ‚Ð¾Ñ€Ð¸Ð·Ð¾Ð²Ð°Ð½Ð½Ñ‹Ð¹ NAS Agent. Ð”Ð°Ð½Ð½Ñ‹Ðµ DSM Ð½Ðµ Ð¾Ñ‚Ð¾Ð±Ñ€Ð°Ð¶Ð°ÑŽÑ‚ÑÑ Ð² Ð¿Ð¾Ñ€Ñ‚Ð°Ð»Ðµ.",
+      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "ÐŸÐ¾Ð¸ÑÐº Ð¸Ð½Ð´ÐµÐºÑÐ¸Ñ€Ð¾Ð²Ð°Ð½Ð½Ð¾Ð³Ð¾ ÐºÐ¾Ð½Ñ‚ÐµÐ½Ñ‚Ð° Ð¸ Ð¾Ñ‚ÐºÑ€Ñ‹Ñ‚Ð¸Ðµ Ñ€ÐµÐ·ÑƒÐ»ÑŒÑ‚Ð°Ñ‚Ð¾Ð² Ð² Ð±Ñ€Ð°ÑƒÐ·ÐµÑ€Ðµ Velora.",
+      "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "Ð”Ð¾ÑÑ‚ÑƒÐ¿ Ñ Windows, Mac, iPhone, iPad Ð¸ Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, ÑƒÐ·Ð»Ñ‹ Ð¸ NAS Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÑŽÑ‚ Ñ‚Ðµ Ð¶Ðµ Ð´Ð°Ð½Ð½Ñ‹Ðµ, Ñ‡Ñ‚Ð¾ desktop-ÐºÐ»Ð¸ÐµÐ½Ñ‚."
     },
     zh: {
-      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora 将网页门户、统一账户、内部搜索、已发布网站、VeloMail、Cloud、Tools、节点和 Guardian 安全整合到一个可在任何设备访问的生态中。",
-      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "可从任何设备使用门户。安装包仅用于高级本地功能。",
-      "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "推荐。可在 Windows、Mac、iPhone、iPad 和 Android 上运行，无需安装未签名文件",
-      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "用于 mining、本地节点和高级桌面功能的 MSI 安装包",
-      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "未 notarized 的高级测试版。如需避免 macOS 警告，请使用门户",
-      "Beta avanzata per Mac Intel non notarizzata": "适用于 Mac Intel 的未 notarized 高级测试版",
-      "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "用于在 NAS 或常开 PC 上安装支持节点的包",
-      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora 当前作为尚未通过 Apple notarization 的测试版发布",
-      "macOS mostrera quindi un avviso al primo avvio": "macOS 会在首次启动时显示警告",
-      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "手动授权后，Velora 应能正常打开",
-      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora 处理账户、访问、安全、网站发布、VeloMail、Cloud、论坛、节点和测试功能所需的数据。",
-      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora 仅使用登录、安全、界面偏好、cookie 同意和门户运行所需的技术 cookie 与存储。",
-      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud 现在通过链式加密、冗余检查和严重风险时的敏感数据自动锁定来保护文件",
-      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "用于准备 Velora 网站和应用的官方指南、技术规范、manifest schema 与示例。",
-      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "手机上无需安装任何内容。若想像应用一样打开，可将门户保存到主屏幕。",
-      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "只输入用户名。Velora 会自动添加账户后缀。",
-      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "搜索区域、Oceano 和指南。结果会在 Velora 浏览器中打开。",
-      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail 和论坛使用同一账户会话。",
-      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "引导式 Publisher 会生成有效 manifest 并减少错误。",
-      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "用于快速检查、安全、内容和发布的可用工具。",
-      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "通过 Velora API 和授权 NAS Agent 管理。门户不会显示 DSM 凭据。",
-      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "搜索已索引内容并在 Velora 浏览器中打开结果。",
-      "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "可从 Windows、Mac、iPhone、iPad 和 Android 访问。Account、Search、Browser、VeloMail、Cloud、Publisher、Tools、Forum、Mining Monitor、节点和 NAS 使用与桌面客户端相同的数据。"
+      "Velora unisce portale web, account unico, motore di ricerca interno, siti pubblicati, VeloMail, Cloud, Tools, nodi e sicurezza Guardian in un unico ecosistema accessibile da ogni dispositivo.": "Velora å°†ç½‘é¡µé—¨æˆ·ã€ç»Ÿä¸€è´¦æˆ·ã€å†…éƒ¨æœç´¢ã€å·²å‘å¸ƒç½‘ç«™ã€VeloMailã€Cloudã€Toolsã€èŠ‚ç‚¹å’Œ Guardian å®‰å…¨æ•´åˆåˆ°ä¸€ä¸ªå¯åœ¨ä»»ä½•è®¾å¤‡è®¿é—®çš„ç”Ÿæ€ä¸­ã€‚",
+      "Usa il portale da qualsiasi dispositivo. Gli installer servono solo per funzioni avanzate locali.": "å¯ä»Žä»»ä½•è®¾å¤‡ä½¿ç”¨é—¨æˆ·ã€‚å®‰è£…åŒ…ä»…ç”¨äºŽé«˜çº§æœ¬åœ°åŠŸèƒ½ã€‚",
+      "Consigliato. Funziona su Windows, Mac, iPhone, iPad e Android senza installare file non firmati": "æŽ¨èã€‚å¯åœ¨ Windowsã€Macã€iPhoneã€iPad å’Œ Android ä¸Šè¿è¡Œï¼Œæ— éœ€å®‰è£…æœªç­¾åæ–‡ä»¶",
+      "Installer MSI per mining, nodo locale e funzioni desktop avanzate": "ç”¨äºŽ miningã€æœ¬åœ°èŠ‚ç‚¹å’Œé«˜çº§æ¡Œé¢åŠŸèƒ½çš„ MSI å®‰è£…åŒ…",
+      "Beta avanzata non notarizzata. Usa il portale se vuoi evitare avvisi macOS": "æœª notarized çš„é«˜çº§æµ‹è¯•ç‰ˆã€‚å¦‚éœ€é¿å… macOS è­¦å‘Šï¼Œè¯·ä½¿ç”¨é—¨æˆ·",
+      "Beta avanzata per Mac Intel non notarizzata": "é€‚ç”¨äºŽ Mac Intel çš„æœª notarized é«˜çº§æµ‹è¯•ç‰ˆ",
+      "Pacchetto per installare un nodo di supporto su NAS o PC sempre acceso": "ç”¨äºŽåœ¨ NAS æˆ–å¸¸å¼€ PC ä¸Šå®‰è£…æ”¯æŒèŠ‚ç‚¹çš„åŒ…",
+      "Velora e attualmente distribuita come Beta non ancora notarizzata da Apple": "Velora å½“å‰ä½œä¸ºå°šæœªé€šè¿‡ Apple notarization çš„æµ‹è¯•ç‰ˆå‘å¸ƒ",
+      "macOS mostrera quindi un avviso al primo avvio": "macOS ä¼šåœ¨é¦–æ¬¡å¯åŠ¨æ—¶æ˜¾ç¤ºè­¦å‘Š",
+      "Dopo l'autorizzazione manuale, Velora deve aprirsi normalmente": "æ‰‹åŠ¨æŽˆæƒåŽï¼ŒVelora åº”èƒ½æ­£å¸¸æ‰“å¼€",
+      "Velora tratta i dati necessari per account, accesso, sicurezza, pubblicazione siti, VeloMail, Cloud, forum, nodi e funzioni beta.": "Velora å¤„ç†è´¦æˆ·ã€è®¿é—®ã€å®‰å…¨ã€ç½‘ç«™å‘å¸ƒã€VeloMailã€Cloudã€è®ºå›ã€èŠ‚ç‚¹å’Œæµ‹è¯•åŠŸèƒ½æ‰€éœ€çš„æ•°æ®ã€‚",
+      "Velora usa solo cookie e storage tecnici necessari a login, sicurezza, preferenze interfaccia, consenso cookie e funzionamento del portale.": "Velora ä»…ä½¿ç”¨ç™»å½•ã€å®‰å…¨ã€ç•Œé¢åå¥½ã€cookie åŒæ„å’Œé—¨æˆ·è¿è¡Œæ‰€éœ€çš„æŠ€æœ¯ cookie ä¸Žå­˜å‚¨ã€‚",
+      "Il Cloud Velora ora protegge i file con cifratura concatenata, controlli ridondanti e blocco automatico dei dati sensibili quando viene rilevato un rischio serio": "Velora Cloud çŽ°åœ¨é€šè¿‡é“¾å¼åŠ å¯†ã€å†—ä½™æ£€æŸ¥å’Œä¸¥é‡é£Žé™©æ—¶çš„æ•æ„Ÿæ•°æ®è‡ªåŠ¨é”å®šæ¥ä¿æŠ¤æ–‡ä»¶",
+      "Guida ufficiale, specifica tecnica, schema manifest ed esempi per preparare siti e applicazioni Velora.": "ç”¨äºŽå‡†å¤‡ Velora ç½‘ç«™å’Œåº”ç”¨çš„å®˜æ–¹æŒ‡å—ã€æŠ€æœ¯è§„èŒƒã€manifest schema ä¸Žç¤ºä¾‹ã€‚",
+      "Da telefono non serve installare niente. Salva il portale nella schermata Home se vuoi aprirlo come app.": "æ‰‹æœºä¸Šæ— éœ€å®‰è£…ä»»ä½•å†…å®¹ã€‚è‹¥æƒ³åƒåº”ç”¨ä¸€æ ·æ‰“å¼€ï¼Œå¯å°†é—¨æˆ·ä¿å­˜åˆ°ä¸»å±å¹•ã€‚",
+      "Scrivi solo il tuo nome utente. Velora aggiunge automaticamente il suffisso dell'account.": "åªè¾“å…¥ç”¨æˆ·åã€‚Velora ä¼šè‡ªåŠ¨æ·»åŠ è´¦æˆ·åŽç¼€ã€‚",
+      "Cerca zone, Oceano e guide. I risultati si aprono nel browser Velora.": "æœç´¢åŒºåŸŸã€Oceano å’ŒæŒ‡å—ã€‚ç»“æžœä¼šåœ¨ Velora æµè§ˆå™¨ä¸­æ‰“å¼€ã€‚",
+      "VeloMail e forum usano la stessa sessione del tuo account.": "VeloMail å’Œè®ºå›ä½¿ç”¨åŒä¸€è´¦æˆ·ä¼šè¯ã€‚",
+      "Il Publisher guidato genera un manifest valido e riduce gli errori.": "å¼•å¯¼å¼ Publisher ä¼šç”Ÿæˆæœ‰æ•ˆ manifest å¹¶å‡å°‘é”™è¯¯ã€‚",
+      "Strumenti pronti per controlli rapidi, sicurezza, contenuti e pubblicazione.": "ç”¨äºŽå¿«é€Ÿæ£€æŸ¥ã€å®‰å…¨ã€å†…å®¹å’Œå‘å¸ƒçš„å¯ç”¨å·¥å…·ã€‚",
+      "Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.": "é€šè¿‡ Velora API å’ŒæŽˆæƒ NAS Agent ç®¡ç†ã€‚é—¨æˆ·ä¸ä¼šæ˜¾ç¤º DSM å‡­æ®ã€‚",
+      "Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.": "æœç´¢å·²ç´¢å¼•å†…å®¹å¹¶åœ¨ Velora æµè§ˆå™¨ä¸­æ‰“å¼€ç»“æžœã€‚",
+      "Accedi da Windows, Mac, iPhone, iPad e Android. Account, Search, Browser, VeloMail, Cloud, Publisher, Tools, Forum, Mining Monitor, Nodi e NAS usano gli stessi dati del client desktop.": "å¯ä»Ž Windowsã€Macã€iPhoneã€iPad å’Œ Android è®¿é—®ã€‚Accountã€Searchã€Browserã€VeloMailã€Cloudã€Publisherã€Toolsã€Forumã€Mining Monitorã€èŠ‚ç‚¹å’Œ NAS ä½¿ç”¨ä¸Žæ¡Œé¢å®¢æˆ·ç«¯ç›¸åŒçš„æ•°æ®ã€‚"
     }
   };
 }
@@ -4788,7 +4805,7 @@ async function findPublishedSiteRoot(address: string) {
 function injectZoneRuntime(html: string, address: string, row: any) {
   const baseTag = `<base href="/zone-assets/${escapeHtml(address)}/">`;
   const status = row?.release_status ?? row?.zone_status ?? "LOCAL_RUNTIME";
-  const shell = `<div data-velora-runtime style="position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483647;display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid rgba(232,196,105,.45);border-radius:16px;background:rgba(6,19,31,.9);color:#f6fbff;font:13px system-ui;box-shadow:0 12px 35px rgba(0,0,0,.28)"><span data-no-translate>Zona ${escapeHtml(address)} · ${escapeHtml(String(status))}</span><button data-velora-zone-translate style="display:none;border:0;border-radius:12px;background:#15324a;color:#f6fbff;padding:8px 10px;font-weight:800">Traduci pagina</button><button data-velora-auth style="border:0;border-radius:12px;background:#e8c469;color:#06131f;padding:8px 10px;font-weight:800">Login Velora</button><span data-velora-auth-state>non collegato</span></div>`;
+  const shell = `<div data-velora-runtime style="position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483647;display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid rgba(232,196,105,.45);border-radius:16px;background:rgba(6,19,31,.9);color:#f6fbff;font:13px system-ui;box-shadow:0 12px 35px rgba(0,0,0,.28)"><span data-no-translate>Zona ${escapeHtml(address)} Â· ${escapeHtml(String(status))}</span><button data-velora-zone-translate style="display:none;border:0;border-radius:12px;background:#15324a;color:#f6fbff;padding:8px 10px;font-weight:800">Traduci pagina</button><button data-velora-auth style="border:0;border-radius:12px;background:#e8c469;color:#06131f;padding:8px 10px;font-weight:800">Login Velora</button><span data-velora-auth-state>non collegato</span></div>`;
   const bridge = `<script>(()=>{const s=document.querySelector("[data-velora-auth-state]");document.addEventListener("click",e=>{const t=e.target&&e.target.closest?e.target.closest("[data-velora-auth],a[href^='velora://auth']"):null;if(!t)return;e.preventDefault();window.parent.postMessage({type:"VELORA_AUTH_REQUEST",zone:${JSON.stringify(address)}},"*")});window.addEventListener("message",e=>{if(!e.data||e.data.type!=="VELORA_AUTH_STATE")return;if(s)s.textContent=e.data.loggedIn?"collegato: "+(e.data.mail||e.data.username||"utente"):"serve accesso Velora"})})();</script>`;
   const withBase = /<head[^>]*>/i.test(html) ? html.replace(/<head([^>]*)>/i, `<head$1>${baseTag}`) : `${baseTag}${html}`;
   const runtime = `${shell}${veloraI18nScript()}${zoneTranslationRuntime(address)}${bridge}`;
