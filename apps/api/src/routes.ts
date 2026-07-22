@@ -3840,7 +3840,6 @@ function veloraI18nDictionaryComplete() {
   const additions: Record<string, Record<string, string>> = {
     en: {
       "VELORA PUBLIC BETA": "VELORA PUBLIC BETA",
-      "Un solo accesso per cercare, pubblicare e usare l’Upper Web.": "One access point to search, publish and use the Upper Web.",
       "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora brings browser, search, VeloMail, Cloud, Publisher, Tools, nodes and security into one portal. Enter, choose what to do and start immediately.",
       "Desktop e mobile": "Desktop and mobile",
       "Cloud protetto": "Protected Cloud",
@@ -3872,7 +3871,6 @@ function veloraI18nDictionaryComplete() {
     },
     fr: {
       "VELORA PUBLIC BETA": "BETA PUBLIQUE VELORA",
-      "Un solo accesso per cercare, pubblicare e usare l’Upper Web.": "Un seul accès pour rechercher, publier et utiliser l’Upper Web.",
       "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora réunit navigateur, recherche, VeloMail, Cloud, Publisher, Tools, nœuds et sécurité dans un portail unique. Entrez, choisissez et commencez.",
       "Desktop e mobile": "Desktop et mobile",
       "Cloud protetto": "Cloud protégé",
@@ -3904,7 +3902,6 @@ function veloraI18nDictionaryComplete() {
     },
     de: {
       "VELORA PUBLIC BETA": "VELORA PUBLIC BETA",
-      "Un solo accesso per cercare, pubblicare e usare l’Upper Web.": "Ein Zugang zum Suchen, Veröffentlichen und Nutzen des Upper Web.",
       "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora bündelt Browser, Suche, VeloMail, Cloud, Publisher, Tools, Knoten und Sicherheit in einem Portal. Einloggen, auswählen, starten.",
       "Desktop e mobile": "Desktop und mobil",
       "Cloud protetto": "Geschützte Cloud",
@@ -3936,7 +3933,6 @@ function veloraI18nDictionaryComplete() {
     },
     es: {
       "VELORA PUBLIC BETA": "BETA PUBLICA VELORA",
-      "Un solo accesso per cercare, pubblicare e usare l’Upper Web.": "Un solo acceso para buscar, publicar y usar la Upper Web.",
       "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora une navegador, búsqueda, VeloMail, Cloud, Publisher, Tools, nodos y seguridad en un único portal. Entra, elige y empieza.",
       "Desktop e mobile": "Desktop y móvil",
       "Cloud protetto": "Cloud protegido",
@@ -4105,7 +4101,6 @@ function veloraI18nDictionaryComplete() {
   dict.ru = {
     ...(dict.ru ?? {}),
     "VELORA PUBLIC BETA": "ПУБЛИЧНАЯ БЕТА VELORA",
-    "Un solo accesso per cercare, pubblicare e usare l’Upper Web.": "Один вход для поиска, публикации и работы в Upper Web.",
     "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora объединяет браузер, поиск, VeloMail, Cloud, Publisher, Tools, узлы и безопасность в одном портале. Войдите, выберите действие и начните сразу.",
     "Desktop e mobile": "ПК и мобильные устройства",
     "Cloud protetto": "Защищенный Cloud",
@@ -4138,7 +4133,6 @@ function veloraI18nDictionaryComplete() {
   dict.zh = {
     ...(dict.zh ?? {}),
     "VELORA PUBLIC BETA": "VELORA 公测版",
-    "Un solo accesso per cercare, pubblicare e usare l’Upper Web.": "一个入口即可搜索、发布并使用 Upper Web。",
     "Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.": "Velora 将浏览器、搜索、VeloMail、Cloud、Publisher、Tools、节点和安全能力集中在一个门户中。登录后选择操作，立即开始。",
     "Desktop e mobile": "桌面与移动端",
     "Cloud protetto": "受保护的 Cloud",
