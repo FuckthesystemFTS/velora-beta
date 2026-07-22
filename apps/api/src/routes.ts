@@ -3494,7 +3494,6 @@ function mobilePage() {
     <button data-tab="account" onclick="showPage('account',this)">Account</button>
   </nav>
   ${veloraI18nScript()}
-  ${publicHomeInteractionScript()}
   <script>
     let deferredInstall = null;
     let currentForumSlug = 'global';
@@ -3721,44 +3720,40 @@ async function publicPage(page: string) {
     <section class="hero home-hero">
       <div class="hero-copy">
         <span>VELORA PUBLIC BETA</span>
-        <h1>Un solo accesso per cercare, pubblicare e usare l’Upper Web.</h1>
-        <p class="lead">Velora unisce browser, search, VeloMail, Cloud, Publisher, Tools, nodi e sicurezza in un portale unico. Entri, scegli cosa fare e inizi subito.</p>
-        <div class="hero-actions"><a class="cta" href="/portal">Apri Velora</a><a class="ghost" href="/download">Scarica app beta</a></div>
-        <div class="trust-row"><span>Portale online</span><span>Account @velora</span><span>Desktop e mobile</span><span>Cloud protetto</span></div>
+        <h1>Apri il tuo livello sopra Internet</h1>
+        <p class="lead">Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora</p>
+        <div class="hero-actions"><a class="cta" href="/portal">Entra nel portale</a><a class="ghost" href="/download">Scarica beta</a></div>
+        <div class="trust-row"><span>Account @velora</span><span>Browser integrato</span><span>Cloud protetto</span><span>Desktop e mobile</span></div>
       </div>
-      <div class="command-center">
-        <div class="command-top"><span></span><span></span><span></span><b>Velora Live Console</b></div>
-        <div class="command-tabs">
-          <button type="button" class="active" data-demo="search">Search</button>
-          <button type="button" data-demo="cloud">Cloud</button>
-          <button type="button" data-demo="mail">VeloMail</button>
-          <button type="button" data-demo="publish">Publisher</button>
-          <button type="button" data-demo="guardian">Guardian</button>
-        </div>
-        <div class="command-screen">
-          <small id="demoEyebrow">Ricerca interna</small>
-          <h3 id="demoTitle">Trova servizi Velora senza uscire dal portale</h3>
-          <p id="demoText">Search apre contenuti, strumenti e zone pubblicate dentro l’ambiente Velora, con lo stesso account e stato di sicurezza.</p>
-          <div class="demo-result" id="demoResult">
-            <b>velora.search</b>
-            <span>online</span>
-          </div>
-        </div>
-        <div class="command-foot"><span></span><p>Una sessione. Più funzioni. Stato leggibile.</p></div>
+      <div class="action-console" aria-label="Azioni Velora">
+        <a class="action-card primary-action" href="/portal/search">
+          <small>01</small>
+          <b>Cerca nell'Upper Web</b>
+          <span>Zone, guide, tools, contenuti Velora</span>
+        </a>
+        <a class="action-card" href="/portal/cloud">
+          <small>02</small>
+          <b>Proteggi file</b>
+          <span>Cloud personale con account unico</span>
+        </a>
+        <a class="action-card" href="/portal/mail">
+          <small>03</small>
+          <b>Usa VeloMail</b>
+          <span>Messaggi tra identità Velora</span>
+        </a>
+        <a class="action-card" href="/portal/publisher">
+          <small>04</small>
+          <b>Pubblica una zona</b>
+          <span>Validazione, manifest e messa online</span>
+        </a>
+        <div class="signal-strip"><span></span><b>Rete operativa</b><em>Guardian attivo</em></div>
       </div>
     </section>
-    <section class="quick-grid">
-      <article><span>01</span><b>Velora Search</b><p>Cerca contenuti, moduli e zone pubblicate senza perdere il contesto del portale.</p></article>
-      <article><span>02</span><b>VeloMail e Cloud</b><p>Messaggi, file e account lavorano insieme con sessione persistente e controlli Guardian.</p></article>
-      <article><span>03</span><b>Publisher Studio</b><p>Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.</p></article>
-      <article><span>04</span><b>Velora Guardian</b><p>Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.</p></article>
-    </section>
-    <section class="panel manifesto">
-      <div>
-        <span>NON UNA DEMO STATICA</span>
-        <h2>Il portale è il punto di accesso. Il desktop aggiunge potenza locale.</h2>
-      </div>
-      <p>La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.</p>
+    <section class="flow-grid">
+      <a href="/portal"><span>START</span><b>Portale</b><p>Accesso immediato da browser</p></a>
+      <a href="/portal/tools"><span>TOOLS</span><b>Velora Tools</b><p>Strumenti pronti per uso quotidiano</p></a>
+      <a href="/portal/publisher"><span>PUBLISH</span><b>Publisher Studio</b><p>Controllo sito, upload e stato online</p></a>
+      <a href="/security"><span>GUARDIAN</span><b>Sicurezza</b><p>Protezione account, cloud e attività sensibili</p></a>
     </section>`;
   return `<!doctype html>
 <html lang="it">
@@ -3784,12 +3779,12 @@ async function publicPage(page: string) {
     nav a{color:#c8d9ea;text-decoration:none}
     nav a:first-child{color:#f1d68b;font-weight:900;letter-spacing:.18em}
     .lang-select{width:auto;border:1px solid rgba(216,174,85,.5);border-radius:14px;background:rgba(6,17,31,.78);color:#f7fbff;padding:10px 12px}
-    .hero,.panel,.cards article,.quick-grid article{border:1px solid rgba(150,202,255,.18);background:linear-gradient(180deg,rgba(12,35,55,.82),rgba(7,20,32,.78));border-radius:28px;box-shadow:0 28px 80px rgba(0,0,0,.36)}
+    .hero,.panel,.cards article,.flow-grid a{border:1px solid rgba(150,202,255,.18);background:linear-gradient(180deg,rgba(12,35,55,.82),rgba(7,20,32,.78));border-radius:28px;box-shadow:0 28px 80px rgba(0,0,0,.36)}
     .hero{padding:clamp(28px,6vw,72px);margin-top:28px;position:relative;overflow:hidden}
     .home-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,.82fr);gap:44px;align-items:center;min-height:610px}
     .hero:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.08),transparent 34%),radial-gradient(circle at 88% 72%,rgba(95,205,255,.16),transparent 28%);pointer-events:none}
-    .hero span,.manifesto span{color:#f1d68b;letter-spacing:.18em;font-weight:900}
-    h1{font-size:clamp(48px,6.8vw,84px);line-height:.92;margin:16px 0;letter-spacing:-.065em;max-width:860px}
+    .hero span{color:#f1d68b;letter-spacing:.18em;font-weight:900}
+    h1{font-size:clamp(54px,8vw,108px);line-height:.84;margin:18px 0;letter-spacing:-.08em;max-width:850px}
     h2{font-size:clamp(30px,3.8vw,52px);line-height:1;margin:8px 0 0;letter-spacing:-.045em}
     p,dd{color:#c8d9ea;font-size:18px}
     .lead{font-size:clamp(18px,2vw,22px);max-width:760px;line-height:1.45}
@@ -3798,21 +3793,19 @@ async function publicPage(page: string) {
     .ghost{color:#f1d68b}
     .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.hero-actions .cta,.hero-actions .ghost{margin-top:0}
     .trust-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}.trust-row span{letter-spacing:0;color:#dcecff;border:1px solid rgba(150,202,255,.25);background:rgba(255,255,255,.06);border-radius:999px;padding:9px 12px;font-size:14px}
-    .command-center{position:relative;border:1px solid rgba(150,202,255,.22);background:linear-gradient(180deg,rgba(5,15,26,.86),rgba(3,9,16,.88));border-radius:30px;padding:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 28px 80px rgba(0,0,0,.35)}
-    .command-center:before{content:"";position:absolute;inset:14px;border-radius:24px;background:radial-gradient(circle at 80% 10%,rgba(103,217,255,.16),transparent 30%);pointer-events:none}
-    .command-top{position:relative;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(150,202,255,.14);padding:4px 4px 16px}.command-top span{width:10px;height:10px;border-radius:50%;background:#f1d68b;letter-spacing:0}.command-top span:nth-child(2){background:#67d9ff}.command-top span:nth-child(3){background:#57e39b}.command-top b{margin-left:auto;color:#dcecff}
-    .command-tabs{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:18px 0}.command-tabs button{border:1px solid rgba(150,202,255,.18);border-radius:14px;background:rgba(255,255,255,.045);color:#dcecff;padding:11px 8px;font-weight:900;cursor:pointer}.command-tabs button.active{background:#f1d68b;color:#06111f;border-color:#f1d68b}
-    .command-screen{position:relative;min-height:260px;border:1px solid rgba(216,174,85,.32);border-radius:24px;background:linear-gradient(135deg,rgba(9,31,50,.92),rgba(4,13,22,.92));padding:26px;overflow:hidden}.command-screen:after{content:"";position:absolute;right:-60px;bottom:-80px;width:260px;height:260px;border-radius:50%;border:1px solid rgba(241,214,139,.24)}
-    .command-screen small{color:#f1d68b;text-transform:uppercase;letter-spacing:.16em;font-weight:900}.command-screen h3{font-size:clamp(28px,3vw,42px);line-height:1;margin:14px 0 12px;letter-spacing:-.04em;max-width:520px}.command-screen p{font-size:17px;line-height:1.45;max-width:520px}
-    .demo-result{position:relative;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:24px;padding:16px 18px;border-radius:18px;background:#07131f;border:1px solid rgba(150,202,255,.2)}.demo-result b{font-size:18px}.demo-result span{letter-spacing:0;color:#57e39b;border:1px solid rgba(87,227,155,.28);border-radius:999px;padding:7px 10px;background:rgba(87,227,155,.08)}
-    .command-foot{position:relative;display:flex;gap:12px;align-items:center;margin-top:18px;padding:14px;border-radius:18px;background:rgba(87,227,155,.08);border:1px solid rgba(87,227,155,.18)}.command-foot span{width:10px;height:10px;border-radius:50%;background:#57e39b;box-shadow:0 0 22px #57e39b;letter-spacing:0}.command-foot p{font-size:15px;margin:0;color:#dcecff}
+    .action-console{position:relative;display:grid;gap:12px;border:1px solid rgba(150,202,255,.2);background:linear-gradient(160deg,rgba(4,12,20,.92),rgba(10,34,52,.76));border-radius:34px;padding:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 36px 90px rgba(0,0,0,.38)}
+    .action-console:before{content:"";position:absolute;inset:-1px;border-radius:34px;background:linear-gradient(120deg,rgba(241,214,139,.34),transparent 34%,rgba(103,217,255,.28));opacity:.45;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);padding:1px;mask-composite:exclude;-webkit-mask-composite:xor;pointer-events:none}
+    .action-card{position:relative;display:grid;grid-template-columns:52px minmax(0,1fr);gap:4px 16px;align-items:center;padding:20px;border-radius:22px;text-decoration:none;color:#f7fbff;background:rgba(255,255,255,.045);border:1px solid rgba(150,202,255,.16);transition:transform .18s ease,border-color .18s ease,background .18s ease}
+    .action-card:hover{transform:translateY(-3px);border-color:rgba(241,214,139,.72);background:rgba(241,214,139,.09)}
+    .action-card small{grid-row:1/3;color:#f1d68b;font-weight:1000;letter-spacing:.14em}.action-card b{font-size:24px;letter-spacing:-.035em}.action-card span{grid-column:2;color:#c8d9ea;letter-spacing:0;font-weight:500}
+    .primary-action{background:linear-gradient(135deg,rgba(241,214,139,.96),rgba(216,174,85,.9));color:#06111f}.primary-action span,.primary-action small{color:#06111f}
+    .signal-strip{display:flex;align-items:center;gap:12px;margin-top:4px;padding:16px 18px;border-radius:20px;background:rgba(87,227,155,.09);border:1px solid rgba(87,227,155,.22);color:#dfffee}.signal-strip span{width:10px;height:10px;border-radius:50%;background:#57e39b;box-shadow:0 0 22px #57e39b;letter-spacing:0}.signal-strip b{margin-right:auto}.signal-strip em{font-style:normal;color:#57e39b}
     .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:22px}
-    .quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-top:22px}.quick-grid article{padding:22px;min-height:220px}.quick-grid span{color:#f1d68b;font-weight:1000}.quick-grid b{display:block;font-size:24px;line-height:1.05;margin:18px 0 10px}.quick-grid p{font-size:16px}
-    .manifesto{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:24px;align-items:end;margin-top:22px}.manifesto p{font-size:22px;line-height:1.35;margin:0}
+    .flow-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-top:22px}.flow-grid a{display:block;min-height:170px;padding:22px;text-decoration:none;color:#f7fbff;transition:transform .18s ease,border-color .18s ease}.flow-grid a:hover{transform:translateY(-4px);border-color:rgba(241,214,139,.66)}.flow-grid span{color:#f1d68b;font-weight:1000;letter-spacing:.16em}.flow-grid b{display:block;font-size:25px;line-height:1.05;margin:22px 0 10px}.flow-grid p{font-size:16px;margin:0;color:#c8d9ea}
     .cards article,.panel{padding:24px}
     dt{color:#f1d68b;margin-top:14px}
     dd{margin-left:0;overflow-wrap:anywhere}
-    footer{color:#9fb4c8}.cookie-banner{position:fixed;left:18px;right:18px;bottom:18px;z-index:30;display:none;gap:14px;align-items:center;justify-content:space-between;max-width:980px;margin:auto;padding:16px;border:1px solid rgba(216,174,85,.45);border-radius:22px;background:rgba(6,17,31,.96);box-shadow:0 20px 70px rgba(0,0,0,.45)}.cookie-banner.show{display:flex}.cookie-banner p{margin:0;font-size:15px}.cookie-banner button{width:auto;border:0;border-radius:14px;background:#f1d68b;color:#06111f;padding:11px 16px;font-weight:900;cursor:pointer}@media(max-width:900px){.home-hero{grid-template-columns:1fr;min-height:auto}.quick-grid,.manifesto{grid-template-columns:1fr}.quick-grid article{min-height:0}}@media(max-width:720px){header,main,footer{padding:16px}.hero{border-radius:24px}h1{font-size:42px}.command-tabs{grid-template-columns:1fr 1fr}.command-screen{min-height:220px}.cookie-banner{display:none;flex-direction:column;align-items:flex-start}.cookie-banner.show{display:flex}}
+    footer{color:#9fb4c8}.cookie-banner{position:fixed;left:18px;right:18px;bottom:18px;z-index:30;display:none;gap:14px;align-items:center;justify-content:space-between;max-width:980px;margin:auto;padding:16px;border:1px solid rgba(216,174,85,.45);border-radius:22px;background:rgba(6,17,31,.96);box-shadow:0 20px 70px rgba(0,0,0,.45)}.cookie-banner.show{display:flex}.cookie-banner p{margin:0;font-size:15px}.cookie-banner button{width:auto;border:0;border-radius:14px;background:#f1d68b;color:#06111f;padding:11px 16px;font-weight:900;cursor:pointer}@media(max-width:900px){.home-hero{grid-template-columns:1fr;min-height:auto}.flow-grid{grid-template-columns:1fr 1fr}}@media(max-width:720px){header,main,footer{padding:16px}.hero{border-radius:24px}h1{font-size:46px}.flow-grid{grid-template-columns:1fr}.signal-strip{align-items:flex-start;flex-direction:column}.cookie-banner{display:none;flex-direction:column;align-items:flex-start}.cookie-banner.show{display:flex}}
   </style>
 </head>
 <body>
@@ -3840,39 +3833,6 @@ function languageSelectorHtml() {
     <option value="ru">Русский</option>
     <option value="zh">中文</option>
   </select>`;
-}
-
-function publicHomeInteractionScript() {
-  return `<script>
-(() => {
-  const demos = {
-    search: ["Ricerca interna", "Trova servizi Velora senza uscire dal portale", "Search apre contenuti, strumenti e zone pubblicate dentro l'ambiente Velora, con lo stesso account e stato di sicurezza.", "velora.search", "online"],
-    cloud: ["Cloud protetto", "Carica file e ritrovali nel tuo account", "Velora Cloud collega spazio utente, sessione stabile e controlli Guardian per proteggere i dati personali.", "velora.cloud", "protetto"],
-    mail: ["Comunicazione", "VeloMail usa la stessa identita Velora", "Invio, ricezione e forum condividono lo stesso account, senza profili paralleli o login separati.", "velomail", "attivo"],
-    publish: ["Publishing", "Prepara una zona prima di pubblicarla", "Publisher Studio guida manifest, validazione, login Velora e stato pubblicazione prima della messa online.", "publisher.studio", "verifica"],
-    guardian: ["Sicurezza", "Guardian controlla rischio, log e cloud", "Audit, protezione dati e segnali admin rendono leggibile cosa sta succedendo all'ecosistema.", "velora.guardian", "protetto"]
-  };
-  const translate = (value) => window.veloraTranslate ? window.veloraTranslate(value) : value;
-  function render(name) {
-    const data = demos[name] || demos.search;
-    const eyebrow = document.getElementById("demoEyebrow");
-    const title = document.getElementById("demoTitle");
-    const text = document.getElementById("demoText");
-    const result = document.getElementById("demoResult");
-    if (!eyebrow || !title || !text || !result) return;
-    eyebrow.textContent = translate(data[0]);
-    title.textContent = translate(data[1]);
-    text.textContent = translate(data[2]);
-    result.innerHTML = "<b>" + data[3] + "</b><span>" + translate(data[4]) + "</span>";
-    document.querySelectorAll("[data-demo]").forEach((button) => button.classList.toggle("active", button.dataset.demo === name));
-  }
-  window.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll("[data-demo]").forEach((button) => button.addEventListener("click", () => render(button.dataset.demo || "search")));
-    render("search");
-  });
-  window.addEventListener("velora:language", () => render(document.querySelector("[data-demo].active")?.dataset.demo || "search"));
-})();
-</script>`;
 }
 
 function veloraI18nDictionaryComplete() {
@@ -3906,7 +3866,6 @@ function veloraI18nDictionaryComplete() {
       "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "Prepare a manifest, validate a publication and follow status before going online.",
       "Velora Guardian": "Velora Guardian",
       "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "Multi-level protection, audit and admin signals for accounts, cloud and sensitive operations.",
-      "NON UNA DEMO STATICA": "NOT A STATIC DEMO",
       "Il portale è il punto di accesso. Il desktop aggiunge potenza locale.": "The portal is the access point. Desktop adds local power.",
       "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "The public beta is for testing real functions: account, search, VeloMail, Cloud, Tools, Publisher, nodes and Guardian security.",
       "verifica": "checking"
@@ -3939,7 +3898,6 @@ function veloraI18nDictionaryComplete() {
       "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "Préparez un manifest, validez une publication et suivez l’état avant la mise en ligne.",
       "Velora Guardian": "Velora Guardian",
       "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "Protection multiliveau, audit et signaux admin pour comptes, cloud et opérations sensibles.",
-      "NON UNA DEMO STATICA": "PAS UNE DEMO STATIQUE",
       "Il portale è il punto di accesso. Il desktop aggiunge potenza locale.": "Le portail est le point d’accès. Le desktop ajoute la puissance locale.",
       "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "La bêta publique sert à tester des fonctions réelles : compte, recherche, VeloMail, Cloud, Tools, Publisher, nœuds et sécurité Guardian.",
       "verifica": "vérification"
@@ -3972,7 +3930,6 @@ function veloraI18nDictionaryComplete() {
       "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "Manifest vorbereiten, Veröffentlichung validieren und Status vor dem Onlinegang verfolgen.",
       "Velora Guardian": "Velora Guardian",
       "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "Mehrstufiger Schutz, Audit und Admin-Signale für Konten, Cloud und sensible Vorgänge.",
-      "NON UNA DEMO STATICA": "KEINE STATISCHE DEMO",
       "Il portale è il punto di accesso. Il desktop aggiunge potenza locale.": "Das Portal ist der Zugangspunkt. Desktop ergänzt lokale Leistung.",
       "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "Die öffentliche Beta testet reale Funktionen: Konto, Suche, VeloMail, Cloud, Tools, Publisher, Knoten und Guardian-Sicherheit.",
       "verifica": "Prüfung"
@@ -4005,7 +3962,6 @@ function veloraI18nDictionaryComplete() {
       "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "Prepara manifest, valida una publicación y sigue el estado antes de ponerla online.",
       "Velora Guardian": "Velora Guardian",
       "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "Protección multinivel, auditoría y señales admin para cuentas, cloud y operaciones sensibles.",
-      "NON UNA DEMO STATICA": "NO ES UNA DEMO ESTATICA",
       "Il portale è il punto di accesso. Il desktop aggiunge potenza locale.": "El portal es el punto de acceso. Desktop añade potencia local.",
       "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "La beta pública prueba funciones reales: cuenta, búsqueda, VeloMail, Cloud, Tools, Publisher, nodos y seguridad Guardian.",
       "verifica": "verificación"
@@ -4014,6 +3970,138 @@ function veloraI18nDictionaryComplete() {
   for (const [language, values] of Object.entries(additions)) {
     dict[language] = { ...(dict[language] ?? {}), ...values };
   }
+  dict.en = {
+    ...(dict.en ?? {}),
+    "Apri il tuo livello sopra Internet": "Open your layer above the Internet",
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "One portal to search, communicate, protect files and publish Velora zones",
+    "Entra nel portale": "Enter the portal",
+    "Scarica beta": "Download beta",
+    "Browser integrato": "Integrated browser",
+    "Cerca nell'Upper Web": "Search the Upper Web",
+    "Zone, guide, tools, contenuti Velora": "Zones, guides, tools, Velora content",
+    "Proteggi file": "Protect files",
+    "Cloud personale con account unico": "Personal cloud with one account",
+    "Usa VeloMail": "Use VeloMail",
+    "Messaggi tra identità Velora": "Messages between Velora identities",
+    "Pubblica una zona": "Publish a zone",
+    "Validazione, manifest e messa online": "Validation, manifest and online release",
+    "Rete operativa": "Network online",
+    "Guardian attivo": "Guardian active",
+    "Accesso immediato da browser": "Instant browser access",
+    "Strumenti pronti per uso quotidiano": "Tools ready for everyday use",
+    "Controllo sito, upload e stato online": "Site check, upload and online status",
+    "Protezione account, cloud e attività sensibili": "Account, cloud and sensitive activity protection"
+  };
+  dict.fr = {
+    ...(dict.fr ?? {}),
+    "Apri il tuo livello sopra Internet": "Ouvrez votre niveau au-dessus d’Internet",
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Un portail unique pour rechercher, communiquer, protéger les fichiers et publier des zones Velora",
+    "Entra nel portale": "Entrer dans le portail",
+    "Scarica beta": "Télécharger la bêta",
+    "Browser integrato": "Navigateur intégré",
+    "Cerca nell'Upper Web": "Rechercher dans l’Upper Web",
+    "Zone, guide, tools, contenuti Velora": "Zones, guides, outils, contenus Velora",
+    "Proteggi file": "Protéger les fichiers",
+    "Cloud personale con account unico": "Cloud personnel avec compte unique",
+    "Usa VeloMail": "Utiliser VeloMail",
+    "Messaggi tra identità Velora": "Messages entre identités Velora",
+    "Pubblica una zona": "Publier une zone",
+    "Validazione, manifest e messa online": "Validation, manifest et mise en ligne",
+    "Rete operativa": "Réseau opérationnel",
+    "Guardian attivo": "Guardian actif",
+    "Accesso immediato da browser": "Accès immédiat depuis le navigateur",
+    "Strumenti pronti per uso quotidiano": "Outils prêts pour l’usage quotidien",
+    "Controllo sito, upload e stato online": "Contrôle du site, upload et état en ligne",
+    "Protezione account, cloud e attività sensibili": "Protection du compte, du cloud et des activités sensibles"
+  };
+  dict.de = {
+    ...(dict.de ?? {}),
+    "Apri il tuo livello sopra Internet": "Öffne deine Ebene über dem Internet",
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Ein Portal zum Suchen, Kommunizieren, Schützen von Dateien und Veröffentlichen von Velora-Zonen",
+    "Entra nel portale": "Portal öffnen",
+    "Scarica beta": "Beta herunterladen",
+    "Browser integrato": "Integrierter Browser",
+    "Cerca nell'Upper Web": "Im Upper Web suchen",
+    "Zone, guide, tools, contenuti Velora": "Zonen, Guides, Tools, Velora-Inhalte",
+    "Proteggi file": "Dateien schützen",
+    "Cloud personale con account unico": "Persönliche Cloud mit einem Konto",
+    "Usa VeloMail": "VeloMail nutzen",
+    "Messaggi tra identità Velora": "Nachrichten zwischen Velora-Identitäten",
+    "Pubblica una zona": "Zone veröffentlichen",
+    "Validazione, manifest e messa online": "Validierung, Manifest und Veröffentlichung",
+    "Rete operativa": "Netzwerk online",
+    "Guardian attivo": "Guardian aktiv",
+    "Accesso immediato da browser": "Sofortzugang im Browser",
+    "Strumenti pronti per uso quotidiano": "Tools für den Alltag",
+    "Controllo sito, upload e stato online": "Site-Prüfung, Upload und Online-Status",
+    "Protezione account, cloud e attività sensibili": "Schutz für Konto, Cloud und sensible Aktivitäten"
+  };
+  dict.es = {
+    ...(dict.es ?? {}),
+    "Apri il tuo livello sopra Internet": "Abre tu nivel por encima de Internet",
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Un portal único para buscar, comunicar, proteger archivos y publicar zonas Velora",
+    "Entra nel portale": "Entrar al portal",
+    "Scarica beta": "Descargar beta",
+    "Browser integrato": "Navegador integrado",
+    "Cerca nell'Upper Web": "Buscar en la Upper Web",
+    "Zone, guide, tools, contenuti Velora": "Zonas, guías, herramientas, contenidos Velora",
+    "Proteggi file": "Proteger archivos",
+    "Cloud personale con account unico": "Cloud personal con cuenta única",
+    "Usa VeloMail": "Usar VeloMail",
+    "Messaggi tra identità Velora": "Mensajes entre identidades Velora",
+    "Pubblica una zona": "Publicar una zona",
+    "Validazione, manifest e messa online": "Validación, manifest y puesta online",
+    "Rete operativa": "Red operativa",
+    "Guardian attivo": "Guardian activo",
+    "Accesso immediato da browser": "Acceso inmediato desde navegador",
+    "Strumenti pronti per uso quotidiano": "Herramientas listas para uso diario",
+    "Controllo sito, upload e stato online": "Control del sitio, upload y estado online",
+    "Protezione account, cloud e attività sensibili": "Protección de cuenta, cloud y actividades sensibles"
+  };
+  dict.ru = {
+    ...(dict.ru ?? {}),
+    "Apri il tuo livello sopra Internet": "Откройте свой уровень над Интернетом",
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Единый портал для поиска, общения, защиты файлов и публикации зон Velora",
+    "Entra nel portale": "Войти в портал",
+    "Scarica beta": "Скачать бета",
+    "Browser integrato": "Встроенный браузер",
+    "Cerca nell'Upper Web": "Поиск в Upper Web",
+    "Zone, guide, tools, contenuti Velora": "Зоны, руководства, инструменты, контент Velora",
+    "Proteggi file": "Защитить файлы",
+    "Cloud personale con account unico": "Личное облако с единым аккаунтом",
+    "Usa VeloMail": "Открыть VeloMail",
+    "Messaggi tra identità Velora": "Сообщения между идентичностями Velora",
+    "Pubblica una zona": "Опубликовать зону",
+    "Validazione, manifest e messa online": "Проверка, manifest и публикация онлайн",
+    "Rete operativa": "Сеть работает",
+    "Guardian attivo": "Guardian активен",
+    "Accesso immediato da browser": "Быстрый доступ из браузера",
+    "Strumenti pronti per uso quotidiano": "Инструменты для ежедневного использования",
+    "Controllo sito, upload e stato online": "Проверка сайта, загрузка и онлайн-статус",
+    "Protezione account, cloud e attività sensibili": "Защита аккаунта, cloud и чувствительных действий"
+  };
+  dict.zh = {
+    ...(dict.zh ?? {}),
+    "Apri il tuo livello sopra Internet": "打开互联网之上的新层级",
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "一个门户即可搜索、通信、保护文件并发布 Velora 区域",
+    "Entra nel portale": "进入门户",
+    "Scarica beta": "下载 Beta",
+    "Browser integrato": "集成浏览器",
+    "Cerca nell'Upper Web": "搜索 Upper Web",
+    "Zone, guide, tools, contenuti Velora": "区域、指南、工具、Velora 内容",
+    "Proteggi file": "保护文件",
+    "Cloud personale con account unico": "单一账号的个人 Cloud",
+    "Usa VeloMail": "使用 VeloMail",
+    "Messaggi tra identità Velora": "Velora 身份之间的消息",
+    "Pubblica una zona": "发布区域",
+    "Validazione, manifest e messa online": "验证、manifest 与上线",
+    "Rete operativa": "网络运行中",
+    "Guardian attivo": "Guardian 已启用",
+    "Accesso immediato da browser": "浏览器即时访问",
+    "Strumenti pronti per uso quotidiano": "日常可用工具",
+    "Controllo sito, upload e stato online": "站点检查、上传和在线状态",
+    "Protezione account, cloud e attività sensibili": "账号、cloud 和敏感操作保护"
+  };
   dict.ru = {
     ...(dict.ru ?? {}),
     "VELORA PUBLIC BETA": "ПУБЛИЧНАЯ БЕТА VELORA",
@@ -4043,7 +4131,6 @@ function veloraI18nDictionaryComplete() {
     "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "Подготовьте manifest, проверьте публикацию и отслеживайте статус перед выходом онлайн.",
     "Velora Guardian": "Velora Guardian",
     "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "Многоуровневая защита, аудит и сигналы администратора для аккаунтов, cloud и чувствительных операций.",
-    "NON UNA DEMO STATICA": "НЕ СТАТИЧЕСКАЯ ДЕМО",
     "Il portale è il punto di accesso. Il desktop aggiunge potenza locale.": "Портал является точкой доступа. Desktop добавляет локальную мощность.",
     "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "Публичная бета нужна для теста реальных функций: аккаунт, поиск, VeloMail, Cloud, Tools, Publisher, узлы и Guardian.",
     "verifica": "проверка"
@@ -4077,11 +4164,52 @@ function veloraI18nDictionaryComplete() {
     "Prepara manifest, valida una pubblicazione e segui lo stato prima di andare online.": "准备 manifest、验证发布，并在上线前跟踪状态。",
     "Velora Guardian": "Velora Guardian",
     "Protezione multilivello, audit e segnali admin per account, cloud e operazioni sensibili.": "为账号、cloud 和敏感操作提供多层保护、审计和管理员信号。",
-    "NON UNA DEMO STATICA": "不是静态演示",
     "Il portale è il punto di accesso. Il desktop aggiunge potenza locale.": "门户是入口，桌面端提供本地能力。",
     "La beta pubblica serve a provare funzioni reali: account, ricerca, VeloMail, Cloud, Tools, Publisher, nodi e sicurezza Guardian.": "公测版用于测试真实功能：账号、搜索、VeloMail、Cloud、Tools、Publisher、节点和 Guardian 安全。",
     "verifica": "检查"
   };
+  Object.assign(dict.ru, {
+    "Apri il tuo livello sopra Internet": "Откройте свой уровень над Интернетом",
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "Единый портал для поиска, общения, защиты файлов и публикации зон Velora",
+    "Entra nel portale": "Войти в портал",
+    "Scarica beta": "Скачать бета",
+    "Browser integrato": "Встроенный браузер",
+    "Cerca nell'Upper Web": "Поиск в Upper Web",
+    "Zone, guide, tools, contenuti Velora": "Зоны, руководства, инструменты, контент Velora",
+    "Proteggi file": "Защитить файлы",
+    "Cloud personale con account unico": "Личное облако с единым аккаунтом",
+    "Usa VeloMail": "Открыть VeloMail",
+    "Messaggi tra identità Velora": "Сообщения между идентичностями Velora",
+    "Pubblica una zona": "Опубликовать зону",
+    "Validazione, manifest e messa online": "Проверка, manifest и публикация онлайн",
+    "Rete operativa": "Сеть работает",
+    "Guardian attivo": "Guardian активен",
+    "Accesso immediato da browser": "Быстрый доступ из браузера",
+    "Strumenti pronti per uso quotidiano": "Инструменты для ежедневного использования",
+    "Controllo sito, upload e stato online": "Проверка сайта, загрузка и онлайн-статус",
+    "Protezione account, cloud e attività sensibili": "Защита аккаунта, cloud и чувствительных действий"
+  });
+  Object.assign(dict.zh, {
+    "Apri il tuo livello sopra Internet": "打开互联网之上的新层级",
+    "Un portale unico per cercare, comunicare, proteggere file e pubblicare zone Velora": "一个门户即可搜索、通信、保护文件并发布 Velora 区域",
+    "Entra nel portale": "进入门户",
+    "Scarica beta": "下载 Beta",
+    "Browser integrato": "集成浏览器",
+    "Cerca nell'Upper Web": "搜索 Upper Web",
+    "Zone, guide, tools, contenuti Velora": "区域、指南、工具、Velora 内容",
+    "Proteggi file": "保护文件",
+    "Cloud personale con account unico": "单一账号的个人 Cloud",
+    "Usa VeloMail": "使用 VeloMail",
+    "Messaggi tra identità Velora": "Velora 身份之间的消息",
+    "Pubblica una zona": "发布区域",
+    "Validazione, manifest e messa online": "验证、manifest 与上线",
+    "Rete operativa": "网络运行中",
+    "Guardian attivo": "Guardian 已启用",
+    "Accesso immediato da browser": "浏览器即时访问",
+    "Strumenti pronti per uso quotidiano": "日常可用工具",
+    "Controllo sito, upload e stato online": "站点检查、上传和在线状态",
+    "Protezione account, cloud e attività sensibili": "账号、cloud 和敏感操作保护"
+  });
   return dict;
 }
 
