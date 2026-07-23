@@ -3127,7 +3127,7 @@ function mobileWebManifest() {
 function mobileServiceWorker() {
   return `
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open('velora-mobile-v2').then(cache => cache.addAll(['/portal','/app.webmanifest','/favicon.ico'])));
+  event.waitUntil(caches.open('velora-mobile-v3').then(cache => cache.addAll(['/portal','/app.webmanifest','/favicon.ico'])));
   self.skipWaiting();
 });
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
@@ -3169,14 +3169,14 @@ function appleWebManifest() {
 
 function appleServiceWorker() {
   return `
-const CACHE = 'velora-portal-v2';
+const CACHE = 'velora-portal-v3';
 const CORE = ['/portal','/portal/home','/portal/search','/portal/tools','/portal/help','/apple.webmanifest','/favicon.ico'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)));
   self.skipWaiting();
 });
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE && key.startsWith('velora-apple-')).map(key => caches.delete(key)))).then(() => self.clients.claim()));
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE && (key.startsWith('velora-apple-') || key.startsWith('velora-portal-'))).map(key => caches.delete(key)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', event => {
   const request = event.request;
