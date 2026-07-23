@@ -712,8 +712,20 @@ function App() {
     }
   }
 
-  function logout() {
-    localStorage.removeItem("velora.session");
+  async function logout() {
+    const token = session?.token;
+    if (token) {
+      fetch(`${apiBaseUrl}/api/v1/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      }).catch(() => undefined);
+    }
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith("velora.") && key !== "velora.theme") {
+        localStorage.removeItem(key);
+      }
+    }
     setSession(null);
     setMailUserId("");
     setMailAddress("alias@velora");
