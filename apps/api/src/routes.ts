@@ -3231,7 +3231,7 @@ function applePortalPage(section: string) {
     <aside class="sidebar">
       <div class="brand"><div class="logo">V</div><div><b>VELORA</b><span>Portale universale</span></div></div>
       <nav class="nav" id="sideNav"></nav>
-      <div class="bottom"><button onclick="installHelp()">Installa</button><button onclick="logout()">Esci</button></div>
+      <div class="bottom"><button onclick="installHelp()">Installa</button></div>
     </aside>
     <section class="main">
       <header class="toolbar">
@@ -3260,7 +3260,7 @@ function applePortalPage(section: string) {
     let selectedSearchCategory='';
     let deferredInstall=null;
     const modules=[
-      ['home','Home'],['browser','Browser'],['search','Search'],['mail','VeloMail'],['cloud','Cloud'],['publisher','Publisher'],['tools','Tools'],['forum','Forum'],['mining','Mining'],['nodes','Nodi'],['nas','NAS'],['oceano','Oceano'],['help','Guida'],['settings','Impostazioni']
+      ['home','Home'],['browser','Browser'],['search','Search'],['mail','VeloMail'],['cloud','Cloud'],['publisher','Publisher'],['tools','Tools'],['forum','Forum'],['mining','Mining'],['nodes','Nodi'],['nas','NAS'],['oceano','Oceano'],['help','Guida'],['settings','Profilo']
     ];
     function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
     function token(){return localStorage.getItem(tokenKey)||''}
@@ -3273,7 +3273,7 @@ function applePortalPage(section: string) {
     function showModule(id){currentSection=id;document.querySelectorAll('.module').forEach(el=>el.classList.toggle('active',el.id==='m-'+id));history.replaceState(null,'',portalBase()+'/'+id);window.scrollTo({top:0,left:0,behavior:'instant'});renderNav();loadModule(id);window.veloraApplyLanguage&&window.veloraApplyLanguage()}
     function saveSession(data){localStorage.setItem(tokenKey,data.accessToken||data.token||'');if(data.refreshToken)localStorage.setItem(refreshKey,data.refreshToken);localStorage.setItem(userKey,JSON.stringify(data.user||{}))}
     function sessionUser(){try{return JSON.parse(localStorage.getItem(userKey)||'{}')}catch{return {}}}
-    function setSessionState(){const u=sessionUser();const logged=Boolean(token());sessionState.textContent=logged?'Connesso come '+(u.username||'utente Velora'):'Accesso non effettuato';profileButton.textContent=logged?(u.username||'Profilo'):'Profilo';if(document.getElementById('authForm'))authForm.classList.toggle('hidden',logged);if(document.getElementById('accountBox'))accountBox.classList.toggle('hidden',!logged);if(document.getElementById('accountName'))accountName.textContent=u.username||'utente Velora';if(document.getElementById('accountMail'))accountMail.textContent=(u.mail||u.username||'account')+'';}
+    function setSessionState(){const u=sessionUser();const logged=Boolean(token());sessionState.textContent=logged?'Connesso come '+(u.username||'utente Velora'):'Accesso non effettuato';profileButton.textContent=logged?'Profilo':'Accedi';if(document.getElementById('authPanel'))authPanel.classList.toggle('hidden',logged);if(document.getElementById('authForm'))authForm.classList.toggle('hidden',logged);if(document.getElementById('accountBox'))accountBox.classList.toggle('hidden',!logged);if(document.getElementById('accountName'))accountName.textContent=u.username||'utente Velora';if(document.getElementById('accountMail'))accountMail.textContent=(u.mail||u.username||'account')+'';if(document.getElementById('profileName'))profileName.textContent=logged?(u.username||'utente Velora'):'Accesso non effettuato';if(document.getElementById('profileMail'))profileMail.textContent=logged?((u.mail||u.username||'account')+''):'Accedi o crea un account dalla Home';if(document.getElementById('profileStatus'))profileStatus.textContent=logged?'Sessione attiva':'Non connesso';if(document.getElementById('profileActions'))profileActions.innerHTML=logged?'<button class="primary" onclick="showModule(\\'mail\\')">Apri VeloMail</button><button onclick="showModule(\\'cloud\\')">Apri Cloud</button><button onclick="logout()">Esci</button>':'<button class="primary" onclick="showModule(\\'home\\')">Vai al login</button>';}
     function clearVeloraSession(){const keep=new Set(['velora.language','velora.cookie.ok','velora.apple.theme']);for(const store of [localStorage,sessionStorage]){for(let i=store.length-1;i>=0;i--){const key=store.key(i)||'';if(key.startsWith('velora.')&&!keep.has(key))store.removeItem(key)}}}
     function clearAuthFields(){if(document.getElementById('authPass'))authPass.value='';if(document.getElementById('authUser'))authUser.value='';}
     function authUsername(){return (authUser.value||'').trim().replace(/@velora$/i,'')+'@velora'}
@@ -3339,9 +3339,9 @@ function appleModulesHtml(initialSection: string) {
         </div>
         <aside class="activity-panel"><h2>Feed attivita</h2><div class="list"><div class="item status-row"><b>Accesso riuscito</b><p>Sessione protetta</p></div><div class="item status-row"><b>Backup Cloud</b><p>Stato in verifica</p></div><div class="item status-row"><b>Contenuto pubblicato</b><p>Indicizzazione attiva</p></div></div></aside>
         <div class="metrics-row" id="homeCards"></div>
+        <div class="panel auth-panel" id="authPanel"><h2>Account Velora</h2><p>Scrivi solo il nome utente. Il suffisso viene aggiunto automaticamente.</p><div id="authForm"><div class="row"><label class="username-wrap"><input id="authUser" autocomplete="username" placeholder="nomeutente"><span class="username-suffix">@velora</span></label><input id="authPass" autocomplete="current-password" type="password" placeholder="Password"></div><div class="row"><button class="primary" onclick="login()">Accedi</button><button onclick="register()">Crea account</button></div></div><div id="accountBox" class="hidden"><div class="card"><b>Account attivo</b><span id="accountName">utente Velora</span><p id="accountMail"></p></div></div><p id="authMsg"></p></div>
         <div class="panel quick-panel"><div class="panel-head"><h2>Strumenti rapidi</h2><button onclick="showModule('tools')">Tutti</button></div><div id="nextActions" class="quick-grid"></div></div>
         <div class="panel network-panel"><h2>Stato rete</h2><div class="network-metrics"><span>Nodi attivi</span><b>3</b><span>Uptime</span><b>Online</b><span>Cloud</span><b>Protetto</b></div></div>
-        <div class="panel auth-panel"><h2>Account Velora</h2><p>Scrivi solo il nome utente. Il suffisso viene aggiunto automaticamente.</p><div id="authForm"><div class="row"><label class="username-wrap"><input id="authUser" autocomplete="username" placeholder="nomeutente"><span class="username-suffix">@velora</span></label><input id="authPass" autocomplete="current-password" type="password" placeholder="Password"></div><div class="row"><button class="primary" onclick="login()">Accedi</button><button onclick="register()">Crea account</button></div></div><div id="accountBox" class="hidden"><div class="card"><b>Account attivo</b><span id="accountName">utente Velora</span><p id="accountMail"></p></div><button onclick="logout()">Esci</button></div><p id="authMsg"></p></div>
       </div>
     </section>
     <section id="m-search" class="module${active("search")}"><div class="page-head"><div><span class="kicker">Search</span><h1>Ricerca Velora</h1><p>Zone, contenuti, Oceano, tools e guide indicizzate.</p></div><button class="primary" onclick="loadSearch()">Aggiorna</button></div><div class="search-shell"><div class="panel search-main"><div class="search-row"><input id="searchQuery" placeholder="Cerca zone, Oceano, tools, guide"><button class="primary" onclick="loadSearch()">Cerca</button></div><div id="searchCategoryBar" class="category-bar"></div><div id="searchResults" class="list results-list"></div></div><aside class="panel preview-panel"><h2>Preview</h2><p>Apri un risultato per caricarlo nel Browser Velora.</p><button onclick="showModule('browser')">Vai al Browser</button></aside></div></section>
@@ -3356,7 +3356,7 @@ function appleModulesHtml(initialSection: string) {
     <section id="m-nas" class="module${active("nas")}"><div class="panel"><h2>NAS</h2><p>Gestione tramite Velora API e NAS Agent autorizzato. Nessuna credenziale DSM viene mostrata nel portale.</p><button onclick="loadNodes()">Controlla NAS</button><div id="nasBox" class="list"></div></div></section>
     <section id="m-oceano" class="module${active("oceano")}"><div class="panel"><h2>Oceano</h2><p>Ricerca contenuti indicizzati e apertura risultati nel Browser Velora.</p><div class="row"><input id="oceanoQuery" placeholder="Cerca in Oceano" oninput="searchQuery.value=this.value"><button onclick="loadSearch()">Cerca</button></div><div id="oceanoResults"></div></div></section>
     <section id="m-help" class="module${active("help")}"><div class="panel"><h2>Guida</h2><div class="cards"><div class="card"><b>Mac</b><span>Dock</span><p>Safari, File, Aggiungi al Dock.</p></div><div class="card"><b>iPhone</b><span>Home</span><p>Condividi, Aggiungi alla schermata Home.</p></div><div class="card"><b>Offline</b><span>Shell</span><p>La shell e la guida restano disponibili. Dati live richiedono rete.</p></div></div></div></section>
-    <section id="m-settings" class="module${active("settings")}"><div class="panel"><h2>Impostazioni</h2><button onclick="toggleTheme()">Cambia tema</button><button onclick="Notification.requestPermission()">Consenti notifiche</button><button onclick="logout()">Logout</button></div></section>
+    <section id="m-settings" class="module${active("settings")}"><div class="split"><div class="panel"><h2>Profilo Velora</h2><div class="card"><b>Account</b><span id="profileName">Accesso non effettuato</span><p id="profileMail">Accedi o crea un account dalla Home</p></div><div class="cards"><div class="card"><b>Sessione</b><span id="profileStatus">Non connesso</span></div><div class="card"><b>Cloud</b><span>25 MB beta</span></div><div class="card"><b>Identita</b><span>Velora</span></div></div><div id="profileActions" class="row"><button class="primary" onclick="showModule('home')">Vai al login</button></div></div><div class="panel"><h2>Preferenze</h2><div class="row"><button onclick="toggleTheme()">Cambia tema</button><button onclick="Notification.requestPermission()">Consenti notifiche</button></div><p class="muted">Da qui gestisci sessione, preferenze e accesso alle funzioni collegate al tuo account.</p></div></div></section>
   `;
 }
 
@@ -3439,11 +3439,17 @@ function mobilePage() {
     <section data-page="account" id="account">
       <div class="panel stack">
         <h2>Account Velora</h2>
-        <label class="username-wrap"><input id="username" placeholder="nomeutente" autocomplete="username"><span class="username-suffix">@velora</span></label>
-        <input id="email" placeholder="Email per nuova registrazione">
-        <input id="password" type="password" placeholder="Password">
-        <div class="row"><button class="primary" onclick="login()">Entra</button><button onclick="register()">Crea account</button></div>
-        <button onclick="logout()">Esci</button>
+        <div id="mobileAuthForm" class="stack">
+          <label class="username-wrap"><input id="username" placeholder="nomeutente" autocomplete="username"><span class="username-suffix">@velora</span></label>
+          <input id="email" placeholder="Email per nuova registrazione">
+          <input id="password" type="password" placeholder="Password">
+          <div class="row"><button class="primary" onclick="login()">Entra</button><button onclick="register()">Crea account</button></div>
+        </div>
+        <div id="mobileAccountBox" class="stack hidden">
+          <div class="card"><b>Account attivo</b><span id="mobileProfileName">utente Velora</span><p id="mobileProfileMail" class="muted"></p></div>
+          <div class="grid"><div class="card"><b>Sessione</b><span>Online</span></div><div class="card"><b>Cloud</b><span>25 MB</span></div></div>
+          <button onclick="logout()">Esci</button>
+        </div>
         <p id="authMsg" class="muted"></p>
       </div>
     </section>
@@ -3538,8 +3544,8 @@ function mobilePage() {
     async function login(){ try{ const body={username:authUsername(),password:password.value}; const data=await api('/api/v1/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}); saveSession(data); setMsg('authMsg','Accesso effettuato','ok'); boot(); }catch(e){ setMsg('authMsg',e.message,'bad'); } }
     function saveSession(data){ localStorage.setItem(tokenKey,data.accessToken||data.token||''); if(data.refreshToken)localStorage.setItem(refreshKey,data.refreshToken); localStorage.setItem(userKey, JSON.stringify(data.user||{})); password.value=''; }
     function clearVeloraSession(){ const keep=new Set(['velora.language','velora.cookie.ok','velora.apple.theme']); for(const store of [localStorage,sessionStorage]){ for(let i=store.length-1;i>=0;i--){ const key=store.key(i)||''; if(key.startsWith('velora.')&&!keep.has(key))store.removeItem(key); } } }
-    async function logout(){ const currentToken=token(); try{ if(currentToken) await api('/api/v1/auth/logout',{method:'POST',headers:{Authorization:'Bearer '+currentToken}}); }catch{} clearVeloraSession(); username.value=''; password.value=''; setMsg('authMsg','Sessione chiusa','ok'); boot(); showPage('home',document.querySelector('[data-tab=home]')); }
-    async function boot(){ const user=JSON.parse(localStorage.getItem(userKey)||'{}'); sessionState.textContent=token() ? 'Connesso come ' + (user.username||'utente Velora') : 'Accesso non effettuato'; await loadHome(); }
+    async function logout(){ const currentToken=token(); try{ if(currentToken) await api('/api/v1/auth/logout',{method:'POST',headers:{Authorization:'Bearer '+currentToken}}); }catch{} clearVeloraSession(); username.value=''; email.value=''; password.value=''; setMsg('authMsg','Sessione chiusa','ok'); boot(); showPage('home',document.querySelector('[data-tab=home]')); }
+    async function boot(){ const user=JSON.parse(localStorage.getItem(userKey)||'{}'); const logged=Boolean(token()); sessionState.textContent=logged ? 'Connesso come ' + (user.username||'utente Velora') : 'Accesso non effettuato'; if(document.getElementById('mobileAuthForm'))mobileAuthForm.classList.toggle('hidden',logged); if(document.getElementById('mobileAccountBox'))mobileAccountBox.classList.toggle('hidden',!logged); if(document.getElementById('mobileProfileName'))mobileProfileName.textContent=user.username||'utente Velora'; if(document.getElementById('mobileProfileMail'))mobileProfileMail.textContent=user.mail||user.username||''; await loadHome(); }
     async function loadHome(){ try{ const health=await api('/health'); const guardian=await api('/api/v1/guardian/status'); homeCards.innerHTML=card('API',health.ok?'online':'verifica')+card('Guardian',guardian.status||'protetto')+card('Livelli',guardian.totalLevels||10)+card('Mobile','attivo'); }catch(e){ homeCards.innerHTML=item('Stato',e.message); } }
     async function loadTools(){ try{ const data=await api('/api/v1/tools'); toolList.innerHTML=(data.tools||[]).filter(t=>t.executable).map(t=>item(t.name,t.description)).join('')||item('Tools','Nessuno strumento disponibile'); }catch(e){ toolList.innerHTML=item('Errore',e.message); } }
     function speakTool(){ const text=toolText.value.trim(); if(!text) return setMsg('toolOutput','Inserisci testo','bad'); speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(text)); setMsg('toolOutput','Lettura avviata','ok'); }
